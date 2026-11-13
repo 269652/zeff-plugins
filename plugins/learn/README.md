@@ -35,3 +35,5 @@ session with tools.
   ones there are.
 - A package can ask the person once to give its flows what they request (*Install and allow what it asks*), listed beforehand.
 - Views reach plugin functions through flows (`run=`), which keeps one permission model: the flow's permissions and the function's grants.
+
+Learn lives in the zeff-plugins repository (plugins/learn). A Zeff installs and updates it from there through its packages.json.
