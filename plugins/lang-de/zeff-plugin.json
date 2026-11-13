@@ -1,0 +1,12 @@
+{
+  "id": "lang-de",
+  "name": "Deutsch",
+  "version": "1.0.0",
+  "description": "Zeff auf Deutsch: alle Texte der Oberfläche, Datum und Zahlen im deutschen Format.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "contributes": {
+    "language": { "code": "de", "name": "German", "native": "Deutsch", "locale": "de-DE" },
+    "locales": { "de": "bundle.json" }
+  }
+}
