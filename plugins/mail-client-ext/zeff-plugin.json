@@ -1,0 +1,36 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "mail-client-ext",
+  "name": "Mail & Chat",
+  "version": "1.0.0",
+  "description": "Your mails and chats as a mail client, a chat and one inbox across channels: read, reply (or let the AI draft), snooze, archive, new inboxes. Made of the view language; the kernel sends.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "compute": "compute.js",
+    "appViews": [
+      {
+        "id": "mail",
+        "dataType": "mail",
+        "label": "Mail",
+        "icon": "✉",
+        "template": "views/mail.html"
+      },
+      {
+        "id": "chat",
+        "dataType": "message",
+        "label": "Chat",
+        "icon": "💬",
+        "template": "views/chat.html"
+      },
+      {
+        "id": "inbox",
+        "dataType": "inbox",
+        "label": "Inbox",
+        "icon": "📬",
+        "template": "views/inbox.html"
+      }
+    ]
+  }
+}

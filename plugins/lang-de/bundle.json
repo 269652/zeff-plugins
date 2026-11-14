@@ -8716,5 +8716,8 @@
   "Open public web pages in an automated Chrome on this computer — it can click and type there (no logins, never your own network)": "Öffentliche Webseiten in einem automatisierten Chrome auf diesem Computer öffnen — dort klicken und tippen (ohne Logins, nie dein eigenes Netz)",
   "Has a date": "Hat ein Datum",
   "Until (a range)": "Bis (ein Zeitraum)",
-  "comma separated — a new one is made": "durch Kommas getrennt — ein neues wird angelegt"
+  "comma separated — a new one is made": "durch Kommas getrennt — ein neues wird angelegt",
+  "Mail & Chat": "Mail & Chat",
+  "Your mails and chats as a mail client, a chat and one inbox across channels: read, reply (or let the AI draft), snooze, archive, new inboxes. Made of the view language; the kernel sends.": "Deine Mails und Chats als Mailprogramm, als Chat und als ein Posteingang über alle Kanäle: lesen, antworten (oder die KI entwerfen lassen), zurückstellen, archivieren, neue Posteingänge. Aus der Ansichtssprache gebaut; gesendet wird vom Kern.",
+  "Notes on a timeline, in projects, as in the app Agenda: a date or a range, on the agenda, pinned, done, tags and people; its text is the note's page. A template in the Workspace (New → from a template → Agenda).": "Notizen auf einem Zeitstrahl, in Projekten, wie in der App Agenda: ein Datum oder ein Zeitraum, auf der Agenda, angeheftet, erledigt, Schlagworte und Personen; ihr Text ist die Seite der Notiz. Eine Vorlage im Workspace (Neu → aus einer Vorlage → Agenda)."
 }

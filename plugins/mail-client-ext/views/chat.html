@@ -1,0 +1,91 @@
+<data name="app" compute="mail-client-ext.chat"/>
+<data name="grants" do="zeff.grants"/>
+{{#if data.app.current.markIds | count}}<data name="markread" do="mail.mark-read" with='{"rows": {{ data.app.current.markIds | tojson }}}' debounce="1500" reload=true/>{{/if}}
+<state name="selected" value="{{ data.app.first }}"/>
+<split ratio=1:3>
+<col>
+  <row justify=end><data name="inboxtemplates" do="mail.inbox-templates" with='{"type": "message"}'/>
+<menu label="＋ New inbox">
+{{#each data.inboxtemplates.templates}}<button do="mail.new-inbox" with='{"parent": {{ db.id }}, "template": "{{ id }}"}' label="{{ icon }} {{ title }}" tip="{{ description }}"/>{{/each}}
+<button do="mail.new-inbox" with='{"parent": {{ db.id }}, "template": "own"}' label="⚙ Your own (rules, AI) …"/>
+</menu></row>
+  <list source="data.app.chats" select=true empty="No messages here.">
+    <row gap=2 align=baseline>
+      {{ ifs(msgchannel == 'Outlook', '✉️', msgchannel == 'Gmail', '📮', msgchannel == 'E-Mail', '✉️', msgchannel == 'Teams', '🟣', msgchannel == 'WhatsApp', '🟢', msgchannel == 'Signal', '🔵', '💬') }}
+      <b>{{ msgchat }}</b>
+      <grow/>
+      <todomark/>
+      <muted>{{ msgsent ? formatDate(msgsent, 'DD.MM., HH:mm') : '' }}</muted>
+    </row>
+    <clamp lines=1><muted>{{#if msgmine}}Me: {{/if}}{{ title }}</muted></clamp>
+  </list>
+</col>
+<col>
+  <selected empty="Pick a chat.">
+    <row gap=2>
+      {{ data.app.current.icon }}
+      <heading level=3>{{ data.app.current.name }}</heading>
+      <grow/>
+      {{#if data.app.current.link}}<button action="url" href="{{ data.app.current.link }}" label="↗ Open in {{ data.app.current.channel }}"/>{{/if}}
+    </row>
+  </selected>
+  {{#if data.app.current.id}}{{#if data.app.current.id}}<know row="{{ data.app.current.id }}" compact=true/>{{/if}}{{/if}}
+  <col gap=2 scroll=60 end=true>
+{{#each data.app.current.messages}}<row justify="{{ msgmine ? 'end' : 'start' }}"><col max="75%"><box tone="{{ msgmine ? 'accent' : 'muted' }}" action="open">{{#if not msgmine}}<small><muted>{{ msgsender }}</muted></small>{{/if}}<text pre=true>{{ title }}</text><row justify=end><small><muted>{{ msgsent ? formatDate(msgsent, 'DD.MM., HH:mm') : '' }}</muted></small></row></box></col></row>{{/each}}
+</col>
+  {{#if data.app.current.id}}
+    {{#if data.app.current.actions}}<suggested row="{{ data.app.current.actions.rowId }}"/>{{/if}}
+    {{#if data.app.current.canReply}}
+      {{#if data.app.current.reply}}<col dock=bottom>
+{{#if data.app.current.reply.kind == 'mail'}}
+<state name="mailto{{ data.app.current.id }}" value="{{ data.app.current.reply.to }}"/>
+<state name="mailsubject{{ data.app.current.id }}" value="{{ data.app.current.reply.subject }}"/>
+<let name="mailToKey" value="'mailto' + data.app.current.id"/><let name="mailTo" value="state | get(mailToKey)"/>
+<let name="mailSubjectKey" value="'mailsubject' + data.app.current.id"/><let name="mailSubject" value="state | get(mailSubjectKey)"/>
+<let name="mailBodyKey" value="'mailbody' + data.app.current.id"/><let name="mailBody" value="state | get(mailBodyKey)"/>
+<let name="mailOpenKey" value="'mailopen' + data.app.current.id"/><let name="mailOpen" value="state | get(mailOpenKey)"/>
+<divider/>
+{{#if not mailOpen}}
+<row gap=2>
+  <button action="state" state="mailopen{{ data.app.current.id }}" value="1" label="↩ Reply"/>
+  <button do="row.reply.draft" with='{"row": {{ data.app.current.id }}}' fill="mailbody{{ data.app.current.id }}=text, mailto{{ data.app.current.id }}=to" then="mailopen{{ data.app.current.id }}=1" label="✨ Draft a reply with AI"/>
+  {{#if data.app.current.reply.account == 'Gmail' and data.grants.gmailSend}}<button do="mail.gmail-change" with='{"row": {{ data.app.current.id }}, "what": "archive"}' label="Archive" tip="Out of the inbox — still in All Mail; nothing is deleted"/><button do="mail.gmail-change" with='{"row": {{ data.app.current.id }}, "what": "unread"}' label="Mark unread"/>{{/if}}
+</row>
+{{#else}}
+<input bind="mailto{{ data.app.current.id }}" placeholder="To" label=""/>
+<input bind="mailsubject{{ data.app.current.id }}" placeholder="Subject"/>
+<input bind="mailbody{{ data.app.current.id }}" type=textarea rows=6 placeholder="Your reply …"/>
+<row gap=2 align=center>
+  {{#if data.app.current.reply.account == 'E-Mail'}}
+    <button do="row.op" with='{"row": {{ data.app.current.id }}, "mode": "send", "op": {"type": "{{ data.app.current.reply.opType }}", "to": {{ mailTo | tojson }}, "subject": {{ mailSubject | tojson }}, "body": {{ mailBody | tojson }}}}' confirm="Send this mail to {{ mailTo }} now?" then="mailopen{{ data.app.current.id }}=; mailbody{{ data.app.current.id }}=" variant=primary disabled="{{ mailBody and mailTo ? 'false' : 'true' }}" label="Send"/>
+  {{#else}}{{#if data.app.current.reply.account == 'Gmail' and data.grants.gmailSend}}
+    <button do="row.op" with='{"row": {{ data.app.current.id }}, "mode": "send", "op": {"type": "{{ data.app.current.reply.opType }}", "to": {{ mailTo | tojson }}, "subject": {{ mailSubject | tojson }}, "body": {{ mailBody | tojson }}}}' confirm="Send this mail to {{ mailTo }} now?" then="mailopen{{ data.app.current.id }}=; mailbody{{ data.app.current.id }}=" variant=primary disabled="{{ mailBody and mailTo ? 'false' : 'true' }}" label="Send"/>
+    <button do="row.op" with='{"row": {{ data.app.current.id }}, "mode": "draft", "op": {"type": "{{ data.app.current.reply.opType }}", "to": {{ mailTo | tojson }}, "subject": {{ mailSubject | tojson }}, "body": {{ mailBody | tojson }}}}' then="mailopen{{ data.app.current.id }}=; mailbody{{ data.app.current.id }}=" disabled="{{ mailBody and mailTo ? 'false' : 'true' }}" label="Save as draft in Gmail"/>
+    <button do="row.op" with='{"row": {{ data.app.current.id }}, "op": {"type": "{{ data.app.current.reply.opType }}", "to": {{ mailTo | tojson }}, "subject": {{ mailSubject | tojson }}, "body": {{ mailBody | tojson }}}}' disabled="{{ mailBody ? 'false' : 'true' }}" label="↗ Open in Gmail"/>
+  {{#else}}
+    <button do="row.op" with='{"row": {{ data.app.current.id }}, "op": {"type": "{{ data.app.current.reply.opType }}", "to": {{ mailTo | tojson }}, "subject": {{ mailSubject | tojson }}, "body": {{ mailBody | tojson }}}}' variant=primary disabled="{{ mailBody ? 'false' : 'true' }}" label="↗ Open as a draft in {{ data.app.current.reply.account }}"/>
+  {{/if}}{{/if}}
+  <button do="row.reply.draft" with='{"row": {{ data.app.current.id }}}' fill="mailbody{{ data.app.current.id }}=text, mailto{{ data.app.current.id }}=to" then="mailopen{{ data.app.current.id }}=1" label="✨ Draft with AI"/>
+  <small><muted>{{ data.app.current.reply.account == 'E-Mail' ? 'Sent from your mailbox, in this conversation.' : data.app.current.reply.account == 'Gmail' and data.grants.gmailSend ? 'Sent from your Gmail, in this conversation.' : 'You send it there.' }}</muted></small>
+  <grow/>
+  <button action="state" state="mailopen{{ data.app.current.id }}" value="" variant=link label="Cancel"/>
+</row>
+{{/if}}
+{{/if}}
+{{#if data.app.current.reply.kind == 'chat'}}
+<let name="chatTextKey" value="'chattext' + data.app.current.id"/><let name="chatText" value="state | get(chatTextKey)"/>
+<divider/>
+<on event="chat-send" do="row.op" with='{"row": {{ data.app.current.reply.rowId }}, "op": {"type": "{{ data.app.current.reply.op.type }}", "to": {{ data.app.current.reply.chat | tojson }}, "chat": {{ data.app.current.reply.chat | tojson }}, "body": {{ chatText | tojson }}}}' confirm="Send to “{{ data.app.current.reply.chat }}” via {{ data.app.current.reply.channel }}?" done="Sent." then="chattext{{ data.app.current.id }}="/>
+<row gap=2 align=center>
+  <col fill=true><input bind="chattext{{ data.app.current.id }}" type=textarea rows=1 placeholder="Reply …" enter="chat-send"/></col>
+  <button do="row.reply.draft" with='{"row": {{ data.app.current.reply.rowId }}}' fill="chattext{{ data.app.current.id }}=text" label="✨" tip="Draft with AI"/>
+  <button do="row.op" with='{"row": {{ data.app.current.reply.rowId }}, "op": {"type": "{{ data.app.current.reply.op.type }}", "to": {{ data.app.current.reply.chat | tojson }}, "chat": {{ data.app.current.reply.chat | tojson }}, "body": {{ chatText | tojson }}}}' confirm="Send to “{{ data.app.current.reply.chat }}” via {{ data.app.current.reply.channel }}?" done="Sent." then="chattext{{ data.app.current.id }}=" variant=primary disabled="{{ chatText ? 'false' : 'true' }}" label="Send"/>
+</row>
+{{/if}}
+</col>{{/if}}
+    {{#else}}
+      <muted>🔒 Read-only — replying through {{ data.app.current.channel }} isn't set up here.</muted>
+    {{/if}}
+  {{/if}}
+</col>
+</split>
