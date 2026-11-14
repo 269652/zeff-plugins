@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "id": "local-ai-ext",
+  "version": "1.0.0",
+  "name": "Local AI",
+  "description": "The local AI's settings page: the server, the model, a test, what goes to it.",
+  "icon": "🖥",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Local AI",
+      "icon": "🖥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "zeffBlock",
+            "attrs": {
+              "block": "local-ai.settings",
+              "params": "{}"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "def": {
+        "name": "local-ai.settings",
+        "title": "Local AI settings",
+        "description": "The local AI's server, model, a test and what goes to it (the Local AI plugin's page).",
+        "icon": "🖥",
+        "params": [],
+        "template": "<data name=\"cfg\" do=\"localai.config\"/>\n<state name=\"url\" value=\"{{ data.cfg.url }}\"/>\n<state name=\"model\" value=\"{{ data.cfg.model }}\"/>\n<state name=\"secret\" value=\"{{ data.cfg.secretLocal ? 'true' : 'false' }}\"/>\n<data name=\"probe\" do=\"localai.probe\" with='{\"url\": {{ state.url | tojson }}, \"model\": {{ state.model | tojson }}}' when=\"{{ state.url }}\" debounce=\"400\"/>\n\n<section title=\"Server\">\n  <row gap=2>\n    {{#each data.cfg.presets}}<button action=\"state\" state=\"url\" value=\"{{ url }}\" label=\"{{ label }}\" variant=\"{{ state.url == url ? 'primary' : 'plain' }}\"/>{{/each}}\n  </row>\n  <input bind=\"url\" label=\"Address\"/>\n  {{#if not data.probe}}\n    <muted>Looking…</muted>\n  {{#else}}\n    {{#if data.probe.ok}}\n      {{#if data.probe.kind == 'ollama'}}<text tone=good>Ollama answers — {{ data.probe.models | count }} models.</text>{{#else}}<text tone=good>A server answers — {{ data.probe.models | count }} models.</text>{{/if}}\n    {{#else}}\n      <text tone=warn>{{ data.probe.error }}</text>\n      <box tone=muted>\n        <b>Getting started with Ollama</b>\n        <text>1. Install it from <a href=\"https://ollama.com/download\">ollama.com/download</a></text>\n        <text>2. Fetch a model, in a terminal: <mono>ollama pull qwen3:8b</mono> (about 5 GB; with 16 GB of memory or more: qwen3:14b)</text>\n        <text>3. Come back here — the model shows up below.</text>\n      </box>\n    {{/if}}\n  {{/if}}\n  {{#if data.probe.models | count}}\n    <select bind=\"model\" label=\"Model\" options=\"{{ data.probe.choices | tojson }}\"/>\n  {{#else}}\n    <input bind=\"model\" label=\"Model\" placeholder=\"qwen3:8b\"/>\n  {{/if}}\n  <row gap=2 align=center>\n    <button do=\"localai.test\" with='{\"url\": {{ state.url | tojson }}, \"model\": {{ state.model | tojson }}}' label=\"Test\" disabled=\"{{ data.probe.ok ? 'false' : 'true' }}\"/>\n    <small><muted>The first answer takes longer: the model is loaded into memory.</muted></small>\n  </row>\n</section>\n\n<section title=\"What goes to it\">\n  <toggle bind=\"secret\" label=\"What is marked secret goes only to the local AI\"/>\n  <muted>A prompt with lines from a secret source or database (Settings → Data boundaries — e.g. your bank, Signal) goes whole to this computer's AI instead of to a cloud AI without them. Everything else goes where the AI settings say.</muted>\n  <text>To run everything locally: choose the local AI as the default under <a href=\"/settings/ai\">Settings → AI</a> — or only single tasks (the mail review, the briefing …) in the table there.</text>\n</section>\n\n<let name=\"secretOn\" value=\"state.secret == 'true'\"/>\n<button do=\"localai.save\" with='{\"url\": {{ state.url | tojson }}, \"model\": {{ state.model | tojson }}, \"secretLocal\": {{ secretOn | tojson }}}' label=\"Save\" variant=primary/>"
+      }
+    }
+  ]
+}

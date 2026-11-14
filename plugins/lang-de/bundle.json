@@ -8719,5 +8719,13 @@
   "comma separated — a new one is made": "durch Kommas getrennt — ein neues wird angelegt",
   "Mail & Chat": "Mail & Chat",
   "Your mails and chats as a mail client, a chat and one inbox across channels: read, reply (or let the AI draft), snooze, archive, new inboxes. Made of the view language; the kernel sends.": "Deine Mails und Chats als Mailprogramm, als Chat und als ein Posteingang über alle Kanäle: lesen, antworten (oder die KI entwerfen lassen), zurückstellen, archivieren, neue Posteingänge. Aus der Ansichtssprache gebaut; gesendet wird vom Kern.",
-  "Notes on a timeline, in projects, as in the app Agenda: a date or a range, on the agenda, pinned, done, tags and people; its text is the note's page. A template in the Workspace (New → from a template → Agenda).": "Notizen auf einem Zeitstrahl, in Projekten, wie in der App Agenda: ein Datum oder ein Zeitraum, auf der Agenda, angeheftet, erledigt, Schlagworte und Personen; ihr Text ist die Seite der Notiz. Eine Vorlage im Workspace (Neu → aus einer Vorlage → Agenda)."
+  "Notes on a timeline, in projects, as in the app Agenda: a date or a range, on the agenda, pinned, done, tags and people; its text is the note's page. A template in the Workspace (New → from a template → Agenda).": "Notizen auf einem Zeitstrahl, in Projekten, wie in der App Agenda: ein Datum oder ein Zeitraum, auf der Agenda, angeheftet, erledigt, Schlagworte und Personen; ihr Text ist die Seite der Notiz. Eine Vorlage im Workspace (Neu → aus einer Vorlage → Agenda).",
+  "Ollama answers — {0} models.": "Ollama antwortet – {0} Modelle.",
+  "A server answers — {0} models.": "Ein Server antwortet – {0} Modelle.",
+  "1. Install it from": "1. Installiere es von",
+  "2. Fetch a model, in a terminal:": "2. Hol dir ein Modell, in einem Terminal:",
+  "3. Come back here — the model shows up below.": "3. Komm hierher zurück – das Modell erscheint unten.",
+  "— or only single tasks (the mail review, the briefing …) in the table there.": "– oder nur einzelne Aufgaben (die Mail-Durchsicht, das Briefing …) in der Tabelle dort.",
+  "An AI that runs on this computer — Ollama, LM Studio, llama.cpp or any server with an OpenAI-compatible API: the briefing, the mail steps and the other AI tasks without a byte leaving it. Its settings page: the server, the model, a test, what goes to it.": "Eine KI, die auf diesem Computer läuft — Ollama, LM Studio, llama.cpp oder jeder Server mit einer OpenAI-kompatiblen API: das Briefing, die Mail-Schritte und die anderen KI-Aufgaben, ohne dass ein Byte ihn verlässt. Ihre Einstellungsseite: der Server, das Modell, ein Test, was zu ihr geht.",
+  "Local AI (Ollama, LM Studio)": "Lokale KI (Ollama, LM Studio)"
 }

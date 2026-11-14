@@ -1,0 +1,45 @@
+<data name="cfg" do="localai.config"/>
+<state name="url" value="{{ data.cfg.url }}"/>
+<state name="model" value="{{ data.cfg.model }}"/>
+<state name="secret" value="{{ data.cfg.secretLocal ? 'true' : 'false' }}"/>
+<data name="probe" do="localai.probe" with='{"url": {{ state.url | tojson }}, "model": {{ state.model | tojson }}}' when="{{ state.url }}" debounce="400"/>
+
+<section title="Server">
+  <row gap=2>
+    {{#each data.cfg.presets}}<button action="state" state="url" value="{{ url }}" label="{{ label }}" variant="{{ state.url == url ? 'primary' : 'plain' }}"/>{{/each}}
+  </row>
+  <input bind="url" label="Address"/>
+  {{#if not data.probe}}
+    <muted>Looking…</muted>
+  {{#else}}
+    {{#if data.probe.ok}}
+      {{#if data.probe.kind == 'ollama'}}<text tone=good>Ollama answers — {{ data.probe.models | count }} models.</text>{{#else}}<text tone=good>A server answers — {{ data.probe.models | count }} models.</text>{{/if}}
+    {{#else}}
+      <text tone=warn>{{ data.probe.error }}</text>
+      <box tone=muted>
+        <b>Getting started with Ollama</b>
+        <text>1. Install it from <a href="https://ollama.com/download">ollama.com/download</a></text>
+        <text>2. Fetch a model, in a terminal: <mono>ollama pull qwen3:8b</mono> (about 5 GB; with 16 GB of memory or more: qwen3:14b)</text>
+        <text>3. Come back here — the model shows up below.</text>
+      </box>
+    {{/if}}
+  {{/if}}
+  {{#if data.probe.models | count}}
+    <select bind="model" label="Model" options="{{ data.probe.choices | tojson }}"/>
+  {{#else}}
+    <input bind="model" label="Model" placeholder="qwen3:8b"/>
+  {{/if}}
+  <row gap=2 align=center>
+    <button do="localai.test" with='{"url": {{ state.url | tojson }}, "model": {{ state.model | tojson }}}' label="Test" disabled="{{ data.probe.ok ? 'false' : 'true' }}"/>
+    <small><muted>The first answer takes longer: the model is loaded into memory.</muted></small>
+  </row>
+</section>
+
+<section title="What goes to it">
+  <toggle bind="secret" label="What is marked secret goes only to the local AI"/>
+  <muted>A prompt with lines from a secret source or database (Settings → Data boundaries — e.g. your bank, Signal) goes whole to this computer's AI instead of to a cloud AI without them. Everything else goes where the AI settings say.</muted>
+  <text>To run everything locally: choose the local AI as the default under <a href="/settings/ai">Settings → AI</a> — or only single tasks (the mail review, the briefing …) in the table there.</text>
+</section>
+
+<let name="secretOn" value="state.secret == 'true'"/>
+<button do="localai.save" with='{"url": {{ state.url | tojson }}, "model": {{ state.model | tojson }}, "secretLocal": {{ secretOn | tojson }}}' label="Save" variant=primary/>
