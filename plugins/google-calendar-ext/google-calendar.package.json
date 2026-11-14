@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "google-calendar-ext",
+  "version": "1.0.0",
+  "name": "Google Calendar",
+  "description": "Your Google calendars read into Zeff's calendars — a sync of the Sync menu.",
+  "icon": "📅",
+  "localize": true,
+  "items": [
+    { "id": "i1", "kind": "page", "title": "Google Calendar", "icon": "📅", "content": { "type": "doc", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Your Google calendars, read into Zeff's calendars. Where they are read from (Google's API or the automation Chrome), which weeks and which Google account: the Connections page and the calendar settings." }] }] } },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Google Calendar",
+      "icon": "⚡",
+      "content": { "type": "doc", "content": [{ "type": "paragraph" }] },
+      "flow": {
+        "name": "google-calendar.sync",
+        "title": "Read Google Calendar",
+        "description": "Your Google calendars into Zeff's — the weeks of the calendar settings. Nothing changes in Google.",
+        "inputs": [{ "name": "from", "type": "text" }, { "name": "to", "type": "text" }],
+        "nodes": [{ "id": "read", "kind": "action", "action": "gcal.sync", "input": { "from": "{{ input.from }}", "to": "{{ input.to }}", "by": "{{ env.trigger.kind }}" } }],
+        "output": "{{ steps.read }}",
+        "requested": { "sync": ["gcalendar"] },
+        "triggers": [{ "kind": "schedule", "everyMinutes": 15, "from": "08:00", "to": "19:00" }],
+        "sync": { "label": "Google Calendar", "replaces": "gcalendar", "what": "Your Google calendars — read through Google's Calendar API or the automation Chrome (as the Connections page says). Nothing changes in Google." }
+      }
+    }
+  ]
+}
