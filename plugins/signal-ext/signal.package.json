@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "id": "signal-ext",
+  "version": "1.0.0",
+  "name": "Signal",
+  "description": "Signal read into Zeff — a sync of the Sync menu.",
+  "icon": "🔵",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Signal",
+      "icon": "🔵",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read). Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Signal",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "signal.sync",
+        "title": "Read Signal",
+        "description": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "read",
+            "kind": "action",
+            "action": "connector.sync",
+            "input": {
+              "source": "signal",
+              "by": "{{ env.trigger.kind }}"
+            }
+          }
+        ],
+        "output": "{{ steps.read }}",
+        "requested": {
+          "sync": [
+            "signal"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "Signal",
+          "what": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read).",
+          "replaces": "signal"
+        }
+      }
+    }
+  ]
+}

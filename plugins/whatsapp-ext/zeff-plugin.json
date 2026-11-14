@@ -1,0 +1,15 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "whatsapp-ext",
+  "name": "WhatsApp",
+  "version": "1.0.0",
+  "description": "Reads your WhatsApp chats' latest messages into Zeff from WhatsApp Web in the account's automation Chrome — no chat opened, nothing marked read. Replies are sent from Zeff on your click.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "workspacePackages": [
+      "whatsapp.package.json"
+    ]
+  }
+}

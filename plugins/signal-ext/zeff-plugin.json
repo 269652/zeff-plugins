@@ -1,0 +1,15 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "signal-ext",
+  "name": "Signal",
+  "version": "1.0.0",
+  "description": "Reads your Signal chats' latest messages into Zeff from Signal Desktop on this computer — no chat opened, nothing marked read. Replies are sent from Zeff on your click.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "workspacePackages": [
+      "signal.package.json"
+    ]
+  }
+}

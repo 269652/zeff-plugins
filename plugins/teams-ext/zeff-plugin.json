@@ -1,0 +1,15 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "teams-ext",
+  "name": "Teams",
+  "version": "1.0.0",
+  "description": "Reads your Teams mentions and 1:1 messages into Zeff — the inbox, the chats, the todos found in them. Through Teams' API or the account's automation Chrome, as the Connections page says. Replies are sent from Zeff on your click.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "workspacePackages": [
+      "teams.package.json"
+    ]
+  }
+}

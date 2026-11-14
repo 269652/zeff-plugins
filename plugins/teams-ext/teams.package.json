@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "id": "teams-ext",
+  "version": "1.0.0",
+  "name": "Teams",
+  "description": "Teams read into Zeff — a sync of the Sync menu.",
+  "icon": "🟣",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Teams",
+      "icon": "🟣",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Teams mentions and 1:1 messages — read through Teams' API or the automation Chrome, as the Connections page says. Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Teams",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "teams.sync",
+        "title": "Read Teams",
+        "description": "Your Teams mentions and 1:1 messages — read through Teams' API or the automation Chrome, as the Connections page says.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "read",
+            "kind": "action",
+            "action": "connector.sync",
+            "input": {
+              "source": "teams",
+              "by": "{{ env.trigger.kind }}"
+            }
+          }
+        ],
+        "output": "{{ steps.read }}",
+        "requested": {
+          "sync": [
+            "teams"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "Teams",
+          "what": "Your Teams mentions and 1:1 messages — read through Teams' API or the automation Chrome, as the Connections page says.",
+          "replaces": "teams"
+        }
+      }
+    }
+  ]
+}
