@@ -1,0 +1,15 @@
+{
+  "name": "web.search.run",
+  "label": "Web search",
+  "what": "Searches the web: with a Brave Search or Google Programmable Search key from the plugin's settings, else through the web search of your Claude login. Hits with title, url, snippet.",
+  "kind": "function",
+  "secrets": ["PROVIDER", "BRAVE_KEY", "GOOGLE_KEY", "GOOGLE_CX"],
+  "web": ["api.search.brave.com", "www.googleapis.com"],
+  "zeff": ["ai.websearch"],
+  "output": {
+    "type": "object",
+    "required": ["hits"],
+    "properties": { "hits": { "type": "array", "items": { "type": "object", "required": ["title", "url", "snippet"], "properties": { "title": { "type": "string" }, "url": { "type": "string" }, "snippet": { "type": "string" } } } } }
+  },
+  "timeoutMs": 130000
+}

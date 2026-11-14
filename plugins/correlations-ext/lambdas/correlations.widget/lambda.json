@@ -1,0 +1,9 @@
+{
+  "name": "correlations.widget",
+  "label": "Correlations: the widget's findings",
+  "what": "The Correlations widget's data: the findings that hold for the target picked, over the last days.",
+  "kind": "function",
+  "zeff": ["series.read"],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

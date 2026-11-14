@@ -1,0 +1,27 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "lookups-ext",
+  "name": "Lookups",
+  "version": "1.0.0",
+  "description": "Search fields for your Workspace views: type a title, pick a suggestion, its data becomes a row — films and series, books, Wikipedia, Google's Knowledge Graph and web results. What you type goes to that service.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "settings": [
+      {
+        "key": "TMDB_KEY",
+        "label": "TMDB API key",
+        "kind": "secret",
+        "help": "Optional: without it films come from Wikidata and Wikipedia, series from TVmaze. Free at themoviedb.org → Settings → API (key or read access token). This product uses the TMDB API but is not endorsed or certified by TMDB."
+      },
+      {
+        "key": "GOOGLE_KEY",
+        "label": "Google API key",
+        "kind": "secret",
+        "help": "For Google Books and the Knowledge Graph: a key from console.cloud.google.com with the Books API and the Knowledge Graph Search API switched on."
+      }
+    ]
+  }
+}

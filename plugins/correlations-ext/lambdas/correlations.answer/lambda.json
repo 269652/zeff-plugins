@@ -1,0 +1,9 @@
+{
+  "name": "correlations.answer",
+  "label": "Correlations: the answer for an agent",
+  "what": "What goes with a daily series (a journal's energy or mood) in the user's days, as computed numbers — or one pair, whether it holds or not. The correlations tool's answer.",
+  "kind": "function",
+  "zeff": ["series.read"],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

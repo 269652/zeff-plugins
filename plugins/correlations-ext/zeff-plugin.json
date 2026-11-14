@@ -1,0 +1,96 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "correlations-ext",
+  "name": "Correlations",
+  "version": "1.0.0",
+  "description": "What goes with what in your days: a journal's energy or mood against meetings, booked hours, messages, todos, spending and your other fields — same day and the day after. Computed in code, told only when it holds.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "tools": [
+      {
+        "name": "correlations",
+        "title": "Correlations in the user's days",
+        "description": "What goes with a daily series in the user's data — e.g. a journal's Energy or Mood against meeting hours, booked hours, messages received/sent, todos, spending, first/last activity and the other fields of their Workspace databases, same day and the day after. Computed in code (Spearman/Pearson, group comparisons, a permutation test with Benjamini–Hochberg); only findings that hold are listed, each as a sentence with n, ρ and the groups' means — quote them as they are. No findings means nothing reliable: say so, don't invent patterns. Give `other` to ask about one pair (answered whether it holds or not).",
+        "lambda": "correlations.answer",
+        "input": [
+          {
+            "name": "database",
+            "type": "text",
+            "description": "The Workspace database's name, e.g. 'Einträge' or 'Journal' (leave out for Zeff's own series like 'Meeting hours')."
+          },
+          {
+            "name": "field",
+            "type": "text",
+            "description": "The field (property) of that database, e.g. 'Energy' or 'Mood'; a tag as 'Tags: Family'; or a series id.",
+            "required": true
+          },
+          {
+            "name": "days",
+            "type": "number",
+            "description": "The period: the last N days up to `to` (default 90, 14–3650)."
+          },
+          {
+            "name": "from",
+            "type": "text",
+            "description": "Start day (YYYY-MM-DD) instead of days."
+          },
+          {
+            "name": "to",
+            "type": "text",
+            "description": "End day (YYYY-MM-DD), default today."
+          },
+          {
+            "name": "other",
+            "type": "text",
+            "description": "One other series to compare with (its label, e.g. 'Meeting hours' or 'Journal › Tags: Work', or its id)."
+          },
+          {
+            "name": "limit",
+            "type": "number",
+            "description": "How many findings at most (default 8, 1–20)."
+          }
+        ],
+        "readOnly": true
+      }
+    ],
+    "widgets": [
+      {
+        "id": "findings",
+        "label": "Correlations",
+        "icon": "🔗",
+        "description": "What goes with a field of your days — a journal's energy or mood against meetings, booked hours, messages, spending and your other fields — only what holds, with n.",
+        "size": "half",
+        "ttl": 600,
+        "lambda": "correlations.widget",
+        "settings": [
+          {
+            "key": "target",
+            "label": "What to explain",
+            "kind": "select",
+            "optionsFrom": "series"
+          },
+          {
+            "key": "days",
+            "label": "Days back",
+            "kind": "number",
+            "default": 90,
+            "min": 14,
+            "max": 730
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "kind": "number",
+            "default": 4,
+            "min": 1,
+            "max": 10
+          }
+        ],
+        "replaces": "correlations.findings"
+      }
+    ]
+  }
+}

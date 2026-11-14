@@ -1,0 +1,9 @@
+{
+  "name": "browser.open",
+  "label": "Open a page in a browser",
+  "what": "The browser_open tool's answer: a public page opened in Zeff's automated Chrome (optional steps first), as the AI reads it.",
+  "kind": "function",
+  "web": ["*"],
+  "zeff": ["web.browse"],
+  "timeoutMs": 90000
+}

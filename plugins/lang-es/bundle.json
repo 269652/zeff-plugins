@@ -8699,5 +8699,19 @@
   "Zeff's Jira connection isn't set up (Jira tab).": "La conexión de Zeff con Jira no está configurada (pestaña Jira).",
   "Zeff's structure": "Estructura de Zeff",
   "Zeff's, changed by you": "de Zeff, cambiada por ti",
-  "zeff/… (no words to make a name of)": "zeff/… (sin palabras para hacer un nombre)"
+  "zeff/… (no words to make a name of)": "zeff/… (sin palabras para hacer un nombre)",
+  "needs setting up": "falta configurarlo",
+  "Lookups runs as a plugin now; your keys came along.": "Lookups funciona ahora como plugin; tus claves vinieron con él.",
+  "Lookups runs as a plugin now.": "Lookups funciona ahora como plugin.",
+  "Lookups as a plugin": "Lookups como plugin",
+  "The same sources as a plugin from its repository: it updates without a new Zeff, and its keys are kept encrypted. Your keys and views come along. Install it first under Plugins → Sources.": "Las mismas fuentes como plugin de su repositorio: se actualiza sin un Zeff nuevo y sus claves se guardan cifradas. Tus claves y vistas vienen con él. Instálalo primero en Plugins → Fuentes.",
+  "Switch to the plugin": "Cambiar al plugin",
+  "Web search runs as a plugin now; your settings came along.": "La búsqueda web funciona ahora como plugin; tus ajustes vinieron con él.",
+  "Web search as a plugin": "Búsqueda web como plugin",
+  "The same search as a plugin from its repository: it updates without a new Zeff, and its keys are kept encrypted. Your provider and keys come along. Install it first under Plugins → Sources.": "La misma búsqueda como plugin de su repositorio: se actualiza sin un Zeff nuevo y sus claves se guardan cifradas. Tu proveedor y tus claves vienen con él. Instálalo primero en Plugins → Fuentes.",
+  "Set {names} in the plugin's settings (Plugins page, its card → Settings).": "Introduce {names} en los ajustes del plugin (página Plugins, su tarjeta → Ajustes).",
+  "This is also there as a plugin from its repository: it updates without a new Zeff, and its keys are kept encrypted. Your settings come along.": "También existe como plugin de su repositorio: se actualiza sin un Zeff nuevo y sus claves se guardan cifradas. Tus ajustes vienen con él.",
+  "Its plugin isn't in the plugins folder — install it first under Sources.": "Su plugin no está en la carpeta de plugins — instálalo primero en Fuentes.",
+  "It runs as a plugin now; your settings came along.": "Ahora funciona como plugin; tus ajustes vinieron con él.",
+  "Open public web pages in an automated Chrome on this computer — it can click and type there (no logins, never your own network)": "Abrir páginas web públicas en un Chrome automatizado en este ordenador — puede hacer clic y escribir en ellas (sin inicios de sesión, nunca tu propia red)"
 }

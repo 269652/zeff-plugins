@@ -1,0 +1,8 @@
+{
+  "name": "web.search.text",
+  "label": "Web search (for the AI)",
+  "what": "The web_search tool's answer: the hits of Zeff's web search as a numbered list for the AI.",
+  "kind": "function",
+  "zeff": ["web.search"],
+  "timeoutMs": 130000
+}

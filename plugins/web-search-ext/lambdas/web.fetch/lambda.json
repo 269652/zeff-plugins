@@ -1,0 +1,9 @@
+{
+  "name": "web.fetch",
+  "label": "Read a web page",
+  "what": "A public web page or PDF as text (HTML cleaned of scripts and navigation), through Zeff's web.read — never the machine's own network.",
+  "kind": "function",
+  "web": ["*"],
+  "zeff": ["web.read"],
+  "timeoutMs": 60000
+}
