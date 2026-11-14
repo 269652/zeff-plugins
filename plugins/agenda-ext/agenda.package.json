@@ -1,0 +1,440 @@
+{
+  "format": 1,
+  "name": "Agenda",
+  "description": "Notes on a timeline, in projects, like the app Agenda: a date or a range, on the agenda, pinned, done, tags and people; the text, checklists and pictures are the note's page.",
+  "icon": "📒",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Agenda",
+      "icon": "📒",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "databaseView",
+            "attrs": {
+              "dbId": "i3",
+              "viewId": "vmc422egl4",
+              "title": ""
+            }
+          },
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Projects",
+      "icon": "🗂️",
+      "schema": {
+        "titleName": "Project",
+        "properties": [
+          {
+            "id": "ps755trgky",
+            "name": "Category",
+            "type": "select",
+            "options": [
+              {
+                "id": "oocvqe9gky",
+                "name": "Personal",
+                "color": "orange"
+              },
+              {
+                "id": "o4l3q6vgky",
+                "name": "Family",
+                "color": "yellow"
+              },
+              {
+                "id": "o66q8wdgky",
+                "name": "Home",
+                "color": "green"
+              },
+              {
+                "id": "ovrw2uagky",
+                "name": "Work",
+                "color": "blue"
+              }
+            ]
+          },
+          {
+            "id": "p9garj5gky",
+            "name": "Archived",
+            "type": "checkbox"
+          },
+          {
+            "id": "ps5slsbgl9",
+            "name": "Notes",
+            "type": "relation",
+            "relationDb": "i3",
+            "backOf": "pzg8dc7gl2"
+          }
+        ],
+        "views": [
+          {
+            "id": "voaimu3gla",
+            "name": "Projects",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<quickadd placeholder=\"New project …\"/>\n<groups source=\"rows | where('Archived', '!=', true)\" by=\"Category\" none=\"Without a category\"><section title=\"{{ group }}\" aside=\"{{ rows | count }}\"><list source=\"rows\" open=true><row wrap=false gap=2><col fill=true><b>{{ title }}</b></col><small><muted>{{ [Notes] | count }} notes</muted></small></row></list></section></groups>"
+          },
+          {
+            "id": "vp4mb9xgla",
+            "name": "Table",
+            "type": "table",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": []
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Getting started",
+          "cells": {
+            "ps755trgky": "oocvqe9gky"
+          },
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Notes",
+      "icon": "📝",
+      "schema": {
+        "titleName": "Note",
+        "properties": [
+          {
+            "id": "p9zqhyagl2",
+            "name": "Date",
+            "type": "date"
+          },
+          {
+            "id": "pzg8dc7gl2",
+            "name": "Project",
+            "type": "relation",
+            "relationDb": "i2"
+          },
+          {
+            "id": "pbwrkxdgl2",
+            "name": "On the agenda",
+            "type": "checkbox"
+          },
+          {
+            "id": "pak3x6zgl2",
+            "name": "Pinned",
+            "type": "checkbox"
+          },
+          {
+            "id": "pkts2vtgl2",
+            "name": "Done",
+            "type": "checkbox"
+          },
+          {
+            "id": "pje3chngl2",
+            "name": "Tags",
+            "type": "multi_select",
+            "options": []
+          },
+          {
+            "id": "pam3u7cgl4",
+            "name": "People",
+            "type": "multi_select",
+            "options": []
+          },
+          {
+            "id": "pr1kg4hgl6",
+            "name": "Reminder",
+            "type": "date",
+            "includeTime": true
+          }
+        ],
+        "views": [
+          {
+            "id": "vmc422egl4",
+            "name": "Agenda",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<data name=\"agenda\" lambda=\"agenda.data\" with='{\"db\": {{ db.id }}, \"done\": \"Done\"}'/>\n<state name=\"v\" value=\"2\"/><state name=\"p\" value=\"\"/><state name=\"scope\" value=\"all\"/><state name=\"q\" value=\"\"/><state name=\"adding\" value=\"\"/><state name=\"tag\" value=\"\"/><state name=\"who\" value=\"\"/><state name=\"showdone\" value=\"\"/>\n<state name=\"nt\" value=\"\"/>\n<state name=\"ndated\" value=\"true\"/>\n<state name=\"ns\" value=\"\"/>\n<state name=\"ne\" value=\"\"/>\n<state name=\"np\" value=\"\"/>\n<state name=\"nag\" value=\"\"/>\n<state name=\"npin\" value=\"\"/>\n<state name=\"ntags\" value=\"\"/>\n<state name=\"nrem\" value=\"\"/>\n<state name=\"ntext\" value=\"\"/>\n<dialog bind=\"adding\" title=\"New note\">\n<input bind=\"nt\" label=\"Title\" placeholder=\"What is it about?\"/>\n<toggle bind=\"ndated\" label=\"Has a date\"/>\n{{#if state.ndated}}<row gap=2><input bind=\"ns\" type=\"date\" label=\"Date\"/><input bind=\"ne\" type=\"date\" label=\"Until (a range)\"/></row>{{/if}}\n{{#if data.agenda.projectOptions}}<select bind=\"np\" options=\"{{ data.agenda.projectOptions }}\" label=\"Project\"/>{{/if}}\n<row gap=3><toggle bind=\"nag\" label=\"On the agenda\"/><toggle bind=\"npin\" label=\"📌 Pinned\"/></row>\n<input bind=\"ntags\" label=\"Tags\" placeholder=\"comma separated — a new one is made\"/>\n<input bind=\"nrem\" type=\"date\" label=\"Reminder\"/>\n<input bind=\"ntext\" type=\"textarea\" label=\"Text\"/>\n<button run=\"agenda.add-note\" with='{\"database\": {{ db.id }}, \"title\": {{ state.nt | tojson }}, \"dated\": {{ state.ndated | tojson }}, \"start\": {{ state.ns | tojson }}, \"end\": {{ state.ne | tojson }}, \"project\": {{ state.np | tojson }}, \"agenda\": {{ state.nag | tojson }}, \"pinned\": {{ state.npin | tojson }}, \"tags\": {{ state.ntags | tojson }}, \"reminder\": {{ state.nrem | tojson }}, \"text\": {{ state.ntext | tojson }}, \"names\": {\"date\":\"Date\",\"project\":\"Project\",\"agenda\":\"On the agenda\",\"pinned\":\"Pinned\",\"tags\":\"Tags\",\"reminder\":\"Reminder\"}}' emit=\"agenda-note-saved\" done=\"Saved.\" label=\"Save\" variant=primary disabled=\"{{ state.nt ? 'false' : 'true' }}\"/>\n</dialog>\n<on event=\"agenda-note-saved\" action=\"state\" state=\"nt\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"ne\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"ntags\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"nrem\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"ntext\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"nag\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"npin\" value=\"\"/><on event=\"agenda-note-saved\" action=\"state\" state=\"adding\" value=\"\"/>\n<nav title=\"Agenda\">\n<entry label=\"All notes\" icon=\"📒\" state=\"scope\" value=\"all\" n=\"{{ rows | where('Done', '!=', true) | count }}\" group=\"Overview\"/>\n<entry label=\"On the agenda\" icon=\"●\" state=\"scope\" value=\"agenda\" n=\"{{ rows | where('On the agenda', true) | where('Done', '!=', true) | count }}\" group=\"Overview\"/>\n<entry label=\"Today\" icon=\"📅\" state=\"scope\" value=\"today\" n=\"{{ rows | where('Date', now) | count }}\" group=\"Overview\"/>\n<entry label=\"Coming up\" icon=\"⏭\" state=\"scope\" value=\"upcoming\" n=\"{{ rows | where('Date', '>=', now) | where('Done', '!=', true) | count }}\" group=\"Overview\"/>\n<entry label=\"Reminders\" icon=\"⏰\" state=\"scope\" value=\"reminders\" n=\"{{ rows | where('Reminder', 'filled') | where('Done', '!=', true) | count }}\" group=\"Overview\"/>\n<entry label=\"Done\" icon=\"✓\" state=\"scope\" value=\"done\" n=\"{{ rows | where('Done', true) | count }}\" group=\"Overview\"/>\n<entry label=\"All projects\" icon=\"🗂️\" state=\"p\" value=\"\" group=\"Projects\"/>\n{{#each data.agenda.projects}}<entry label=\"{{ title }}\" icon=\"{{ icon }}\" state=\"p\" value=\"{{ title }}\" n=\"{{ open }}\" group=\"{{ category }}\"/>{{/each}}\n</nav>\n<panes>\n<pane title=\"{{ state.p ? state.p : 'Notes' }}\" aside=\"{{ rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('Done', '!=', true) | count }}\">\n<toolbar><button action=\"state\" state=\"adding\" value=\"true\" label=\"New note\" variant=primary/><search bind=\"q\" placeholder=\"Search notes\"/><toggle bind=\"showdone\" label=\"Show done ones\"/></toolbar>\n{{#if rows | where('Tags', 'filled') | count}}<facets bind=\"tag\" field=\"Tags\" source=\"rows | where('Done', '!=', true)\" all=\"All tags\"/>{{/if}}\n{{#if rows | where('People', 'filled') | count}}<facets bind=\"who\" field=\"People\" source=\"rows | where('Done', '!=', true)\" all=\"Everyone\"/>{{/if}}\n<quickadd placeholder=\"New note …\"/>\n{{#if state.scope == 'all'}}{{#if state.showdone}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | limit(100000) | sort('Date', 'desc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"No notes yet: write the first one above.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{#else}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('Done', '!=', true) | sort('Date', 'desc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"No notes yet: write the first one above.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{/if}}{{/if}}\n{{#if state.scope == 'agenda'}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('On the agenda', true) | where('Done', '!=', true) | sort('Date', 'desc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"Nothing on the agenda: put a note there with ○ On the agenda.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{/if}}\n{{#if state.scope == 'today'}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('Date', now) | sort('Date', 'desc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"No note for today.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{/if}}\n{{#if state.scope == 'upcoming'}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('Date', '>=', now) | where('Done', '!=', true) | sort('Date', 'asc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"Nothing dated ahead.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{/if}}\n{{#if state.scope == 'reminders'}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('Reminder', 'filled') | where('Done', '!=', true) | sort('Date', 'asc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"No note has a reminder: give one in a note's ⏰ Reminder.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{/if}}\n{{#if state.scope == 'done'}}<timeline source=\"rows | search(state.q) | only('Project', state.p) | only('Tags', state.tag) | only('People', state.who) | where('Done', true) | sort('Date', 'desc') | sort('Pinned', 'desc')\" date=\"{{ [Date] | date }}\" page=30 more=\"Show more\" empty=\"No note marked done yet.\">\n<row wrap=false gap=2 align=center><col fill=true>{{#if [Done]}}<strike>{{ title | default('…') }}</strike>{{#else}}<b>{{ title | default('…') }}</b>{{/if}}</col><todomark/>{{#if [Pinned]}}<small>📌</small>{{/if}}{{ [Project] | chip }}</row>\n{{#if [Tags]}}<row gap=1>{{ [Tags] | chip }}{{ [People] | chip }}</row>{{/if}}\n{{#if [Reminder]}}<small><muted>⏰ {{ [Reminder] | date }}</muted></small>{{/if}}\n{{#if text}}<text pre=true><clamp lines=8>{{ text }}</clamp></text>{{/if}}\n<row gap=1><button action=\"toggle\" prop=\"On the agenda\" label=\"{{ [On the agenda] ? '● On the agenda' : '○ On the agenda' }}\" variant=quiet/><button action=\"toggle\" prop=\"Done\" label=\"{{ [Done] ? '✓ Done' : '○ Done' }}\" variant=quiet/><button action=\"toggle\" prop=\"Pinned\" label=\"📌\" tip=\"Pin to the top\" variant=quiet/><button action=\"open\" label=\"Open\" variant=quiet/></row>\n</timeline>{{/if}}\n</pane>\n<pane title=\"On the agenda\" aside=\"{{ rows | where('On the agenda', true) | where('Done', '!=', true) | count }}\" width=320>\n<list source=\"rows | where('On the agenda', true) | where('Done', '!=', true) | sort('Date')\" open=true empty=\"Nothing on the agenda.\"><row wrap=false gap=2><col fill=true><truncate><b>{{ title | default('…') }}</b></truncate><small><muted>{{ [Date] | date }}</muted></small></col><button action=\"toggle\" prop=\"Done\" label=\"✓\" tip=\"Done\" variant=quiet/></row></list>\n{{#if data.agenda.events}}<divider label=\"Today in the calendar\"/><list source=\"data.agenda.events\"><row wrap=false gap=2><small><muted>{{ time }}</muted></small><col fill=true><truncate>{{ title }}</truncate></col></row></list>{{/if}}\n<divider label=\"Reminders\"/>\n<list source=\"rows | where('Reminder', 'filled') | where('Done', '!=', true) | sort('Reminder') | limit(6)\" open=true empty=\"No reminders.\"><row wrap=false gap=2><col fill=true><truncate>{{ title | default('…') }}</truncate></col><small><muted>⏰ {{ [Reminder] | relative }}</muted></small></row></list>\n<divider label=\"Coming up\"/>\n<list source=\"rows | where('Date', '>=', now) | where('Done', '!=', true) | sort('Date') | limit(8)\" open=true empty=\"Nothing dated ahead.\"><row wrap=false gap=2><col fill=true><truncate>{{ title | default('…') }}</truncate></col><small><muted>{{ [Date] | relative }}</muted></small></row></list>\n</pane>\n</panes>"
+          },
+          {
+            "id": "vlkstj4gl4",
+            "name": "Calendar",
+            "type": "calendar",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "dateProp": "p9zqhyagl2"
+          },
+          {
+            "id": "vfv43wngl4",
+            "name": "Table",
+            "type": "table",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [
+              {
+                "prop": "p9zqhyagl2",
+                "dir": "desc"
+              }
+            ],
+            "hidden": []
+          }
+        ],
+        "dataType": "agenda",
+        "todoList": {
+          "done": "pkts2vtgl2",
+          "due": "pr1kg4hgl6",
+          "engine": true,
+          "dated": true
+        }
+      },
+      "rows": [
+        {
+          "id": "r2",
+          "title": "Welcome to your agenda",
+          "cells": {
+            "p9zqhyagl2": "2026-11-14",
+            "pzg8dc7gl2": [
+              "r1"
+            ],
+            "pbwrkxdgl2": true,
+            "pak3x6zgl2": true
+          },
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Every note has a date, or none. Put what matters now on the agenda (○), pin what should stay on top (📌), mark what is done (✓). Open a note to write: lists, checklists, tables, pictures and links to other notes."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "r3",
+          "title": "Call the doctor",
+          "cells": {
+            "p9zqhyagl2": "2026-11-15",
+            "pzg8dc7gl2": [
+              "r1"
+            ],
+            "pbwrkxdgl2": true
+          },
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "taskList",
+                "attrs": {
+                  "listId": "teby2gxgn3",
+                  "engine": false
+                },
+                "content": [
+                  {
+                    "type": "taskItem",
+                    "attrs": {
+                      "checked": false,
+                      "itemId": "ivanzorgn3"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Ask about the appointment"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "taskItem",
+                    "attrs": {
+                      "checked": false,
+                      "itemId": "idtb3argn3"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Bring the card"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "r4",
+          "title": "Ideas for the garden",
+          "cells": {
+            "pzg8dc7gl2": [
+              "r1"
+            ]
+          },
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add an Agenda note",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "agenda.add-note",
+        "title": "Add an Agenda note",
+        "inputs": [
+          {
+            "name": "database",
+            "type": "db",
+            "required": true
+          },
+          {
+            "name": "title",
+            "type": "text",
+            "required": true
+          },
+          {
+            "name": "dated",
+            "type": "text"
+          },
+          {
+            "name": "start",
+            "type": "text"
+          },
+          {
+            "name": "end",
+            "type": "text"
+          },
+          {
+            "name": "project",
+            "type": "text"
+          },
+          {
+            "name": "agenda",
+            "type": "text"
+          },
+          {
+            "name": "pinned",
+            "type": "text"
+          },
+          {
+            "name": "tags",
+            "type": "text"
+          },
+          {
+            "name": "reminder",
+            "type": "text"
+          },
+          {
+            "name": "text",
+            "type": "text"
+          },
+          {
+            "name": "names",
+            "type": "json"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "values",
+            "kind": "script",
+            "code": "const input = flowInput;\nconst n = input.names || {};\nconst yes = (v) => v === true || v === 'true';\nconst today = env.today;\nconst v = {};\nif (yes(input.dated) && n.date) { const start = input.start || today; v[n.date] = input.end && input.end > start ? { start, end: input.end } : start; }\nif (input.project && n.project) v[n.project] = [input.project];\nif (yes(input.agenda) && n.agenda) v[n.agenda] = true;\nif (yes(input.pinned) && n.pinned) v[n.pinned] = true;\nif (input.reminder && n.reminder) v[n.reminder] = input.reminder;\nconst tags = String(input.tags || '').split(',').map((x) => x.trim()).filter(Boolean);\nif (tags.length && n.tags) v[n.tags] = [...new Set(tags)];\nreturn v;"
+          },
+          {
+            "id": "add",
+            "kind": "action",
+            "action": "db.add",
+            "input": {
+              "database": "{{ input.database }}",
+              "title": "{{ input.title }}",
+              "values": "{{ steps.values }}",
+              "markdown": "{{ input.text }}"
+            }
+          }
+        ],
+        "output": "{{ steps.add }}",
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ],
+        "enabled": true,
+        "requested": {
+          "write": [
+            "@agenda-ext.i3"
+          ]
+        }
+      }
+    }
+  ],
+  "id": "agenda-ext",
+  "version": "1.0.0",
+  "localize": true
+}

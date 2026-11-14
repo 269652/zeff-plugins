@@ -8713,5 +8713,8 @@
   "This is also there as a plugin from its repository: it updates without a new Zeff, and its keys are kept encrypted. Your settings come along.": "También existe como plugin de su repositorio: se actualiza sin un Zeff nuevo y sus claves se guardan cifradas. Tus ajustes vienen con él.",
   "Its plugin isn't in the plugins folder — install it first under Sources.": "Su plugin no está en la carpeta de plugins — instálalo primero en Fuentes.",
   "It runs as a plugin now; your settings came along.": "Ahora funciona como plugin; tus ajustes vinieron con él.",
-  "Open public web pages in an automated Chrome on this computer — it can click and type there (no logins, never your own network)": "Abrir páginas web públicas en un Chrome automatizado en este ordenador — puede hacer clic y escribir en ellas (sin inicios de sesión, nunca tu propia red)"
+  "Open public web pages in an automated Chrome on this computer — it can click and type there (no logins, never your own network)": "Abrir páginas web públicas en un Chrome automatizado en este ordenador — puede hacer clic y escribir en ellas (sin inicios de sesión, nunca tu propia red)",
+  "Has a date": "Tiene fecha",
+  "Until (a range)": "Hasta (un periodo)",
+  "comma separated — a new one is made": "separadas por comas — se crea una nueva"
 }

@@ -1,0 +1,8 @@
+{
+  "name": "agenda.data",
+  "label": "Agenda: the projects and today's events",
+  "what": "What the Agenda screen shows beside its notes: the projects by category (the archived ones not, those whose notes are all done not) with their open notes, and today's events of the calendar.",
+  "kind": "function",
+  "zeff": ["db.schema", "db.query"],
+  "timeoutMs": 30000
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "agenda-ext",
+  "name": "Agenda",
+  "version": "1.0.0",
+  "description": "Notes on a timeline, in projects, as in the app Agenda: a date or a range, on the agenda, pinned, done, tags and people; its text is the note's page. A template in the Workspace (New → from a template → Agenda).",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": ["agenda.package.json"]
+  }
+}
