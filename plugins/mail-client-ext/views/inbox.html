@@ -51,10 +51,8 @@
     {{#if data.app.current.fetch}}<data name="thread" do="mail.thread" with='{"conv": {{ data.app.current.conv | tojson }}}'/>{{/if}}
 <let name="mailLoaded" value="data.thread.conv == data.app.current.conv"/>
 <let name="mailN" value="data.thread.messages | count"/>
-<let name="mailMsgs" value="data.app.current.fetch and mailLoaded and mailN ? data.thread.messages : data.app.current.fallbackList"/>
-{{#if data.app.current.fetch}}{{#if not mailLoaded}}<muted>…</muted>{{/if}}{{/if}}
 <col gap=2>
-{{#if not (data.app.current.fetch and not mailLoaded)}}{{#each mailMsgs}}<box tone="{{ mine ? 'accent' : 'plain' }}"><row gap=2><small><b>{{ mine ? 'Me' : name }}</b></small><small><muted>{{ at }}</muted></small></row><text pre=true>{{ preview }}</text></box>{{/each}}{{/if}}
+{{#if data.app.current.fetch}}{{#if not mailLoaded}}<muted>…</muted>{{#else}}{{#if mailN}}{{#each data.thread.messages}}<box tone="{{ mine ? 'accent' : 'plain' }}"><row gap=2><small><b>{{ mine ? 'Me' : name }}</b></small><small><muted>{{ at }}</muted></small></row><text pre=true>{{ preview }}</text></box>{{/each}}{{#else}}{{#each data.app.current.fallbackList}}<box tone="{{ mine ? 'accent' : 'plain' }}"><row gap=2><small><b>{{ mine ? 'Me' : name }}</b></small><small><muted>{{ at }}</muted></small></row><text pre=true>{{ preview }}</text></box>{{/each}}{{/if}}{{/if}}{{#else}}{{#each data.app.current.fallbackList}}<box tone="{{ mine ? 'accent' : 'plain' }}"><row gap=2><small><b>{{ mine ? 'Me' : name }}</b></small><small><muted>{{ at }}</muted></small></row><text pre=true>{{ preview }}</text></box>{{/each}}{{/if}}
 </col>
     {{#if data.app.current.actions}}<suggested row="{{ data.app.current.actions.rowId }}"/>{{/if}}
     {{#if data.app.current.canReply}}{{#if data.app.current.reply}}<col dock=bottom>
