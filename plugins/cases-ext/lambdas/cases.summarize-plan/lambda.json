@@ -1,0 +1,13 @@
+{
+  "name": "cases.summarize-plan",
+  "label": "Cases: the summaries to make",
+  "what": "the summaries to make: the cases due (never summed up, new sources since — or those asked for), each with what the AI reads.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "prompts.text",
+    "sources.texts"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

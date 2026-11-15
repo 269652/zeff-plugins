@@ -1,0 +1,8 @@
+{
+  "name": "outlook.driver",
+  "label": "Outlook: the scraper",
+  "what": "Reads your Outlook mails and calendar in the account's automation Chrome (Outlook Web — mail lists, attachments, calendar weeks); nothing is marked read.",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

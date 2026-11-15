@@ -20,7 +20,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "Your chats' latest messages (WhatsApp Web's chat list — no chat opened, nothing marked read). Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+                "text": "Your chats' latest messages (WhatsApp Web's chat list — no chat opened, nothing marked read). The sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings. The scraper is the driver lambda whatsapp.driver (Studio → Lambdas): when the app changes and the sync breaks, it is mended there."
               }
             ]
           }
@@ -48,19 +48,106 @@
         "inputs": [],
         "nodes": [
           {
-            "id": "read",
+            "id": "up",
             "kind": "action",
-            "action": "connector.sync",
+            "action": "chrome.up",
+            "input": {}
+          },
+          {
+            "id": "wait",
+            "kind": "if",
+            "when": "env.trigger.kind == 'schedule' and not steps.up.up",
+            "then": [
+              {
+                "id": "later",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "The automation Chrome isn't running. Not synced."
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "cnt",
+            "kind": "action",
+            "action": "messages.count",
+            "input": {
+              "folder": "WhatsApp"
+            }
+          },
+          {
+            "id": "reading",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "whatsapp.driver",
+                  "event": {
+                    "tool": "read",
+                    "known": "{{ steps.cnt.count > 0 }}",
+                    "launch": "{{ env.trigger.kind != 'schedule' }}"
+                  }
+                }
+              }
+            ],
+            "catch": [
+              {
+                "id": "signin",
+                "kind": "action",
+                "action": "login.notice",
+                "input": {
+                  "service": "whatsapp",
+                  "message": "{{ error.message }}"
+                }
+              },
+              {
+                "id": "failed",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "WhatsApp: {{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "save",
+            "kind": "action",
+            "action": "messages.save",
             "input": {
               "source": "whatsapp",
-              "by": "{{ env.trigger.kind }}"
+              "messages": "{{ steps.read.messages }}"
+            }
+          },
+          {
+            "id": "fine",
+            "kind": "action",
+            "action": "login.notice",
+            "input": {
+              "service": "whatsapp",
+              "ok": true
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.save.what }}"
             }
           }
         ],
-        "output": "{{ steps.read }}",
         "requested": {
           "sync": [
             "whatsapp"
+          ],
+          "driver": [
+            "whatsapp.driver"
           ]
         },
         "triggers": [

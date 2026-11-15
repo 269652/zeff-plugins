@@ -1,0 +1,15 @@
+{
+  "name": "cases.detect",
+  "label": "Cases: finding the cases",
+  "what": "finding the cases: the case numbers in your mails, letters and todos — what the flow cases.detect writes (new cases, their new sources, a case's person).",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "mail.messages",
+    "documents.texts",
+    "todos.texts",
+    "people.emails"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

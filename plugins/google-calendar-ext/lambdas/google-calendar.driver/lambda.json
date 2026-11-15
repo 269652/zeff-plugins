@@ -1,0 +1,8 @@
+{
+  "name": "google-calendar.driver",
+  "label": "Google Calendar: the scraper",
+  "what": "Reads your Google calendars' events (and which accounts are signed in) in the account's automation Chrome.",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

@@ -1,0 +1,229 @@
+{
+  "format": 1,
+  "id": "keep-ext",
+  "version": "1.0.0",
+  "name": "Google Keep",
+  "description": "Google Keep read into Zeff — a sync of the Sync menu.",
+  "icon": "🟡",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Google Keep",
+      "icon": "🟡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Google Keep notes, read in the automation Chrome. The sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings. The scraper is the driver lambda keep.driver (Studio → Lambdas): when Keep changes its page and the sync breaks, it is mended there."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Google Keep",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "keep.sync",
+        "title": "Read Google Keep",
+        "description": "Your Google Keep notes — read by the scraper keep.driver in the automation Chrome, kept, and the Google Keep database brought up to date. By itself only while the automation Chrome runs.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "acc",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "keep.account",
+              "event": {}
+            }
+          },
+          {
+            "id": "up",
+            "kind": "action",
+            "action": "chrome.up",
+            "input": {}
+          },
+          {
+            "id": "wait",
+            "kind": "if",
+            "when": "env.trigger.kind == 'schedule' and not steps.up.up",
+            "then": [
+              {
+                "id": "later",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "{{ steps.acc.notRunning }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "reading",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "keep.driver",
+                  "event": {
+                    "tool": "notes",
+                    "account": "{{ steps.acc.account }}",
+                    "launch": "{{ env.trigger.kind != 'schedule' }}"
+                  }
+                }
+              }
+            ],
+            "catch": [
+              {
+                "id": "signin",
+                "kind": "action",
+                "action": "login.notice",
+                "input": {
+                  "service": "keep",
+                  "message": "{{ error.message }}"
+                }
+              },
+              {
+                "id": "failed",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "{{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "keep.save-plan",
+              "event": {
+                "notes": "{{ steps.read.notes }}",
+                "full": "{{ steps.read.full }}"
+              }
+            }
+          },
+          {
+            "id": "kept",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "keep-ext.notes",
+              "rows": "{{ steps.plan.rows }}"
+            }
+          },
+          {
+            "id": "gone",
+            "kind": "foreach",
+            "items": "steps.plan.remove",
+            "as": "id",
+            "max": 1000,
+            "nodes": [
+              {
+                "id": "drop",
+                "kind": "action",
+                "action": "store.delete",
+                "input": {
+                  "store": "keep-ext.notes",
+                  "where": {
+                    "id": "{{ id }}"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "fine",
+            "kind": "action",
+            "action": "login.notice",
+            "input": {
+              "service": "keep",
+              "ok": true
+            }
+          },
+          {
+            "id": "rows",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "keep.mirror-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "db",
+            "kind": "action",
+            "action": "db.mirror",
+            "input": {
+              "name": "keep-ext.google",
+              "setup": "{{ steps.rows.setup }}",
+              "key": "noteref",
+              "records": "{{ steps.rows.records }}"
+            }
+          },
+          {
+            "id": "after",
+            "kind": "action",
+            "action": "workspace.after-sync",
+            "input": {}
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.plan.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "driver": [
+            "keep.driver"
+          ],
+          "store": [
+            "keep-ext.notes",
+            "keep-ext.google"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 60,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "Google Keep",
+          "what": "Your Google Keep notes (Keep opened in a fresh tab of the automation Chrome, what it loads kept — nothing in Keep changes)",
+          "replaces": "keep"
+        }
+      }
+    }
+  ]
+}

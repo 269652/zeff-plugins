@@ -1,0 +1,172 @@
+{
+  "format": 1,
+  "id": "gitlab-ext",
+  "version": "1.0.0",
+  "name": "GitLab",
+  "description": "GitLab read into Zeff — a sync of the Sync menu.",
+  "icon": "🦊",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "GitLab",
+      "icon": "🦊",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your merge requests, their comments and your branches — read through GitLab's pages in the automation Chrome. The sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings. The scraper is the driver lambda gitlab.driver (Studio → Lambdas): when the app changes and the sync breaks, it is mended there."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read GitLab",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "gitlab.sync",
+        "title": "Read GitLab",
+        "description": "Your merge requests, their comments and your branches — read through GitLab's pages in the automation Chrome.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "cfg",
+            "kind": "action",
+            "action": "gitlab.settings",
+            "input": {}
+          },
+          {
+            "id": "api",
+            "kind": "if",
+            "when": "steps.cfg.via == 'api'",
+            "then": [
+              {
+                "id": "noapi",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "GitLab is connected through its API — the plugin reads through the automation Chrome only; connect GitLab through the Chrome on the Connections page, or switch back."
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "up",
+            "kind": "action",
+            "action": "chrome.up",
+            "input": {}
+          },
+          {
+            "id": "wait",
+            "kind": "if",
+            "when": "env.trigger.kind == 'schedule' and not steps.up.up",
+            "then": [
+              {
+                "id": "later",
+                "kind": "return",
+                "value": {
+                  "ok": true,
+                  "message": "The automation Chrome isn't running — later."
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "reading",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "gitlab.driver",
+                  "event": {
+                    "tool": "read",
+                    "baseUrl": "{{ steps.cfg.baseUrl }}",
+                    "sinceIso": "{{ steps.cfg.sinceIso }}",
+                    "launch": "{{ env.trigger.kind != 'schedule' }}"
+                  }
+                }
+              }
+            ],
+            "catch": [
+              {
+                "id": "failed",
+                "kind": "action",
+                "action": "gitlab.keep",
+                "input": {
+                  "items": [],
+                  "ok": false,
+                  "message": "{{ error.message }}"
+                }
+              },
+              {
+                "id": "stop",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "{{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "keep",
+            "kind": "action",
+            "action": "gitlab.keep",
+            "input": {
+              "items": "{{ steps.read.items }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.keep }}"
+          }
+        ],
+        "requested": {
+          "sync": [
+            "gitlab"
+          ],
+          "driver": [
+            "gitlab.driver"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "GitLab",
+          "what": "Your merge requests, their comments and your branches — read through GitLab's pages in the automation Chrome.",
+          "replaces": "gitlab"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "cases-ext",
+  "name": "Cases",
+  "version": "0.1.0",
+  "description": "One place per matter: the case numbers in your mails, letters and todos hold together one case — who it is owed to, what is open after your payments, what is due next and where to pay (GiroCode). Stage 1: its overview; finding cases, summaries and the bank are still the built-in's.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "stores": [
+      {
+        "name": "cases",
+        "adopts": "cases",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "key",
+            "type": "text"
+          },
+          {
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "person_id",
+            "type": "integer"
+          },
+          {
+            "name": "note",
+            "type": "text"
+          },
+          {
+            "name": "compiled",
+            "type": "text"
+          },
+          {
+            "name": "overrides",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "text"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          },
+          {
+            "name": "last_at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "cases_by_key",
+        "adopts": "cases",
+        "key": "key",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "key",
+            "type": "text"
+          },
+          {
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "person_id",
+            "type": "integer"
+          },
+          {
+            "name": "created_at",
+            "type": "text"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          },
+          {
+            "name": "last_at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "sources",
+        "adopts": "case_sources",
+        "key": [
+          "case_id",
+          "ref"
+        ],
+        "columns": [
+          {
+            "name": "case_id",
+            "type": "integer"
+          },
+          {
+            "name": "ref",
+            "type": "text"
+          },
+          {
+            "name": "kind",
+            "type": "text"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "bank",
+        "adopts": "bank_transactions",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "account",
+            "type": "text"
+          },
+          {
+            "name": "date",
+            "type": "text"
+          },
+          {
+            "name": "amount",
+            "type": "real"
+          },
+          {
+            "name": "currency",
+            "type": "text"
+          },
+          {
+            "name": "text",
+            "type": "text"
+          },
+          {
+            "name": "counterparty",
+            "type": "text"
+          },
+          {
+            "name": "iban",
+            "type": "text"
+          },
+          {
+            "name": "reference",
+            "type": "text"
+          },
+          {
+            "name": "imported_at",
+            "type": "text"
+          },
+          {
+            "name": "case_id",
+            "type": "integer"
+          },
+          {
+            "name": "todo_id",
+            "type": "integer"
+          },
+          {
+            "name": "matched_at",
+            "type": "text"
+          },
+          {
+            "name": "person_id",
+            "type": "integer"
+          }
+        ]
+      },
+      {
+        "name": "warnings",
+        "adopts": "case_warnings",
+        "key": [
+          "case_id",
+          "due"
+        ],
+        "columns": [
+          {
+            "name": "case_id",
+            "type": "integer"
+          },
+          {
+            "name": "due",
+            "type": "text"
+          },
+          {
+            "name": "todo_id",
+            "type": "integer"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "parties",
+        "adopts": "case_parties",
+        "key": [
+          "case_id",
+          "role"
+        ],
+        "columns": [
+          {
+            "name": "case_id",
+            "type": "integer"
+          },
+          {
+            "name": "role",
+            "type": "text"
+          },
+          {
+            "name": "person_id",
+            "type": "integer"
+          },
+          {
+            "name": "source",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "appViews": [
+      {
+        "id": "overview",
+        "dataType": "cases",
+        "label": "Overview",
+        "icon": "📁",
+        "template": "views/overview.html"
+      }
+    ],
+    "workspacePackages": [
+      "cases.package.json"
+    ],
+    "sources": [
+      {
+        "id": "cases",
+        "label": "Cases",
+        "icon": "📁",
+        "hint": "Your cases — a row per case number (Aktenzeichen) with the party, the person, the money (total, open, instalment), the next payment or deadline and the account to pay to.",
+        "lambda": "cases.records",
+        "replaces": "cases",
+        "noNewRows": true
+      }
+    ]
+  }
+}

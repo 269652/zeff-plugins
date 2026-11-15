@@ -20,7 +20,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read). Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+                "text": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read). The sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings. The scraper is the driver lambda signal.driver (Studio → Lambdas): when the app changes and the sync breaks, it is mended there."
               }
             ]
           }
@@ -48,19 +48,122 @@
         "inputs": [],
         "nodes": [
           {
-            "id": "read",
+            "id": "wait",
+            "kind": "if",
+            "when": "env.trigger.kind == 'schedule'",
+            "then": [
+              {
+                "id": "status",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "signal.driver",
+                  "event": {
+                    "tool": "signal_status",
+                    "args": {
+                      "launch": false
+                    }
+                  }
+                }
+              },
+              {
+                "id": "down",
+                "kind": "if",
+                "when": "not steps.status.open and not steps.status.chrome",
+                "then": [
+                  {
+                    "id": "later",
+                    "kind": "return",
+                    "value": {
+                      "ok": true,
+                      "message": "Signal Desktop isn't running — later"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "cnt",
             "kind": "action",
-            "action": "connector.sync",
+            "action": "messages.count",
+            "input": {
+              "folder": "Signal"
+            }
+          },
+          {
+            "id": "reading",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "signal.driver",
+                  "event": {
+                    "tool": "read",
+                    "known": "{{ steps.cnt.count > 0 }}",
+                    "launch": true
+                  }
+                }
+              }
+            ],
+            "catch": [
+              {
+                "id": "signin",
+                "kind": "action",
+                "action": "login.notice",
+                "input": {
+                  "service": "signal",
+                  "message": "{{ error.message }}"
+                }
+              },
+              {
+                "id": "failed",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "Signal: {{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "save",
+            "kind": "action",
+            "action": "messages.save",
             "input": {
               "source": "signal",
-              "by": "{{ env.trigger.kind }}"
+              "messages": "{{ steps.read.messages }}"
+            }
+          },
+          {
+            "id": "fine",
+            "kind": "action",
+            "action": "login.notice",
+            "input": {
+              "service": "signal",
+              "ok": true
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.save.what }}"
             }
           }
         ],
-        "output": "{{ steps.read }}",
         "requested": {
           "sync": [
             "signal"
+          ],
+          "driver": [
+            "signal.driver"
           ]
         },
         "triggers": [

@@ -1,0 +1,15 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "imap-mail-ext",
+  "name": "E-Mail (IMAP / POP3)",
+  "version": "1.0.0",
+  "description": "Reads your mail accounts (IMAP / POP3) into Zeff — each under its name, from its own server; none marked read. Replies are sent over the account's SMTP server on your click.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "workspacePackages": [
+      "imap-mail.package.json"
+    ]
+  }
+}

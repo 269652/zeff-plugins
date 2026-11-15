@@ -1,0 +1,13 @@
+{
+  "name": "cases.records",
+  "label": "Cases: the cases database's rows",
+  "what": "the cases database's rows: one per case — its number, party, person, the money (total, open after the payments, instalment), the next step, the account, how many sources, the last activity.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "people.names",
+    "money.allocations"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

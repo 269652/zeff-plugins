@@ -1,12 +1,15 @@
-# Signal
+# Signal (signal-ext)
 
-Reads your Signal chats' latest messages into Zeff from Signal Desktop on this computer — no chat opened, nothing marked read. Replies are sent from Zeff on your click.
+Reads your Signal chats' messages into Zeff from Signal Desktop on this computer — no chat opened, nothing marked read. Replies, a chat's history and the sign-in go through the same scraper. Its scraper is a lambda you (or the AI) can mend when Signal Desktop changes.
 
-- **A sync of the Sync menu.** The package brings one flow, `signal.sync`, marked as a sync in the place of the built-in's step:
-  run it there, see how it last went, set how often on the Sync settings page. By itself it runs only between 8 and 19 o'clock.
-- **The reading is Zeff's.** Reading Signal is a driver of Zeff's kernel; the flow calls it through `connector.sync`, which needs the
-  flow's permission `sync: signal` — you allow it when you switch.
-- **Everything else stays.** Replies from Zeff, the inbox, the chats and the todos found in them keep working.
-- **Generated** by Zeff's `scripts/port-connectors.mts`.
+- **The scraper** is the driver lambda `signal.driver` — the built-in's own files (`driver.mjs`, `adapter.mjs`, `contract.json`),
+  Zeff's generic automation kit imported by name (`zeff:chrome`, `zeff:automation/…`). A lambda of kind *driver*: it runs with the
+  account's automation Chrome / the app on this computer, outside the sandbox (this plugin asks for `exec`). **When the app changes and
+  the sync breaks**, mend it in the Studio (Lambdas → signal.driver) — you or the AI; the fix is kept in Zeff's database.
+- **The sync** is the flow `signal.sync` — a step of the Sync menu in the built-in's place: the scraper's `read`, the messages kept with
+  the kernel's `messages.save` (the inbox, the chats, the todos found in them read them as before). Its permissions: `sync: signal`,
+  `driver: signal.driver` — allowed when you switch.
+- **Replies, a chat's history, the sign-in** go through the same scraper while this plugin is on.
+- **Generated** by Zeff's `scripts/port-drivers.mts`.
 
 **Switching:** Plugins → Signal (built-in) → *Switch to the plugin*.

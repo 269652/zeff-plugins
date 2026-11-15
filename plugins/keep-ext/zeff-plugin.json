@@ -1,0 +1,99 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "keep-ext",
+  "name": "Google Keep",
+  "version": "1.0.0",
+  "description": "Reads your Google Keep notes into a Workspace database, in the account's automation Chrome (Keep opened in a new tab, what it loads taken over, the tab closed; nothing changes in Keep). Its scraper is a lambda you (or the AI) can mend when Keep changes.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [
+    "exec"
+  ],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "keep.package.json"
+    ],
+    "stores": [
+      {
+        "name": "notes",
+        "adopts": "keep_notes",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "kind",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "name": "text",
+            "type": "text"
+          },
+          {
+            "name": "labels",
+            "type": "text"
+          },
+          {
+            "name": "color",
+            "type": "text"
+          },
+          {
+            "name": "pinned",
+            "type": "integer"
+          },
+          {
+            "name": "archived",
+            "type": "integer"
+          },
+          {
+            "name": "created_at",
+            "type": "text"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          },
+          {
+            "name": "url",
+            "type": "text"
+          },
+          {
+            "name": "synced_at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "linked",
+        "adopts": "keep_own_notes",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "google_id",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "settings": [
+      {
+        "key": "ACCOUNT",
+        "label": "Google account",
+        "kind": "text",
+        "default": "0",
+        "help": "Which Google account's Keep: its number in the automation Chrome (0 the first signed in, 1 the second …) or its address."
+      }
+    ]
+  }
+}

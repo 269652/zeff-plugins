@@ -1,0 +1,8 @@
+{
+  "name": "whatsapp.driver",
+  "label": "WhatsApp: the scraper",
+  "what": "Your chats' latest messages (WhatsApp Web's chat list — no chat opened, nothing marked read).",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

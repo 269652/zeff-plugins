@@ -1,0 +1,22 @@
+{
+  "name": "jira.driver",
+  "label": "Jira: the reader",
+  "what": "Reads your Jira tickets and the chosen boards' issues through the Jira MCP server the plugin's settings name (one session), normalized as Zeff keeps them.",
+  "kind": "driver",
+  "zeff": [
+    "session.next",
+    "session.reply"
+  ],
+  "secrets": [
+    "MCP_COMMAND",
+    "MCP_ARGS",
+    "MCP_ENV",
+    "BASE_URL",
+    "TOOL",
+    "JQL",
+    "FIELDS",
+    "LIMIT"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

@@ -1,0 +1,85 @@
+<data name="app" lambda="cases.overview"/>
+<state name="paying" value=""/>
+
+{{#if not data.app}}
+  {{#if data.app_error}}<box tone=bad title="Something went wrong"><text>{{ data.app_error }}</text></box>{{#else}}<text tone=muted>…</text>{{/if}}
+{{#else}}
+
+<row gap=3 align=start justify=between>
+  <data name="bank" do="bank.status"/>
+<col gap=2>
+  <row gap=2 align=center>
+    {{#if data.bank.statements}}<upload bind="statement" label="Import statement (CSV)" accept=".csv,text/csv" max=999 emit="statement-read"/>{{/if}}
+    {{#if data.bank.connected}}<button action="state" state="bankopen" value="{{ state.bankopen ? '' : '1' }}" label="🏦 Bank connected" variant="{{ state.bankopen ? 'primary' : 'plain' }}"/>{{#else}}<button action="state" state="bankopen" value="{{ state.bankopen ? '' : '1' }}" label="🏦 Connect bank" variant="{{ state.bankopen ? 'primary' : 'plain' }}"/>{{/if}}
+    {{#if data.bank.connected}}<button do="bank.sync" emit="bank-changed" label="Fetch bookings"/>{{/if}}
+    <small><muted>{{#if data.bank}}{{ data.bank.transactions }} bookings{{/if}}{{#if data.bank.lastSync}} · fetched {{ formatDate(data.bank.lastSync, 'DD.MM.YYYY, HH:mm') }}{{/if}}{{#if data.bank.validUntil}} · access until {{ formatDate(data.bank.validUntil, 'DD.MM.YYYY') }}{{/if}}</muted></small>
+  </row>
+  {{#if state.bankopen}}
+  <box>
+    <muted>Your bookings, fetched by themselves through Enable Banking — free for your own accounts. Once: make an application at enablebanking.com (restricted mode), register this redirect address, link your bank there, then enter the application's id and private key here and sign in at your bank.</muted>
+    <mono>{{ data.bank.callback }}</mono>
+    <grid cols=3 gap=2 min=150>
+      <input bind="bankapp" label="Application id" value="{{ data.bank.appId }}"/>
+      <input bind="bankaspsp" label="Bank" value="{{ data.bank.aspsp }}"/>
+      <input bind="bankcountry" label="Country" value="{{ data.bank.country }}"/>
+    </grid>
+    {{#if data.bank.configured}}<input bind="bankkey" type=textarea rows=4 label="Private key (PEM) — empty: the saved one stays" placeholder="-----BEGIN PRIVATE KEY-----"/>{{#else}}<input bind="bankkey" type=textarea rows=4 label="Private key (PEM)" placeholder="-----BEGIN PRIVATE KEY-----"/>{{/if}}
+    <row gap=2>
+      <button do="bank.save" with='{"appId": {{ state.bankapp | tojson }}, "privateKey": {{ state.bankkey | tojson }}, "aspsp": {{ state.bankaspsp | tojson }}, "country": {{ state.bankcountry | tojson }}}' then="bankkey=" emit="bank-done" label="Save"/>
+      {{#if data.bank.connected}}<button do="bank.auth" variant=primary disabled="{{ data.bank.configured ? 'false' : 'true' }}" label="Sign in at the bank again"/>{{#else}}<button do="bank.auth" variant=primary disabled="{{ data.bank.configured ? 'false' : 'true' }}" label="Sign in at the bank"/>{{/if}}
+    </row>
+  </box>
+  {{/if}}
+</col>
+<on event="statement-read" do="bank.import" with='{"csv": {{ state.statement | tojson }}, "name": {{ state.statement_name | tojson }}}' emit="bank-changed"/>
+<on event="bank-changed" run="cases.match" emit="bank-matched"/>
+<on event="bank-matched" run="cases.warn" emit="bank-done"/>
+<on event="bank-done" action="reload"/>
+  {{#if data.app.debtsUrl}}<button action="url" href="{{ data.app.debtsUrl }}" label="Creditors overview →"/>{{/if}}
+</row>
+
+<grid cols=4 gap=3 min=150>
+  <tile label="Open in all" value="{{ data.app.open | euro }}"/>
+  <tile label="Due in 30 days" value="{{ data.app.dueSoon | euro }}"/>
+  <tile label="Running cases" value="{{ data.app.running }}"/>
+  <tile label="Overdue" value="{{ data.app.overdue }}" tone="{{ data.app.overdue > 0 ? 'bad' : 'plain' }}"/>
+</grid>
+
+<list source="data.app.cases" spacing=roomy grid="max-content minmax(0,80ch) 1fr max-content" empty="No case running.">
+  <row gap=2>
+    <col align=end><mono>{{ label }}</mono></col>
+    <col gap=1>
+      <row>{{#if rowId}}<button action="open" row="{{ rowId }}" label="{{ name }}" variant=link print=true/>{{#else}}<b>{{ name }}</b>{{/if}}</row>
+      {{#if sub}}<row><muted>{{ sub }}</muted></row>{{/if}}
+      <row gap=3 align=baseline>
+        {{#if hasDue}}
+          {{#if overdue}}
+            <text tone=bad>Overdue since {{ due }}{{#if nextWhat}} · {{ nextWhat }}{{/if}}</text>
+          {{#else}}
+            <text>{{ due }}{{#if nextWhat}} · {{ nextWhat }}{{/if}}</text>
+          {{/if}}
+        {{#else}}
+          <text tone=muted>{{ summed ? 'Nothing due.' : 'Not summed up yet' }}</text>
+        {{/if}}
+      </row>
+      {{#if state.paying == key}}<girocode name="{{ payment.name }}" iban="{{ payment.iban }}" bic="{{ payment.bic }}" amount="{{ payment.amount }}" purpose="{{ payment.purpose }}"/>{{/if}}
+    </col>
+    <grow/>
+    <col gap=2 align=end>
+      <row><b tip="From the case's letters and mails">{{ open | euro | default('—') }}</b></row>
+      <row>
+        {{#if state.paying == key}}
+          <button action="state" state="paying" value="" label="Close"/>
+        {{#else}}
+          {{#if payment}}
+            <button action="state" state="paying" value="{{ id }}" label="Pay with GiroCode" variant=primary/>
+          {{#else}}
+            <small><muted>No account known</muted></small>
+          {{/if}}
+        {{/if}}
+      </row>
+    </col>
+  </row>
+</list>
+
+{{/if}}

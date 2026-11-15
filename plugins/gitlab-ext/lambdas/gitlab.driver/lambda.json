@@ -1,0 +1,8 @@
+{
+  "name": "gitlab.driver",
+  "label": "GitLab: the scraper",
+  "what": "Your merge requests, their comments and your branches — read through GitLab's pages in the automation Chrome.",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

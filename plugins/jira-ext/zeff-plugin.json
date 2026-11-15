@@ -1,0 +1,68 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "jira-ext",
+  "name": "Jira",
+  "version": "1.0.0",
+  "description": "Reads your Jira tickets and those of the boards you chose into Zeff — the basis of the todos, the context sync and the entries per ticket — through the Jira MCP server (mcp-atlassian). Its reader is a lambda you (or the AI) can mend. Transitions, comments and new tickets are still done by Zeff on your click.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [
+    "exec"
+  ],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "jira.package.json"
+    ],
+    "settings": [
+      {
+        "key": "MCP_COMMAND",
+        "label": "Jira MCP server: command",
+        "kind": "text",
+        "help": "The program that starts the Jira MCP server, e.g. uvx (mcp-atlassian). Carried over from where Zeff had it when you switch."
+      },
+      {
+        "key": "MCP_ARGS",
+        "label": "Jira MCP server: arguments",
+        "kind": "text",
+        "help": "Its arguments: a JSON list, or words separated by spaces — e.g. mcp-atlassian."
+      },
+      {
+        "key": "MCP_ENV",
+        "label": "Jira MCP server: environment (with your token)",
+        "kind": "secret",
+        "help": "KEY=value lines (JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN …) or a JSON object — kept encrypted, never shown again."
+      },
+      {
+        "key": "BASE_URL",
+        "label": "Jira address",
+        "kind": "text",
+        "help": "Where your Jira is (for the tickets' links); empty: the server's JIRA_URL."
+      },
+      {
+        "key": "TOOL",
+        "label": "Search tool",
+        "kind": "text",
+        "default": "jira_search"
+      },
+      {
+        "key": "JQL",
+        "label": "Your tickets (JQL)",
+        "kind": "text",
+        "default": "assignee = currentUser() ORDER BY updated DESC"
+      },
+      {
+        "key": "FIELDS",
+        "label": "Fields to read",
+        "kind": "text",
+        "default": "summary,description,status,created,updated,resolutiondate,issuetype,priority,assignee"
+      },
+      {
+        "key": "LIMIT",
+        "label": "How many of yours at most",
+        "kind": "text",
+        "default": "100"
+      }
+    ]
+  }
+}

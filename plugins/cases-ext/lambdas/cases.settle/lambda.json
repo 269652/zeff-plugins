@@ -1,0 +1,12 @@
+{
+  "name": "cases.settle",
+  "label": "Cases: a case moved on by its payments",
+  "what": "a case moved on by its payments: the next due a month on for each instalment paid since its summary, paid in full: done.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "money.allocations"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

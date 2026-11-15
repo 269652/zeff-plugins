@@ -1,0 +1,9 @@
+{
+  "name": "cases.link",
+  "label": "Cases: linking the sources",
+  "what": "linking the sources: the new sources of the plan with the ids their cases have now (a new case: the id it got).",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

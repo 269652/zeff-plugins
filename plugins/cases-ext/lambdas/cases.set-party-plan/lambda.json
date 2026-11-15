@@ -1,0 +1,11 @@
+{
+  "name": "cases.set-party-plan",
+  "label": "Cases: a party chosen by you (none",
+  "what": "a party chosen by you (none: taken off) — or the contact just made for it; the case's person follows its creditor when it had none.",
+  "kind": "function",
+  "zeff": [
+    "store.query"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "id": "gmail-ext",
+  "version": "1.0.0",
+  "name": "Gmail",
+  "description": "Gmail read into Zeff — a sync of the Sync menu.",
+  "icon": "📮",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Gmail",
+      "icon": "📮",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Gmail accounts' latest mails — read through Gmail's API or the automation Chrome, as the Connections page says; none marked read. Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Gmail",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "gmail.sync",
+        "title": "Read Gmail",
+        "description": "Your Gmail accounts' latest mails — read through Gmail's API or the automation Chrome, as the Connections page says; none marked read.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "read",
+            "kind": "action",
+            "action": "connector.sync",
+            "input": {
+              "source": "gmail",
+              "by": "{{ env.trigger.kind }}"
+            }
+          }
+        ],
+        "output": "{{ steps.read }}",
+        "requested": {
+          "sync": [
+            "gmail"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "Gmail",
+          "what": "Your Gmail accounts' latest mails — read through Gmail's API or the automation Chrome, as the Connections page says; none marked read."
+        }
+      }
+    }
+  ]
+}

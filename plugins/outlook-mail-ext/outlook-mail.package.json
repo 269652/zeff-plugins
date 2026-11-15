@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "id": "outlook-mail-ext",
+  "version": "1.0.0",
+  "name": "Outlook Mail",
+  "description": "Outlook Mail read into Zeff — a sync of the Sync menu.",
+  "icon": "✉️",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Outlook Mail",
+      "icon": "✉️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Outlook inbox's latest mails — read through Microsoft's API or the automation Chrome, as the Connections page says; none marked read. Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Outlook Mail",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "outlook-mail.sync",
+        "title": "Read Outlook Mail",
+        "description": "Your Outlook inbox's latest mails — read through Microsoft's API or the automation Chrome, as the Connections page says; none marked read.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "read",
+            "kind": "action",
+            "action": "connector.sync",
+            "input": {
+              "source": "outlook-mail",
+              "by": "{{ env.trigger.kind }}"
+            }
+          }
+        ],
+        "output": "{{ steps.read }}",
+        "requested": {
+          "sync": [
+            "outlook-mail"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "Outlook Mail",
+          "what": "Your Outlook inbox's latest mails — read through Microsoft's API or the automation Chrome, as the Connections page says; none marked read."
+        }
+      }
+    }
+  ]
+}

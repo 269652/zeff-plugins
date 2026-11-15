@@ -1,0 +1,130 @@
+{
+  "format": 1,
+  "id": "jira-ext",
+  "version": "1.0.0",
+  "name": "Jira",
+  "description": "Jira read into Zeff — a sync of the Sync menu.",
+  "icon": "🎫",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Jira",
+      "icon": "🎫",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Jira tickets and the chosen boards' tickets. The sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings. The reader is the driver lambda jira.driver (Studio → Lambdas): when Jira or its MCP server changes and the sync breaks, it is mended there."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Jira",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "jira.sync",
+        "title": "Read Jira",
+        "description": "Your Jira tickets and those of the chosen boards — read by the reader jira.driver through the Jira MCP server, kept (boards, which are yours, titles of booked tickets), the boards' databases brought up to date.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "cfg",
+            "kind": "action",
+            "action": "jira.settings",
+            "input": {}
+          },
+          {
+            "id": "reading",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "jira.driver",
+                  "event": {
+                    "tool": "read",
+                    "boardIds": "{{ steps.cfg.boardIds }}",
+                    "titleKeys": "{{ steps.cfg.titleKeys }}"
+                  }
+                }
+              }
+            ],
+            "catch": [
+              {
+                "id": "failed",
+                "kind": "action",
+                "action": "jira.keep",
+                "input": {
+                  "ok": false,
+                  "message": "{{ error.message }}"
+                }
+              },
+              {
+                "id": "stop",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "{{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "keep",
+            "kind": "action",
+            "action": "jira.keep",
+            "input": {
+              "read": "{{ steps.read }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.keep }}"
+          }
+        ],
+        "requested": {
+          "sync": [
+            "jira"
+          ],
+          "driver": [
+            "jira.driver"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15
+          }
+        ],
+        "sync": {
+          "label": "Jira",
+          "what": "Your tickets and the chosen boards' tickets",
+          "replaces": "jira"
+        }
+      }
+    }
+  ]
+}

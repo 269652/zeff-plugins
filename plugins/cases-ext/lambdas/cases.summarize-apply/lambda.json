@@ -1,0 +1,12 @@
+{
+  "name": "cases.summarize-apply",
+  "label": "Cases: a summary kept",
+  "what": "a summary kept: the AI's answer checked, moved on by the payments since, and the contacts its names mean (asked of the People plugin).",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "money.allocations"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

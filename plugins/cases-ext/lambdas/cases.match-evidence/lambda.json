@@ -1,0 +1,9 @@
+{
+  "name": "cases.match-evidence",
+  "label": "Cases: a booking that settled something as evidence",
+  "what": "a booking that settled something as evidence: kept as matched.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

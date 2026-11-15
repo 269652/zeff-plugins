@@ -1,0 +1,11 @@
+{
+  "name": "keep.save-plan",
+  "label": "Google Keep: keeping the notes",
+  "what": "keeping the notes: what the sync read, as rows of the store notes — new and changed ones, and (Keep gave all) those gone from Keep — and what it says.",
+  "kind": "function",
+  "zeff": [
+    "store.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

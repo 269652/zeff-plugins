@@ -3,11 +3,14 @@
   "id": "signal-ext",
   "name": "Signal",
   "version": "1.0.0",
-  "description": "Reads your Signal chats' latest messages into Zeff from Signal Desktop on this computer — no chat opened, nothing marked read. Replies are sent from Zeff on your click.",
+  "description": "Reads your Signal chats' messages into Zeff from Signal Desktop on this computer — no chat opened, nothing marked read. Replies, a chat's history and the sign-in go through the same scraper. Its scraper is a lambda you (or the AI) can mend when Signal Desktop changes.",
   "author": "Zeff",
   "apiVersion": 1,
-  "permissions": [],
+  "permissions": [
+    "exec"
+  ],
   "contributes": {
+    "lambdas": "lambdas",
     "workspacePackages": [
       "signal.package.json"
     ]

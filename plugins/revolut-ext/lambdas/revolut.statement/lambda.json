@@ -1,0 +1,9 @@
+{
+  "name": "revolut.statement",
+  "label": "Revolut: read a statement",
+  "what": "A statement (CSV — Revolut's export, in German or English, or another bank's with a date, an amount and a text) read into its bookings and the account it is of; a pending booking left for later.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

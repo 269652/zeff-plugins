@@ -1,0 +1,17 @@
+{
+  "name": "cases.case",
+  "label": "Cases: a case's page",
+  "what": "a case's page: who it is with, where it stands and the money, its todos, mails and letters, the payment, what was paid, its parties, your note.",
+  "kind": "function",
+  "zeff": [
+    "workspace.row-source",
+    "store.query",
+    "zeff.installed",
+    "people.list",
+    "todos.by-ids",
+    "money.allocations",
+    "people.accounts"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

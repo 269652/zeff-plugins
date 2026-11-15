@@ -1,0 +1,8 @@
+{
+  "name": "keep.driver",
+  "label": "Google Keep: the scraper",
+  "what": "Reads your Google Keep notes in the account's automation Chrome (Keep opened in a fresh tab, what its web app loads kept, the tab closed — nothing changes in Keep); tool status checks the sign-in, tool write changes a note in Keep's own editor.",
+  "kind": "driver",
+  "timeoutMs": 300000,
+  "memoryMb": 512
+}

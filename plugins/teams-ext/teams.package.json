@@ -20,7 +20,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "Your Teams mentions and 1:1 messages — read through Teams' API or the automation Chrome, as the Connections page says. Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+                "text": "Your Teams mentions and 1:1 messages — read from Teams in the automation Chrome (its own cache, read-only). The sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings. The scraper is the driver lambda teams.driver (Studio → Lambdas): when the app changes and the sync breaks, it is mended there."
               }
             ]
           }
@@ -44,23 +44,110 @@
       "flow": {
         "name": "teams.sync",
         "title": "Read Teams",
-        "description": "Your Teams mentions and 1:1 messages — read through Teams' API or the automation Chrome, as the Connections page says.",
+        "description": "Your Teams mentions and 1:1 messages — read from Teams in the automation Chrome (its own cache, read-only).",
         "inputs": [],
         "nodes": [
           {
-            "id": "read",
+            "id": "cfg",
             "kind": "action",
-            "action": "connector.sync",
+            "action": "teams.settings",
+            "input": {}
+          },
+          {
+            "id": "api",
+            "kind": "if",
+            "when": "steps.cfg.via == 'api'",
+            "then": [
+              {
+                "id": "noapi",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "Teams is read through Microsoft's API — the plugin reads through the automation Chrome only; switch the Connections page to the Chrome, or switch back."
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "up",
+            "kind": "action",
+            "action": "chrome.up",
+            "input": {}
+          },
+          {
+            "id": "wait",
+            "kind": "if",
+            "when": "env.trigger.kind == 'schedule' and not steps.up.up",
+            "then": [
+              {
+                "id": "later",
+                "kind": "return",
+                "value": {
+                  "ok": true,
+                  "message": "The automation Chrome isn't running — later."
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "reading",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "driver.call",
+                "input": {
+                  "name": "teams.driver",
+                  "event": {
+                    "tool": "read",
+                    "launch": "{{ env.trigger.kind != 'schedule' }}"
+                  }
+                }
+              }
+            ],
+            "catch": [
+              {
+                "id": "failed",
+                "kind": "action",
+                "action": "teams.keep",
+                "input": {
+                  "ok": false,
+                  "message": "{{ error.message }}"
+                }
+              },
+              {
+                "id": "stop",
+                "kind": "return",
+                "value": {
+                  "ok": false,
+                  "message": "{{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "keep",
+            "kind": "action",
+            "action": "teams.keep",
             "input": {
-              "source": "teams",
-              "by": "{{ env.trigger.kind }}"
+              "messages": "{{ steps.read.messages }}"
             }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.keep }}"
           }
         ],
-        "output": "{{ steps.read }}",
         "requested": {
           "sync": [
             "teams"
+          ],
+          "driver": [
+            "teams.driver"
           ]
         },
         "triggers": [
@@ -73,7 +160,7 @@
         ],
         "sync": {
           "label": "Teams",
-          "what": "Your Teams mentions and 1:1 messages — read through Teams' API or the automation Chrome, as the Connections page says.",
+          "what": "Your Teams mentions and 1:1 messages — read from Teams in the automation Chrome (its own cache, read-only).",
           "replaces": "teams"
         }
       }

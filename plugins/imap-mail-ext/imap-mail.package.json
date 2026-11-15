@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "id": "imap-mail-ext",
+  "version": "1.0.0",
+  "name": "E-Mail (IMAP / POP3)",
+  "description": "E-Mail (IMAP / POP3) read into Zeff — a sync of the Sync menu.",
+  "icon": "📧",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "E-Mail (IMAP / POP3)",
+      "icon": "📧",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your mail accounts' latest mails (IMAP / POP3, each under its name) — read from their servers; none marked read. Its sync is the flow below — a step of the Sync menu; how often it runs: the Sync settings."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read E-Mail (IMAP / POP3)",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "imap-mail.sync",
+        "title": "Read E-Mail (IMAP / POP3)",
+        "description": "Your mail accounts' latest mails (IMAP / POP3, each under its name) — read from their servers; none marked read.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "read",
+            "kind": "action",
+            "action": "connector.sync",
+            "input": {
+              "source": "imap-mail",
+              "by": "{{ env.trigger.kind }}"
+            }
+          }
+        ],
+        "output": "{{ steps.read }}",
+        "requested": {
+          "sync": [
+            "imap-mail"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 15,
+            "from": "08:00",
+            "to": "19:00"
+          }
+        ],
+        "sync": {
+          "label": "E-Mail (IMAP / POP3)",
+          "what": "Your mail accounts' latest mails (IMAP / POP3, each under its name) — read from their servers; none marked read."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "cases.warn-plan",
+  "label": "Cases: the instalments ten days late with nothing paid since",
+  "what": "the instalments ten days late with nothing paid since: a todo each (once per case and due), with the transfer when the account is known.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "money.allocations"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

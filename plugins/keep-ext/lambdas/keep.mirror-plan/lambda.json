@@ -1,0 +1,11 @@
+{
+  "name": "keep.mirror-plan",
+  "label": "Google Keep: the Google Keep database",
+  "what": "the Google Keep database: the notes kept (not the archived, not those synced with one of your boards) as its rows — colour, pinned, labels, the note, when it was edited in Keep — and how the database is made.",
+  "kind": "function",
+  "zeff": [
+    "store.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

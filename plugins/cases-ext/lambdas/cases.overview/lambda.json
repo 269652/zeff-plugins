@@ -1,0 +1,16 @@
+{
+  "name": "cases.overview",
+  "label": "Cases: the overview",
+  "what": "The running cases by what is due first — who each is owed to, what is open after the payments, where it pays to — and the money in figures: the cases view's data.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "money.allocations",
+    "people.names",
+    "people.accounts",
+    "zeff.places",
+    "workspace.rows-by-ref"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "revolut-ext",
+  "name": "Revolut",
+  "version": "1.0.0",
+  "description": "Reads your Revolut statements (the CSV export, in German or English — other banks' CSV too) into Zeff's bank: a file you import on the cases' overview, or one that comes in as a document. Paying someone by their RevTag stays a todo action.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "services": [
+      {
+        "name": "bank.statement",
+        "lambda": "revolut.statement"
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "gmail-ext",
+  "name": "Gmail",
+  "version": "1.0.0",
+  "description": "Reads your Gmail accounts' latest mails into Zeff — through Gmail's API or Gmail in the account's automation Chrome, as the Connections page says; none marked read. With Gmail's write access, replies are sent from Zeff on your click.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [
+    "exec"
+  ],
+  "contributes": {
+    "workspacePackages": [
+      "gmail.package.json"
+    ],
+    "lambdas": "lambdas"
+  }
+}

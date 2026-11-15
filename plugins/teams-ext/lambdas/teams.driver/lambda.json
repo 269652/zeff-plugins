@@ -1,0 +1,8 @@
+{
+  "name": "teams.driver",
+  "label": "Teams: the scraper",
+  "what": "Your Teams mentions and 1:1 messages — read from Teams in the automation Chrome (its own cache, read-only).",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

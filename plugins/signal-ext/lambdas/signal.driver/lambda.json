@@ -1,0 +1,8 @@
+{
+  "name": "signal.driver",
+  "label": "Signal: the scraper",
+  "what": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read).",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

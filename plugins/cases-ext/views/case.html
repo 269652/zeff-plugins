@@ -1,0 +1,129 @@
+<data name="app" lambda="cases.case" with='{"row": {{ id }}}'/>
+{{#if data.app}}{{#if data.app.canCompile}}{{#if not data.app.summed}}{{#if not data.app.manual}}{{#if data.app.statusValue == 'open'}}<data name="autosum" flow="cases.summarize" with='{"ids": [{{ data.app.caseId }}]}' when="{{ data.app.caseId }}"/>{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}
+<on event="case-done" action="reload"/>
+{{#if not data.app}}
+  {{#if data.app_error}}<box tone=bad title="Something went wrong"><text>{{ data.app_error }}</text></box>{{#else}}<text tone=muted>…</text>{{/if}}
+{{#else}}
+
+<row gap=2 align=center>
+  {{#if data.app.manual}}<badge>Own debt</badge>{{#else}}<code>{{ data.app.label }}</code>{{/if}}
+  {{#if data.app.creditor.name}}
+    <badge><button action="url" href="{{ data.app.creditor.href }}" label="{{ data.app.creditor.name }}" variant=link tip="Creditor"/></badge>
+  {{#else}}
+    {{#if data.app.person.name}}<badge><button action="url" href="{{ data.app.person.href }}" label="{{ data.app.person.name }}" variant=link/></badge>{{/if}}
+  {{/if}}
+  {{#if data.app.collector.name}}<muted>via</muted> <button action="url" href="{{ data.app.collector.href }}" label="{{ data.app.collector.name }}" variant=link/>{{/if}}
+  {{#if data.app.party}}<muted>{{ data.app.party }}</muted>{{/if}}
+  <grow/>
+  <select bind="casestatus" value="{{ data.app.statusValue }}" options="open:Open, closed:Closed, ignored:Not a case" emit="case-status"/>
+  <on event="case-status" run="cases.set" with='{"case": {{ data.app.caseId }}, "status": {{ state.casestatus | tojson }}}' emit="case-done"/>
+  {{#if data.app.canCompile and not data.app.manual}}
+    <button run="cases.summarize" with='{"ids": [{{ data.app.caseId }}], "force": true}' emit="case-done" label="{{ data.app.busy ? '…' : data.app.summed ? 'Sum up again' : 'Sum up' }}" disabled="{{ data.app.busy }}"/>
+  {{/if}}
+</row>
+
+<split side=right width=340>
+  <col gap=5>
+    <section title="Where it stands">
+      {{#if data.app.summary}}
+        <text>{{ data.app.summary }}</text>
+      {{#else}}
+        {{#if data.app.compiling}}
+          <text tone=muted>Being summed up from its mails, letters and todos …</text>
+        {{#else}}
+          <text tone=muted>{{ data.app.canCompile ? 'Not summed up yet — Sum up reads its mails, letters and todos.' : 'With the LLM plugin the AI sums the case up.' }}</text>
+        {{/if}}
+      {{/if}}
+      {{#if data.app.summed and not data.app.manual}}
+        <grid cols=4 gap=2 min=120>
+          <tile label="Total" value="{{ data.app.total | euro }}"/>
+          <tile label="Open" value="{{ data.app.open | euro }}"/>
+          <tile label="Instalment" value="{{ data.app.installment | euro }}"/>
+          <tile label="Next" value="{{ data.app.next }}"/>
+        </grid>
+      {{/if}}
+    </section>
+
+    <section title="Todos">
+      <list source="data.app.todos" spacing=compact empty="No todo names this case.">
+        <row gap=2 align=baseline wrap=false>
+          <mono><button action="url" href="{{ href }}" label="{{ ref }}" variant=link/></mono>
+          <col gap=0 fill=true>{{#if done}}<strike>{{ text }}</strike>{{#else}}<text>{{ text }}</text>{{/if}}</col>
+          {{#if due}}<small><muted>{{ due }}</muted></small>{{/if}}
+        </row>
+      </list>
+    </section>
+
+    <section title="Mails and letters" aside="{{ data.app.mails }} mails · {{ data.app.letters }} letters">
+      {{#if data.app.hasSources}}
+        <sources refs="{{ data.app.refs | tojson }}" open=true/>
+      {{#else}}
+        <text tone=muted>No mail or letter found for it yet.</text>
+      {{/if}}
+    </section>
+
+    <know row="{{ data.app.rowId }}" compact=true/>
+
+    <rowtimeline row="{{ data.app.rowId }}" title="Timeline"/>
+  </col>
+
+  <col gap=5>
+    <section title="Payment">
+      {{#if data.app.payment}}
+        <input bind="payamount" label="Amount" value="{{ data.app.payAmount }}" placeholder="0,00"/>
+        <girocode name="{{ data.app.bundlePayment.name }}" iban="{{ data.app.bundlePayment.iban }}" bic="{{ data.app.bundlePayment.bic }}" amount="{{ state.payamount }}" purpose="{{ data.app.bundlePayment.purpose }}"/>
+      {{#else}}
+        {{#if data.app.person.name}}
+          <text tone=muted>No account known for {{ data.app.person.name }} yet — add the IBAN to their details.</text>
+        {{#else}}
+          <text tone=muted>No account known for it yet — choose the person it is with.</text>
+        {{/if}}
+      {{/if}}
+    </section>
+
+    {{#if data.app.paid}}
+      <section title="Paid">
+        <list source="data.app.paid" spacing=compact>
+          <row gap=2 align=baseline justify=between><muted>{{ date }}{{#if todo}} · ticked off {{ todo }}{{/if}}</muted><b>{{ amount | euro }}</b></row>
+        </list>
+      </section>
+    {{/if}}
+
+    <section title="Parties">
+    <col gap=1>
+      <row gap=2 align=baseline justify=between>
+        <small tip="Who it is owed to"><muted>Creditor</muted></small>
+        {{#if data.app.parties.creditor.name}}<button action="url" href="{{ data.app.parties.creditor.href }}" label="{{ data.app.parties.creditor.name }} →" variant=link tip="{{ data.app.parties.creditor.ai ? 'As the AI read it from the case' : 'Chosen by you' }}"/>{{/if}}
+      </row>
+      <select search=true bind="party_creditor" value="{{ data.app.partyIds.creditor }}" options="{{ data.app.peopleOptions | tojson }}" emit="party-creditor"/>
+      <row gap=1 align=center><col fill=true><input bind="new_creditor" placeholder="New contact: name"/></col><select bind="newkind_creditor" options="person:Person, organization:Organisation"/><button run="cases.set-party" with='{"case": {{ data.app.caseId }}, "role": "creditor", "name": {{ state.new_creditor | tojson }}, "kind": {{ state.newkind_creditor | tojson }}}' then="new_creditor=" emit="case-done" label="＋" disabled="{{ state.new_creditor ? 'false' : 'true' }}"/></row>
+      <on event="party-creditor" run="cases.set-party" with='{"case": {{ data.app.caseId }}, "role": "creditor", "personId": {{ state.party_creditor | tojson }}}' emit="case-done"/>
+    </col>
+    <col gap=1>
+      <row gap=2 align=baseline justify=between>
+        <small tip="Bailiff, collection agency, lawyer"><muted>Collected by</muted></small>
+        {{#if data.app.parties.collector.name}}<button action="url" href="{{ data.app.parties.collector.href }}" label="{{ data.app.parties.collector.name }} →" variant=link tip="{{ data.app.parties.collector.ai ? 'As the AI read it from the case' : 'Chosen by you' }}"/>{{/if}}
+      </row>
+      <select search=true bind="party_collector" value="{{ data.app.partyIds.collector }}" options="{{ data.app.peopleOptions | tojson }}" emit="party-collector"/>
+      <row gap=1 align=center><col fill=true><input bind="new_collector" placeholder="New contact: name"/></col><select bind="newkind_collector" options="person:Person, organization:Organisation"/><button run="cases.set-party" with='{"case": {{ data.app.caseId }}, "role": "collector", "name": {{ state.new_collector | tojson }}, "kind": {{ state.newkind_collector | tojson }}}' then="new_collector=" emit="case-done" label="＋" disabled="{{ state.new_collector ? 'false' : 'true' }}"/></row>
+      <on event="party-collector" run="cases.set-party" with='{"case": {{ data.app.caseId }}, "role": "collector", "personId": {{ state.party_collector | tojson }}}' emit="case-done"/>
+    </col>
+    <col gap=1>
+      <row gap=2 align=baseline justify=between>
+        <small tip="Whose account you pay to"><muted>Paid to</muted></small>
+        {{#if data.app.parties.payee.name}}<button action="url" href="{{ data.app.parties.payee.href }}" label="{{ data.app.parties.payee.name }} →" variant=link tip="{{ data.app.parties.payee.ai ? 'As the AI read it from the case' : 'Chosen by you' }}"/>{{/if}}
+      </row>
+      <select search=true bind="party_payee" value="{{ data.app.partyIds.payee }}" options="{{ data.app.peopleOptions | tojson }}" emit="party-payee"/>
+      <row gap=1 align=center><col fill=true><input bind="new_payee" placeholder="New contact: name"/></col><select bind="newkind_payee" options="person:Person, organization:Organisation"/><button run="cases.set-party" with='{"case": {{ data.app.caseId }}, "role": "payee", "name": {{ state.new_payee | tojson }}, "kind": {{ state.newkind_payee | tojson }}}' then="new_payee=" emit="case-done" label="＋" disabled="{{ state.new_payee ? 'false' : 'true' }}"/></row>
+      <on event="party-payee" run="cases.set-party" with='{"case": {{ data.app.caseId }}, "role": "payee", "personId": {{ state.party_payee | tojson }}}' emit="case-done"/>
+    </col>
+    </section>
+
+    <section title="Notes">
+      <input bind="casenote" type=textarea rows=4 value="{{ data.app.noteText }}" placeholder="What you want to remember about this case" leave="case-note"/>
+      <on event="case-note" run="cases.set" with='{"case": {{ data.app.caseId }}, "note": {{ state.casenote | tojson }}}' emit="case-done"/>
+    </section>
+  </col>
+</split>
+
+{{/if}}

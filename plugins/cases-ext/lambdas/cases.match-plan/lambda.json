@@ -1,0 +1,13 @@
+{
+  "name": "cases.match-plan",
+  "label": "Cases: matching the bookings",
+  "what": "matching the bookings: each payment out not matched yet — to a todo's transfer and its case, a payment already ticked off, one read twice — and what the flow does about it.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "money.allocations",
+    "todos.transfers"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

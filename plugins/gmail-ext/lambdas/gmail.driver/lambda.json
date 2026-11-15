@@ -1,0 +1,8 @@
+{
+  "name": "gmail.driver",
+  "label": "Gmail: the scraper",
+  "what": "Reads your Gmail accounts' mails, threads and attachments in the account's automation Chrome; nothing is marked read.",
+  "kind": "driver",
+  "timeoutMs": 600000,
+  "memoryMb": 512
+}

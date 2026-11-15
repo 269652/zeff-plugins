@@ -1,0 +1,849 @@
+{
+  "format": 1,
+  "id": "cases-ext",
+  "version": "1.0.0",
+  "name": "Cases",
+  "description": "What the Cases plugin runs by itself: finding the cases.",
+  "icon": "📁",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Cases",
+      "icon": "📁",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "What the Cases plugin runs by itself. Its cases are in the database Cases."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Find the cases",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.detect",
+        "title": "Find the cases",
+        "description": "The case numbers in your mails, letters and todos: new cases made, new places linked to theirs, a case's person found by the addresses — by rule, no AI.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.detect",
+              "event": {}
+            }
+          },
+          {
+            "id": "cases",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.cases_by_key",
+              "rows": "{{ steps.plan.cases }}",
+              "back": true
+            }
+          },
+          {
+            "id": "link",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.link",
+              "event": {
+                "sources": "{{ steps.plan.sources }}",
+                "cases": "{{ steps.cases.rows }}"
+              }
+            }
+          },
+          {
+            "id": "sources",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.sources",
+              "rows": "{{ steps.link.rows }}"
+            }
+          }
+        ],
+        "output": {
+          "created": "{{ steps.plan.created }}",
+          "linked": "{{ steps.plan.linked }}"
+        },
+        "requested": {
+          "store": [
+            "cases-ext.cases_by_key",
+            "cases-ext.sources"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 30,
+            "from": "07:00",
+            "to": "21:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Sum the cases up",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.summarize",
+        "title": "Sum the cases up",
+        "description": "The AI reads each case's mails, letters and todos and says what it is about, who it is with, the money, what is due next and where to pay — the cases never summed up and those with new sources since (at most 8 a run).",
+        "inputs": [
+          {
+            "name": "ids",
+            "type": "list"
+          },
+          {
+            "name": "force",
+            "type": "boolean"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.summarize-plan",
+              "event": {
+                "ids": "{{ input.ids }}",
+                "force": "{{ input.force }}"
+              }
+            }
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "{{ steps.plan.items }}",
+            "as": "item",
+            "nodes": [
+              {
+                "id": "ai",
+                "kind": "action",
+                "action": "ai.json",
+                "input": {
+                  "prompt": "{{ item.prompt }}",
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "Worum es geht, in 3–8 Wörtern (z. B. „Rundfunkbeitrag SWR — Ratenplan“)."
+                      },
+                      "party": {
+                        "type": "string",
+                        "description": "Wer auf der anderen Seite steht: Gläubiger, Behörde, Firma."
+                      },
+                      "creditor": {
+                        "type": "string",
+                        "description": "Wem ich das Geld schulde (der Gläubiger selbst, z. B. die Bank, der Rundfunkbeitrag, ein Versorger, eine Person) — leer, wenn es um keine Schuld geht."
+                      },
+                      "creditor_kind": {
+                        "type": "string",
+                        "enum": [
+                          "person",
+                          "organization",
+                          ""
+                        ],
+                        "description": "Ist der Gläubiger ein Mensch oder eine Organisation?"
+                      },
+                      "collector": {
+                        "type": "string",
+                        "description": "Wer die Forderung für den Gläubiger eintreibt (Gerichtsvollzieher/in, Inkassobüro, Anwalt/Kanzlei) — leer, wenn der Gläubiger selbst schreibt."
+                      },
+                      "collector_kind": {
+                        "type": "string",
+                        "enum": [
+                          "person",
+                          "organization",
+                          ""
+                        ],
+                        "description": "Ist der Eintreiber ein Mensch oder eine Organisation?"
+                      },
+                      "summary": {
+                        "type": "string",
+                        "description": "Stand der Sache in 1–3 Sätzen: was ist passiert, was ist vereinbart, was ist offen."
+                      },
+                      "total": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "description": "Die ganze Forderung in Euro, sonst null."
+                      },
+                      "open": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "description": "Was davon noch offen ist, in Euro, sonst null."
+                      },
+                      "installment": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "description": "Eine laufende Rate in Euro, sonst null."
+                      },
+                      "installment_day": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "description": "Der Tag im Monat, an dem die Raten fällig sind (z. B. 15 bei „am 15. jedes Monats“), sonst null."
+                      },
+                      "next_due": {
+                        "type": "string",
+                        "description": "Die nächste Zahlung oder Frist als YYYY-MM-DD, sonst leer."
+                      },
+                      "next_what": {
+                        "type": "string",
+                        "description": "Was dann fällig ist (z. B. „Rate 300 €“, „Widerspruchsfrist“)."
+                      },
+                      "iban": {
+                        "type": "string",
+                        "description": "Die IBAN, auf die zu zahlen ist, genau abgeschrieben — sonst leer."
+                      },
+                      "bic": {
+                        "type": "string"
+                      },
+                      "payee": {
+                        "type": "string",
+                        "description": "Der Empfänger der Zahlung, wie angegeben."
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "description": "Der Verwendungszweck, wie verlangt — sonst leer."
+                      },
+                      "done": {
+                        "type": "boolean",
+                        "description": "true, wenn die Sache erledigt ist (bezahlt, eingestellt, abgeschlossen)."
+                      }
+                    },
+                    "required": [
+                      "title",
+                      "party",
+                      "creditor",
+                      "creditor_kind",
+                      "collector",
+                      "collector_kind",
+                      "summary",
+                      "total",
+                      "open",
+                      "installment",
+                      "next_due",
+                      "next_what",
+                      "iban",
+                      "bic",
+                      "payee",
+                      "purpose",
+                      "done"
+                    ]
+                  },
+                  "task": "cases-compile",
+                  "budget": 0.3
+                }
+              },
+              {
+                "id": "apply",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "cases.summarize-apply",
+                  "event": {
+                    "item": "{{ item }}",
+                    "answer": "{{ steps.ai }}"
+                  }
+                }
+              },
+              {
+                "id": "keep",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "cases-ext.cases",
+                  "rows": [
+                    "{{ steps.apply.row }}"
+                  ]
+                }
+              },
+              {
+                "id": "contacts",
+                "kind": "action",
+                "action": "people.contacts",
+                "input": {
+                  "items": "{{ steps.apply.contacts }}"
+                }
+              },
+              {
+                "id": "parties",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "cases.summarize-parties",
+                  "event": {
+                    "caseId": "{{ item.id }}",
+                    "ids": "{{ steps.contacts.ids }}",
+                    "parties": "{{ steps.apply.parties }}"
+                  }
+                }
+              },
+              {
+                "id": "keepParties",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "cases-ext.parties",
+                  "rows": "{{ steps.parties.rows }}"
+                }
+              }
+            ]
+          }
+        ],
+        "output": {
+          "summed": "{{ steps.plan.items | count }}"
+        },
+        "requested": {
+          "ai": true,
+          "api": true,
+          "store": [
+            "cases-ext.cases",
+            "cases-ext.parties"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 60,
+            "from": "07:00",
+            "to": "21:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Move a case on by its payments",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.settle",
+        "title": "Move a case on by its payments",
+        "description": "When the payments to a case change (a booking matched, a payment todo ticked off, one taken back): its next due and whether it is done follow.",
+        "inputs": [
+          {
+            "name": "ref",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "settle",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.settle",
+              "event": {
+                "ref": "{{ input.ref }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.cases",
+              "rows": "{{ steps.settle.rows }}"
+            }
+          }
+        ],
+        "output": "{{ steps.keep }}",
+        "requested": {
+          "store": [
+            "cases-ext.cases"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "event",
+            "event": "ledger.changed",
+            "name": "case"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Match the bank's bookings",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.match",
+        "title": "Match the bank's bookings",
+        "description": "Your payments out not matched yet: to an open todo's transfer and its case (the todo done, the case's payment booked), a payment you ticked off confirmed, one read twice counted once — and what one without todo or case pays anyway.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.match-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "kept",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.bank",
+              "rows": "{{ steps.plan.bankRows }}"
+            }
+          },
+          {
+            "id": "confirms",
+            "kind": "foreach",
+            "items": "{{ steps.plan.confirms }}",
+            "as": "c",
+            "nodes": [
+              {
+                "id": "confirm",
+                "kind": "action",
+                "action": "money.confirm",
+                "input": {
+                  "paymentId": "{{ c.paymentId }}",
+                  "tx": "{{ c.tx }}",
+                  "label": "{{ c.label }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "pays",
+            "kind": "foreach",
+            "items": "{{ steps.plan.pays }}",
+            "as": "p",
+            "nodes": [
+              {
+                "id": "pay",
+                "kind": "action",
+                "action": "money.pay",
+                "input": {
+                  "key": "{{ p.key }}",
+                  "date": "{{ p.date }}",
+                  "amount": "{{ p.amount }}",
+                  "label": "{{ p.label }}",
+                  "source": "bank",
+                  "tx": "{{ p.tx }}",
+                  "allocate": "{{ p.allocate }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "dones",
+            "kind": "foreach",
+            "items": "{{ steps.plan.dones }}",
+            "as": "d",
+            "nodes": [
+              {
+                "id": "done",
+                "kind": "action",
+                "action": "todos.done",
+                "input": {
+                  "id": "{{ d.id }}",
+                  "note": "{{ d.note }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "evidence",
+            "kind": "foreach",
+            "items": "{{ steps.plan.evidence }}",
+            "as": "e",
+            "nodes": [
+              {
+                "id": "settle",
+                "kind": "action",
+                "action": "money.settle",
+                "input": {
+                  "evidence": "{{ e.evidence }}"
+                }
+              },
+              {
+                "id": "row",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "cases.match-evidence",
+                  "event": {
+                    "tx": "{{ e.tx }}",
+                    "settled": "{{ steps.settle.settled }}"
+                  }
+                }
+              },
+              {
+                "id": "keep",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "cases-ext.bank",
+                  "rows": "{{ steps.row.rows }}"
+                }
+              }
+            ]
+          }
+        ],
+        "output": {
+          "matched": "{{ steps.plan.matched }}"
+        },
+        "requested": {
+          "money": true,
+          "todos": true,
+          "store": [
+            "cases-ext.bank"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 60,
+            "from": "07:00",
+            "to": "21:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Warn before a plan lapses",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.warn",
+        "title": "Warn before a plan lapses",
+        "description": "An instalment ten days late, with nothing paid since it was due: a todo to pay it (once), with the transfer on it — before the payment plan lapses.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.warn-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "{{ steps.plan.warnings }}",
+            "as": "w",
+            "nodes": [
+              {
+                "id": "todo",
+                "kind": "action",
+                "action": "todos.add",
+                "input": {
+                  "text": "{{ w.text }}",
+                  "due": "{{ w.today }}",
+                  "ops": "{{ w.ops }}"
+                }
+              },
+              {
+                "id": "keep",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "cases-ext.warnings",
+                  "rows": [
+                    {
+                      "case_id": "{{ w.caseId }}",
+                      "due": "{{ w.due }}",
+                      "todo_id": "{{ steps.todo.id }}",
+                      "at": "{{ env.now }}"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "output": {
+          "warned": "{{ steps.plan.warnings | count }}"
+        },
+        "requested": {
+          "todos": true,
+          "store": [
+            "cases-ext.warnings"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "at": "08:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change a case",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.set",
+        "title": "Change a case",
+        "description": "A case's status (open, closed, not a case) or your note, as you set it on its page.",
+        "inputs": [
+          {
+            "name": "case",
+            "type": "number",
+            "required": true
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "note",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "row",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.set-row",
+              "event": {
+                "case": "{{ input.case }}",
+                "status": "{{ input.status }}",
+                "note": "{{ input.note }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.cases",
+              "rows": "{{ steps.row.rows }}"
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "cases-ext.cases"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Choose a case's party",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "cases.set-party",
+        "title": "Choose a case's party",
+        "description": "Who a case is owed to, who collects it, who is paid — a contact you chose (none: taken off), or a new one made by its name.",
+        "inputs": [
+          {
+            "name": "case",
+            "type": "number",
+            "required": true
+          },
+          {
+            "name": "role",
+            "type": "text",
+            "required": true
+          },
+          {
+            "name": "personId",
+            "type": "text"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "kind",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "contact",
+            "kind": "action",
+            "action": "people.contacts",
+            "input": {
+              "items": [
+                {
+                  "name": "{{ input.name }}",
+                  "new": true,
+                  "kind": "{{ input.kind }}",
+                  "creditor": "{{ input.role == 'creditor' }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "cases.set-party-plan",
+              "event": {
+                "case": "{{ input.case }}",
+                "role": "{{ input.role }}",
+                "personId": "{{ input.personId }}",
+                "made": "{{ steps.contact.ids[0] }}"
+              }
+            }
+          },
+          {
+            "id": "put",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.parties",
+              "rows": "{{ steps.plan.put }}"
+            }
+          },
+          {
+            "id": "del",
+            "kind": "foreach",
+            "items": "{{ steps.plan.del }}",
+            "as": "w",
+            "nodes": [
+              {
+                "id": "delete",
+                "kind": "action",
+                "action": "store.delete",
+                "input": {
+                  "store": "cases-ext.parties",
+                  "where": "{{ w }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "person",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "cases-ext.cases",
+              "rows": "{{ steps.plan.cases }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true,
+          "store": [
+            "cases-ext.parties",
+            "cases-ext.cases"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

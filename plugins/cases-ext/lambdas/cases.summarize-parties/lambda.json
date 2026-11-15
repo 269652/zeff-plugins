@@ -1,0 +1,9 @@
+{
+  "name": "cases.summarize-parties",
+  "label": "Cases: a case's parties as its summary names them",
+  "what": "a case's parties as its summary names them: the contacts found or made, as rows of the parties store — what you chose stays.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

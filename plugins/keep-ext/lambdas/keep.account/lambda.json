@@ -1,0 +1,12 @@
+{
+  "name": "keep.account",
+  "label": "Google Keep: which account",
+  "what": "which account: the Google account whose Keep is read (the plugin's setting), and what the sync says when the automation Chrome isn't running.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 60000,
+  "memoryMb": 256,
+  "secrets": [
+    "ACCOUNT"
+  ]
+}

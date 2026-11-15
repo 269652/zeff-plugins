@@ -3,11 +3,14 @@
   "id": "whatsapp-ext",
   "name": "WhatsApp",
   "version": "1.0.0",
-  "description": "Reads your WhatsApp chats' latest messages into Zeff from WhatsApp Web in the account's automation Chrome — no chat opened, nothing marked read. Replies are sent from Zeff on your click.",
+  "description": "Reads your WhatsApp chats' messages into Zeff from WhatsApp Web in the account's automation Chrome — no chat opened, nothing marked read. Replies and a chat's history go through the same scraper. Its scraper is a lambda you (or the AI) can mend when WhatsApp Web changes.",
   "author": "Zeff",
   "apiVersion": 1,
-  "permissions": [],
+  "permissions": [
+    "exec"
+  ],
   "contributes": {
+    "lambdas": "lambdas",
     "workspacePackages": [
       "whatsapp.package.json"
     ]

@@ -1,0 +1,9 @@
+{
+  "name": "cases.set-row",
+  "label": "Cases: a case changed by you",
+  "what": "a case changed by you: its status (open, closed, not a case) or your note.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}
