@@ -1,0 +1,289 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "finances-ext",
+  "name": "Finances",
+  "version": "0.1.0",
+  "description": "Your debts and what you are owed: the Kennzahlen of the debts database — what you owe, what you are owed, the instalments a month, months until debt-free. Slice 1 of the port: the rest of Finances (income, spending, formulas, widgets, the overviews) is still the built-in's.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "sources": [
+      {
+        "id": "recurring",
+        "label": "Recurring payments",
+        "icon": "🔁",
+        "hint": "What goes out regularly to the same recipient — contracts and subscriptions read off your bank statements.",
+        "lambda": "finances.recurring",
+        "replaces": "recurring",
+        "noNewRows": true,
+        "lockedFields": [
+          "ctrmonthly",
+          "ctramount",
+          "ctrrhythm",
+          "ctrlast",
+          "ctrnext"
+        ]
+      }
+    ],
+    "widgets": [
+      {
+        "id": "payments",
+        "label": "Payments coming up",
+        "icon": "📆",
+        "description": "The instalments and payments of your debts (or what comes back to you) in the next weeks — the overdue first, each leading to its debt.",
+        "size": "half",
+        "ttl": 60,
+        "replaces": "finances.payments",
+        "lambda": "finances.widget-payments",
+        "settings": [
+          {
+            "key": "dir",
+            "label": "Whose",
+            "kind": "select",
+            "default": "owe",
+            "options": [
+              {
+                "value": "owe",
+                "label": "What I owe"
+              },
+              {
+                "value": "owed",
+                "label": "What I am owed"
+              }
+            ]
+          },
+          {
+            "key": "days",
+            "label": "Days ahead",
+            "kind": "number",
+            "default": 45,
+            "min": 1,
+            "max": 365
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "kind": "number",
+            "default": 8,
+            "min": 1,
+            "max": 30
+          }
+        ]
+      },
+      {
+        "id": "cashflow",
+        "label": "Cashflow ahead",
+        "icon": "📈",
+        "description": "Your account in the next weeks: income, fixed costs, subscriptions, instalments and payments ahead — the balance week by week and the first day it drops below zero (or your buffer).",
+        "size": "full",
+        "ttl": 300,
+        "replaces": "finances.cashflow",
+        "lambda": "finances.widget-cashflow",
+        "settings": [
+          {
+            "key": "balance",
+            "label": "Balance today (empty: only the net a month)",
+            "kind": "text",
+            "default": ""
+          },
+          {
+            "key": "buffer",
+            "label": "Buffer (warn below)",
+            "kind": "number",
+            "default": 0,
+            "min": 0,
+            "max": 100000
+          },
+          {
+            "key": "days",
+            "label": "Days ahead",
+            "kind": "number",
+            "default": 90,
+            "min": 14,
+            "max": 180
+          }
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "id": "owe-open",
+        "label": "Schuldenstand (Plugin)",
+        "unit": "€",
+        "what": "What you owe in all, still open",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owe-open"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owe-count",
+        "label": "Offene Schulden (Plugin)",
+        "unit": "",
+        "what": "How many debts are still open",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owe-count"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "rates",
+        "label": "Tilgungsrate (Plugin)",
+        "unit": "€/Monat",
+        "what": "The instalments you pay a month (the plans running now)",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "rates"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "free-in",
+        "label": "Schuldenfrei in (Plugin)",
+        "unit": "Monate",
+        "what": "Months until the last debt with a plan is paid off",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "free-in"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owe-unplanned",
+        "label": "Schulden ohne Plan (Plugin)",
+        "unit": "€",
+        "what": "What you owe without a payment plan",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owe-unplanned"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owed-open",
+        "label": "Forderungen (Plugin)",
+        "unit": "€",
+        "what": "What others owe you, still open",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owed-open"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owed-count",
+        "label": "Offene Forderungen (Plugin)",
+        "unit": "",
+        "what": "How many debts others have with you, still open",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owed-count"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owed-rates",
+        "label": "Rückzahlungen (Plugin)",
+        "unit": "€/Monat",
+        "what": "What comes back to you a month",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owed-rates"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owed-free-in",
+        "label": "Alles zurück in (Plugin)",
+        "unit": "Monate",
+        "what": "Months until the last debt to you with a plan is paid back",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owed-free-in"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "owed-unplanned",
+        "label": "Forderungen ohne Plan (Plugin)",
+        "unit": "€",
+        "what": "What you are owed without a payment plan",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "owed-unplanned"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "income",
+        "label": "Nettoeinkommen (Plugin)",
+        "unit": "€/Monat",
+        "what": "Your net income a month (set by hand, or read off your statements)",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "income"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "spending",
+        "label": "Ausgaben (Plugin)",
+        "unit": "€/Monat",
+        "what": "What was spent a month — the last three whole months of your bank statements, on average",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "spending"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "credit",
+        "label": "Auf Kreditkonten (Plugin)",
+        "unit": "€/Monat",
+        "what": "What went to the accounts you marked as credit accounts a month",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "credit"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "free-monthly",
+        "label": "Frei im Monat (Plugin)",
+        "unit": "€/Monat",
+        "what": "What is left of your income after the instalments and the fixed costs",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "free-monthly"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "savings-rate",
+        "label": "Sparquote (Plugin)",
+        "unit": "%",
+        "what": "Of your income, the part that didn't go out",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "savings-rate"
+        },
+        "everyMinutes": 15
+      },
+      {
+        "id": "debt-service-rate",
+        "label": "Schuldendienstquote (Plugin)",
+        "unit": "%",
+        "what": "Of your income, the part the instalments take",
+        "lambda": "finances.metric",
+        "args": {
+          "which": "debt-service-rate"
+        },
+        "everyMinutes": 15
+      }
+    ]
+  }
+}

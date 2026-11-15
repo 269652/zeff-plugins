@@ -1,0 +1,11 @@
+{
+  "name": "notion.pull",
+  "label": "Notion: what changed",
+  "what": "What changed in Notion since the last sync, as a plan for the flow notion.pull: pages, databases and rows to make or change (in Zeff's terms, parents first), the ones moved to Notion's trash. { ops, cursor, more, checked, message }.",
+  "kind": "function",
+  "secrets": ["NOTION_TOKEN"],
+  "web": ["api.notion.com"],
+  "zeff": ["store.query"],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

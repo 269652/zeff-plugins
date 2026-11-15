@@ -1,0 +1,1003 @@
+{
+  "format": 1,
+  "id": "notion-ext",
+  "version": "1.0.0",
+  "name": "Notion",
+  "description": "Your Notion workspace in Zeff, both ways: pages, databases and rows under the page My Notion, kept in step a few seconds after either side changes.",
+  "icon": "📓",
+  "localize": false,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Notion",
+      "icon": "🔄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Your Notion pages, databases and rows are kept in step with the page My Notion (below this one): what changes in Notion comes in within about 15 seconds, what you change in Zeff goes to Notion a few seconds after you stop typing."
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Setting it up"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "1. In Notion: Settings → Connections → Develop or manage integrations → New integration (internal). Copy its secret."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "2. In Zeff: Menu → Plugins → Notion → ⚙️ Settings: paste the secret as Notion token."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "3. In Notion: open each top page you want in Zeff → ••• → Connections → add your integration. Its sub-pages and databases come along."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "4. Optional: a Notion page as the place for pages you make right under My Notion in Zeff (setting “New pages from Zeff go to”). Without it, pages you make under synced pages still go to Notion."
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "What is kept"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Text with headings, lists, to-dos, toggles, quotes, callouts, code, equations, tables, columns, dividers, pictures (kept in Zeff — Notion's links expire), sub-pages and databases with their rows and fields. What only Zeff has (widgets, code cells, mentions of todos) stays in Zeff; what only Notion has (bookmarks, embeds, synced blocks, files) shows in Zeff as a link to it in Notion and stays in Notion as long as you leave that line as it is."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "The two flows below do the work — open them to see each run (Studio → Flows)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "My Notion",
+      "icon": "📓",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Everything below this page is kept in step with Notion."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Sync from Notion",
+      "icon": "⬇️",
+      "flow": {
+        "name": "notion.pull",
+        "title": "Sync from Notion",
+        "description": "What changed in Notion comes into Zeff: new and changed pages, databases and rows (under the page My Notion), merged with what you wrote in Zeff meanwhile; what Notion moved to its trash goes to Zeff's. Asked every 15 seconds whether there is anything (one small request), run only then — and every 5 minutes anyway.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "notion.pull",
+              "event": {}
+            }
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "steps.plan.ops",
+            "as": "op",
+            "max": 1000,
+            "nodes": [
+              {
+                "id": "par",
+                "kind": "if",
+                "when": "op.parentNotion",
+                "then": [
+                  {
+                    "id": "pq",
+                    "kind": "action",
+                    "action": "store.query",
+                    "input": {
+                      "store": "notion-ext.links",
+                      "where": {
+                        "notion_id": "{{ op.parentNotion }}"
+                      },
+                      "limit": 1
+                    }
+                  },
+                  {
+                    "id": "ps",
+                    "kind": "set",
+                    "vars": {
+                      "parent": "{{ steps.pq.rows[0].zeff_id | default('@notion-ext.i2') }}"
+                    }
+                  }
+                ],
+                "else": [
+                  {
+                    "id": "pr",
+                    "kind": "set",
+                    "vars": {
+                      "parent": "@notion-ext.i2"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "which",
+                "kind": "switch",
+                "on": "op.op",
+                "cases": [
+                  {
+                    "value": "page.create",
+                    "nodes": [
+                      {
+                        "id": "mk",
+                        "kind": "action",
+                        "action": "meta.run",
+                        "input": {
+                          "op": "page.create",
+                          "args": {
+                            "title": "{{ op.title | default('Untitled') }}",
+                            "icon": "{{ op.icon }}",
+                            "cover": "{{ op.cover }}",
+                            "parent": "{{ vars.parent }}",
+                            "doc": "{{ op.doc }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "mkl",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": "{{ op.rows }}"
+                        }
+                      },
+                      {
+                        "id": "mkz",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": [
+                            {
+                              "notion_id": "{{ op.notion }}",
+                              "zeff_id": "{{ steps.mk.id }}"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "mkp",
+                        "kind": "if",
+                        "when": "op.pictures",
+                        "then": [
+                          {
+                            "id": "mkpk",
+                            "kind": "action",
+                            "action": "files.keep-page",
+                            "input": {
+                              "page": "{{ steps.mk.id }}"
+                            }
+                          }
+                        ],
+                        "else": []
+                      }
+                    ]
+                  },
+                  {
+                    "value": "page.update",
+                    "nodes": [
+                      {
+                        "id": "pu",
+                        "kind": "action",
+                        "action": "meta.run",
+                        "input": {
+                          "op": "page.update",
+                          "args": {
+                            "id": "{{ op.zeff }}",
+                            "title": "{{ op.title | default('Untitled') }}",
+                            "icon": "{{ op.icon }}",
+                            "cover": "{{ op.cover }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "pum",
+                        "kind": "if",
+                        "when": "op.parentNotion",
+                        "then": [
+                          {
+                            "id": "pmv",
+                            "kind": "action",
+                            "action": "meta.run",
+                            "input": {
+                              "op": "page.update",
+                              "args": {
+                                "id": "{{ op.zeff }}",
+                                "parent": "{{ vars.parent }}"
+                              }
+                            }
+                          }
+                        ],
+                        "else": []
+                      },
+                      {
+                        "id": "pccur",
+                        "kind": "action",
+                        "action": "meta.read",
+                        "input": {
+                          "op": "page.read",
+                          "args": {
+                            "id": "{{ op.zeff }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "pcmg",
+                        "kind": "action",
+                        "action": "lambda.invoke",
+                        "input": {
+                          "name": "notion.merge",
+                          "event": {
+                            "current": "{{ steps.pccur.doc }}",
+                            "base": "{{ op.base }}",
+                            "theirs": "{{ op.theirs }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "pcw",
+                        "kind": "if",
+                        "when": "not steps.pcmg.same",
+                        "then": [
+                          {
+                            "id": "pcdoc",
+                            "kind": "action",
+                            "action": "meta.run",
+                            "input": {
+                              "op": "page.update",
+                              "args": {
+                                "id": "{{ op.zeff }}",
+                                "doc": "{{ steps.pcmg.doc }}"
+                              }
+                            }
+                          }
+                        ],
+                        "else": []
+                      },
+                      {
+                        "id": "pcl",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": "{{ op.rows }}"
+                        }
+                      },
+                      {
+                        "id": "pcb",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": [
+                            {
+                              "notion_id": "{{ op.notion }}",
+                              "base": "{{ steps.pcmg.base | json }}"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "pup",
+                        "kind": "if",
+                        "when": "op.pictures",
+                        "then": [
+                          {
+                            "id": "pupk",
+                            "kind": "action",
+                            "action": "files.keep-page",
+                            "input": {
+                              "page": "{{ op.zeff }}"
+                            }
+                          }
+                        ],
+                        "else": []
+                      }
+                    ]
+                  },
+                  {
+                    "value": "database.create",
+                    "nodes": [
+                      {
+                        "id": "dm",
+                        "kind": "action",
+                        "action": "meta.run",
+                        "input": {
+                          "op": "database.create",
+                          "args": {
+                            "title": "{{ op.title }}",
+                            "icon": "{{ op.icon }}",
+                            "parent": "{{ vars.parent }}",
+                            "titleName": "{{ op.titleName }}",
+                            "properties": "{{ op.properties }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "dml",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": "{{ op.rows }}"
+                        }
+                      },
+                      {
+                        "id": "dmz",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": [
+                            {
+                              "notion_id": "{{ op.notion }}",
+                              "zeff_id": "{{ steps.dm.id }}"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "value": "database.update",
+                    "nodes": [
+                      {
+                        "id": "du",
+                        "kind": "action",
+                        "action": "meta.run",
+                        "input": {
+                          "op": "page.update",
+                          "args": {
+                            "id": "{{ op.zeff }}",
+                            "title": "{{ op.title }}",
+                            "icon": "{{ op.icon }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "dua",
+                        "kind": "if",
+                        "when": "op.alter.length > 0",
+                        "then": [
+                          {
+                            "id": "dal",
+                            "kind": "action",
+                            "action": "meta.run",
+                            "input": {
+                              "op": "database.alter",
+                              "args": {
+                                "database": "{{ op.zeff }}",
+                                "ops": "{{ op.alter }}"
+                              }
+                            }
+                          }
+                        ],
+                        "else": []
+                      },
+                      {
+                        "id": "dul",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": "{{ op.rows }}"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "value": "row.create",
+                    "nodes": [
+                      {
+                        "id": "rq",
+                        "kind": "action",
+                        "action": "store.query",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "where": {
+                            "notion_id": "{{ op.database }}"
+                          },
+                          "limit": 1
+                        }
+                      },
+                      {
+                        "id": "ra",
+                        "kind": "action",
+                        "action": "db.add",
+                        "input": {
+                          "database": "{{ steps.rq.rows[0].zeff_id }}",
+                          "title": "{{ op.title | default('Untitled') }}",
+                          "values": "{{ op.values }}"
+                        }
+                      },
+                      {
+                        "id": "rc",
+                        "kind": "if",
+                        "when": "not op.empty or op.icon",
+                        "then": [
+                          {
+                            "id": "rcd",
+                            "kind": "action",
+                            "action": "meta.run",
+                            "input": {
+                              "op": "page.update",
+                              "args": {
+                                "id": "{{ steps.ra.id }}",
+                                "icon": "{{ op.icon }}",
+                                "doc": "{{ op.doc }}"
+                              }
+                            }
+                          }
+                        ],
+                        "else": []
+                      },
+                      {
+                        "id": "ral",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": "{{ op.rows }}"
+                        }
+                      },
+                      {
+                        "id": "raz",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": [
+                            {
+                              "notion_id": "{{ op.notion }}",
+                              "zeff_id": "{{ steps.ra.id }}"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "rap",
+                        "kind": "if",
+                        "when": "op.pictures",
+                        "then": [
+                          {
+                            "id": "rapk",
+                            "kind": "action",
+                            "action": "files.keep-page",
+                            "input": {
+                              "page": "{{ steps.ra.id }}"
+                            }
+                          }
+                        ],
+                        "else": []
+                      }
+                    ]
+                  },
+                  {
+                    "value": "row.update",
+                    "nodes": [
+                      {
+                        "id": "ru",
+                        "kind": "action",
+                        "action": "db.update",
+                        "input": {
+                          "row": "{{ op.zeff }}",
+                          "title": "{{ op.title | default('Untitled') }}",
+                          "values": "{{ op.values }}"
+                        }
+                      },
+                      {
+                        "id": "rui",
+                        "kind": "action",
+                        "action": "meta.run",
+                        "input": {
+                          "op": "page.update",
+                          "args": {
+                            "id": "{{ op.zeff }}",
+                            "icon": "{{ op.icon }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "ruc",
+                        "kind": "if",
+                        "when": "op.contentChanged",
+                        "then": [
+                          {
+                            "id": "rmcur",
+                            "kind": "action",
+                            "action": "meta.read",
+                            "input": {
+                              "op": "page.read",
+                              "args": {
+                                "id": "{{ op.zeff }}"
+                              }
+                            }
+                          },
+                          {
+                            "id": "rmmg",
+                            "kind": "action",
+                            "action": "lambda.invoke",
+                            "input": {
+                              "name": "notion.merge",
+                              "event": {
+                                "current": "{{ steps.rmcur.doc }}",
+                                "base": "{{ op.base }}",
+                                "theirs": "{{ op.theirs }}"
+                              }
+                            }
+                          },
+                          {
+                            "id": "rmw",
+                            "kind": "if",
+                            "when": "not steps.rmmg.same",
+                            "then": [
+                              {
+                                "id": "rmdoc",
+                                "kind": "action",
+                                "action": "meta.run",
+                                "input": {
+                                  "op": "page.update",
+                                  "args": {
+                                    "id": "{{ op.zeff }}",
+                                    "doc": "{{ steps.rmmg.doc }}"
+                                  }
+                                }
+                              }
+                            ],
+                            "else": []
+                          },
+                          {
+                            "id": "rml",
+                            "kind": "action",
+                            "action": "store.put",
+                            "input": {
+                              "store": "notion-ext.links",
+                              "rows": "{{ op.rows }}"
+                            }
+                          },
+                          {
+                            "id": "rmb",
+                            "kind": "action",
+                            "action": "store.put",
+                            "input": {
+                              "store": "notion-ext.links",
+                              "rows": [
+                                {
+                                  "notion_id": "{{ op.notion }}",
+                                  "base": "{{ steps.rmmg.base | json }}"
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "else": [
+                          {
+                            "id": "rul",
+                            "kind": "action",
+                            "action": "store.put",
+                            "input": {
+                              "store": "notion-ext.links",
+                              "rows": "{{ op.rows }}"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "rup",
+                        "kind": "if",
+                        "when": "op.pictures",
+                        "then": [
+                          {
+                            "id": "rupk",
+                            "kind": "action",
+                            "action": "files.keep-page",
+                            "input": {
+                              "page": "{{ op.zeff }}"
+                            }
+                          }
+                        ],
+                        "else": []
+                      }
+                    ]
+                  },
+                  {
+                    "value": "archive",
+                    "nodes": [
+                      {
+                        "id": "ar",
+                        "kind": "action",
+                        "action": "meta.run",
+                        "input": {
+                          "op": "page.archive",
+                          "args": {
+                            "id": "{{ op.zeff }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "ard",
+                        "kind": "action",
+                        "action": "store.delete",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "where": {
+                            "notion_id": "{{ op.notion }}"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "value": "unlink",
+                    "nodes": [
+                      {
+                        "id": "ul",
+                        "kind": "action",
+                        "action": "store.delete",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "where": {
+                            "notion_id": "{{ op.notion }}"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "value": "link",
+                    "nodes": [
+                      {
+                        "id": "lk",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "notion-ext.links",
+                          "rows": "{{ op.rows }}"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "default": []
+              }
+            ]
+          },
+          {
+            "id": "st",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "notion-ext.state",
+              "rows": [
+                {
+                  "name": "cursor",
+                  "value": "{{ steps.plan.cursor }}"
+                },
+                {
+                  "name": "more",
+                  "value": "{{ if(steps.plan.more, '1', '0') }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "chk",
+            "kind": "if",
+            "when": "steps.plan.checked",
+            "then": [
+              {
+                "id": "chs",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "notion-ext.state",
+                  "rows": [
+                    {
+                      "name": "checked_at",
+                      "value": "{{ env.now }}"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.plan.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "notion-ext.links",
+            "notion-ext.state"
+          ],
+          "meta": [
+            "pages",
+            "pages-read",
+            "databases"
+          ],
+          "web": [
+            "*"
+          ],
+          "maxSteps": 20000
+        },
+        "triggers": [
+          {
+            "kind": "watch",
+            "lambda": "notion.watch",
+            "everySeconds": 15
+          },
+          {
+            "kind": "schedule",
+            "everyMinutes": 5
+          }
+        ],
+        "sync": {
+          "label": "Notion",
+          "what": "Your Notion pages, databases and rows shared with the integration — both ways, close to live"
+        }
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Sync to Notion",
+      "icon": "⬆️",
+      "flow": {
+        "name": "notion.push",
+        "title": "Sync to Notion",
+        "description": "What you change in Zeff under the page My Notion goes to Notion a few seconds after you stop typing: new pages, databases and rows, titles, icons, covers, a row's values, the blocks of a page's text that changed; moved to Zeff's trash, moved to Notion's.",
+        "inputs": [
+          {
+            "name": "page",
+            "type": "number"
+          },
+          {
+            "name": "event",
+            "type": "text"
+          },
+          {
+            "name": "field",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "pg",
+            "kind": "action",
+            "action": "meta.read",
+            "input": {
+              "op": "page.read",
+              "args": {
+                "id": "{{ input.page }}"
+              }
+            }
+          },
+          {
+            "id": "root",
+            "kind": "action",
+            "action": "meta.read",
+            "input": {
+              "op": "page.read",
+              "args": {
+                "id": "@notion-ext.i2"
+              }
+            }
+          },
+          {
+            "id": "sch",
+            "kind": "if",
+            "when": "steps.pg.kind == 'database' or steps.pg.database",
+            "then": [
+              {
+                "id": "sc",
+                "kind": "action",
+                "action": "meta.read",
+                "input": {
+                  "op": "schema",
+                  "args": {
+                    "database": "{{ steps.pg.database | default(steps.pg.id) }}"
+                  }
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "w",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "notion.push",
+              "event": {
+                "page": "{{ steps.pg }}",
+                "schema": "{{ steps.sc }}",
+                "root": "{{ steps.root.id }}",
+                "event": "{{ input.event }}",
+                "field": "{{ input.field }}"
+              }
+            }
+          },
+          {
+            "id": "put",
+            "kind": "if",
+            "when": "steps.w.put.length > 0",
+            "then": [
+              {
+                "id": "p1",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "notion-ext.links",
+                  "rows": "{{ steps.w.put }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "rm",
+            "kind": "foreach",
+            "items": "steps.w.remove",
+            "as": "id",
+            "max": 100,
+            "nodes": [
+              {
+                "id": "d1",
+                "kind": "action",
+                "action": "store.delete",
+                "input": {
+                  "store": "notion-ext.links",
+                  "where": {
+                    "notion_id": "{{ id }}"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.w.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "notion-ext.links"
+          ],
+          "meta": [
+            "pages-read",
+            "read"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "event",
+            "event": "page.added",
+            "under": "@notion-ext.i2",
+            "settle": 3
+          },
+          {
+            "kind": "event",
+            "event": "page.changed",
+            "under": "@notion-ext.i2",
+            "settle": 3
+          },
+          {
+            "kind": "event",
+            "event": "page.removed",
+            "under": "@notion-ext.i2",
+            "settle": 3
+          },
+          {
+            "kind": "event",
+            "event": "row.added",
+            "under": "@notion-ext.i2",
+            "settle": 3
+          },
+          {
+            "kind": "event",
+            "event": "row.changed",
+            "under": "@notion-ext.i2",
+            "settle": 3
+          },
+          {
+            "kind": "event",
+            "event": "row.removed",
+            "under": "@notion-ext.i2",
+            "settle": 3
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "Notion": "Notion",
+  "Your Notion workspace in the Workspace, both ways and close to live: the pages, databases and rows you share with your Notion integration come in under the page My Notion, and what you change on either side reaches the other within seconds — text with its blocks, titles, icons, covers, a row's fields. Use Zeff in place of Notion, or beside it. What only one side can show stays there.": "Tu espacio de Notion en el Workspace, en ambos sentidos y casi en directo: las páginas, bases de datos y filas que compartes con tu integración de Notion llegan bajo la página «My Notion», y lo que cambias en un lado llega al otro en segundos: el texto con sus bloques, títulos, iconos, portadas, los campos de una fila. Usa Zeff en lugar de Notion, o junto a él. Lo que solo un lado puede mostrar se queda allí.",
+  "Notion token": "Token de Notion",
+  "Your integration's secret: in Notion, Settings → Connections → Develop or manage integrations → New integration (internal) → copy the secret. Then share the pages you want in Zeff with it (a page's ••• → Connections).": "El secreto de tu integración: en Notion, Configuración → Conexiones → Desarrollar o gestionar integraciones → Nueva integración (interna) → copia el secreto. Luego comparte con ella las páginas que quieras en Zeff (••• de una página → Conexiones).",
+  "New pages from Zeff go to": "Las páginas nuevas de Zeff van a",
+  "Optional: a Notion page's link — pages you make right under My Notion in Zeff are made there (shared with the integration). Pages you make below synced pages go next to them in Notion anyway.": "Opcional: el enlace de una página de Notion: las páginas que creas en Zeff justo bajo «My Notion» se crean allí (compartida con la integración). Las que creas bajo páginas sincronizadas van junto a ellas en Notion de todos modos.",
+  "Sync from Notion": "Sincronizar desde Notion",
+  "Sync to Notion": "Sincronizar con Notion",
+  "What changed in Notion comes into Zeff: new and changed pages, databases and rows (under the page My Notion), merged with what you wrote in Zeff meanwhile; what Notion moved to its trash goes to Zeff's. Asked every 15 seconds whether there is anything (one small request), run only then — and every 5 minutes anyway.": "Lo que cambió en Notion llega a Zeff: páginas, bases de datos y filas nuevas y cambiadas (bajo la página «My Notion»), combinadas con lo que escribiste en Zeff entretanto; lo que Notion movió a su papelera va a la de Zeff. Cada 15 segundos pregunta si hay algo (una petición pequeña) y solo entonces se ejecuta; y cada 5 minutos de todos modos.",
+  "What you change in Zeff under the page My Notion goes to Notion a few seconds after you stop typing: new pages, databases and rows, titles, icons, covers, a row's values, the blocks of a page's text that changed; moved to Zeff's trash, moved to Notion's.": "Lo que cambias en Zeff bajo la página «My Notion» va a Notion unos segundos después de que dejes de escribir: páginas, bases de datos y filas nuevas, títulos, iconos, portadas, los valores de una fila, los bloques del texto que cambiaron; movido a la papelera de Zeff, va a la de Notion.",
+  "Your Notion pages, databases and rows shared with the integration — both ways, close to live": "Tus páginas, bases de datos y filas de Notion compartidas con la integración, en ambos sentidos y casi en directo",
+  "Notion sync": "Sincronización de Notion",
+  "Notion: what changed": "Notion: qué cambió",
+  "Notion: anything new?": "Notion: ¿algo nuevo?",
+  "Notion: merge a page": "Notion: combinar una página",
+  "Notion: write a page": "Notion: escribir una página"
+}

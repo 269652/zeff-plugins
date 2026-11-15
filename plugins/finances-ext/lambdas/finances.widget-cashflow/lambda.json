@@ -1,0 +1,16 @@
+{
+  "name": "finances.widget-cashflow",
+  "label": "Finances: the cashflow ahead",
+  "what": "The widget's list: your account in the next weeks — what comes in regularly, the fixed costs, subscriptions, instalments and payments — the balance week by week and the first day it drops below zero (or your buffer).",
+  "kind": "function",
+  "zeff": [
+    "zeff.places",
+    "db.cells",
+    "people.names",
+    "pref.get",
+    "bank.bookings",
+    "workspace.value-sources"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

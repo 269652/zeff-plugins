@@ -1,0 +1,10 @@
+{
+  "name": "notion.watch",
+  "label": "Notion: anything new?",
+  "what": "Asked every few seconds by the flow notion.pull's watch trigger: whether Notion has something newer than the last sync (one small request). { changed, token }.",
+  "kind": "function",
+  "secrets": ["NOTION_TOKEN"],
+  "web": ["api.notion.com"],
+  "zeff": ["store.query"],
+  "timeoutMs": 15000
+}

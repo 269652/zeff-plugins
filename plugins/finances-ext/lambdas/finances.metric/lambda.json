@@ -1,0 +1,15 @@
+{
+  "name": "finances.metric",
+  "label": "Finances: a debt Kennzahl",
+  "what": "One of the debt Kennzahlen (event.which): what you owe or are owed, how many debts, the instalments a month, months until debt-free, what has no plan — from the debts database with the built-in's own plans.",
+  "kind": "function",
+  "zeff": [
+    "zeff.places",
+    "db.cells",
+    "pref.get",
+    "bank.bookings",
+    "workspace.value"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

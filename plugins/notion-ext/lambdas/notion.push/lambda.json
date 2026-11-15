@@ -1,0 +1,11 @@
+{
+  "name": "notion.push",
+  "label": "Notion: write a page",
+  "what": "A Zeff page as it is now, written to Notion: made there, its title, icon, cover, a row's values and only the blocks of its text that differ; moved to Notion's trash with Zeff's. { put, remove, message }.",
+  "kind": "function",
+  "secrets": ["NOTION_TOKEN", "NOTION_PARENT"],
+  "web": ["api.notion.com"],
+  "zeff": ["store.query", "files.read"],
+  "timeoutMs": 120000,
+  "memoryMb": 512
+}

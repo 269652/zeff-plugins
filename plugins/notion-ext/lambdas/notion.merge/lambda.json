@@ -1,0 +1,8 @@
+{
+  "name": "notion.merge",
+  "label": "Notion: merge a page",
+  "what": "A Zeff page's text and Notion's new version of it merged against how it was at the last sync — what only Zeff has stays. { doc, base, same }.",
+  "kind": "function",
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "notion-ext",
+  "name": "Notion",
+  "version": "1.0.0",
+  "description": "Your Notion workspace in the Workspace, both ways and close to live: the pages, databases and rows you share with your Notion integration come in under the page My Notion, and what you change on either side reaches the other within seconds — text with its blocks, titles, icons, covers, a row's fields. Use Zeff in place of Notion, or beside it. What only one side can show stays there.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": ["notion.package.json"],
+    "locales": { "de": "i18n/de.json", "es": "i18n/es.json" },
+    "settings": [
+      {
+        "key": "NOTION_TOKEN",
+        "label": "Notion token",
+        "kind": "secret",
+        "required": true,
+        "help": "Your integration's secret: in Notion, Settings → Connections → Develop or manage integrations → New integration (internal) → copy the secret. Then share the pages you want in Zeff with it (a page's ••• → Connections)."
+      },
+      {
+        "key": "NOTION_PARENT",
+        "label": "New pages from Zeff go to",
+        "kind": "text",
+        "help": "Optional: a Notion page's link — pages you make right under My Notion in Zeff are made there (shared with the integration). Pages you make below synced pages go next to them in Notion anyway."
+      }
+    ],
+    "stores": [
+      {
+        "name": "links",
+        "key": "notion_id",
+        "columns": [
+          { "name": "notion_id", "type": "text" },
+          { "name": "kind", "type": "text" },
+          { "name": "zeff_id", "type": "integer" },
+          { "name": "parent", "type": "text" },
+          { "name": "edited", "type": "text" },
+          { "name": "nhash", "type": "text" },
+          { "name": "vhash", "type": "text" },
+          { "name": "snap", "type": "text" },
+          { "name": "base", "type": "text" },
+          { "name": "props", "type": "text" },
+          { "name": "pending", "type": "integer" },
+          { "name": "title", "type": "text" },
+          { "name": "icon", "type": "text" },
+          { "name": "cover", "type": "text" },
+          { "name": "checked", "type": "text" },
+          { "name": "synced_at", "type": "text" }
+        ]
+      },
+      {
+        "name": "state",
+        "key": "name",
+        "columns": [
+          { "name": "name", "type": "text" },
+          { "name": "value", "type": "text" }
+        ]
+      }
+    ]
+  }
+}

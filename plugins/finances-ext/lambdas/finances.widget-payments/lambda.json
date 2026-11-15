@@ -1,0 +1,13 @@
+{
+  "name": "finances.widget-payments",
+  "label": "Finances: the payments coming up",
+  "what": "The widget's list: the instalments and payments of your debts (or what comes back to you) in the next weeks, the overdue first.",
+  "kind": "function",
+  "zeff": [
+    "zeff.places",
+    "db.cells",
+    "people.names"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

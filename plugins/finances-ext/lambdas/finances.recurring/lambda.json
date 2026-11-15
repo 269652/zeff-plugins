@@ -1,0 +1,14 @@
+{
+  "name": "finances.recurring",
+  "label": "Finances: the recurring payments",
+  "what": "The recurring payments of your bank statements as records: each running contract or subscription, what it costs a payment and a month, its rhythm, when last paid and next.",
+  "kind": "function",
+  "zeff": [
+    "bank.bookings",
+    "people.list",
+    "people.by-iban",
+    "pref.get"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}
