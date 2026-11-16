@@ -1,0 +1,12 @@
+{
+  "name": "news.widget",
+  "label": "News: the widget News for you",
+  "what": "The best new items for the widget, with buttons to save, like or hide them.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 256
+}

@@ -1,0 +1,12 @@
+{
+  "name": "news.today",
+  "label": "News: for the Today page",
+  "what": "How many news came in since yesterday and the best few not seen yet — what the Today page shows.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 256
+}

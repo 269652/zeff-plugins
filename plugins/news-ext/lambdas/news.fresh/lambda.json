@@ -1,0 +1,12 @@
+{
+  "name": "news.fresh",
+  "label": "News: how many came in since",
+  "what": "How many items came in since an open page loaded (the page's \"N new\").",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 256
+}

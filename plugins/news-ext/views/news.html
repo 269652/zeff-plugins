@@ -1,8 +1,17 @@
-<state name="view" value="foryou"/><state name="source" value=""/><state name="category" value=""/><state name="limit" value="24"/><state name="reading" value=""/><state name="ask" value=""/><state name="like" value=""/>
-<data name="news" lambda="news.screen" with="view={{ state.view }}, source={{ state.source }}, category={{ state.category }}, limit={{ state.limit }}, like={{ state.like }}"/>
+<state name="view" value="foryou"/><state name="source" value=""/><state name="category" value=""/><state name="limit" value="24"/><state name="reading" value=""/><state name="ask" value=""/><state name="like" value=""/><state name="topic" value=""/><state name="story" value=""/><state name="seenids" value=""/><state name="stream" value="1" keep=true/>
+<data name="news" lambda="news.screen" with="view={{ state.view }}, source={{ state.source }}, category={{ state.category }}, limit={{ state.limit }}, like={{ state.like }}, topic={{ state.topic }}"/>
+<data name="fresh" lambda="news.fresh" with="since={{ data.news.loadedAt }}" when="{{ data.news.loadedAt }}" every=60/>
 <data name="item" lambda="news.item" with="id={{ state.reading }}" when="{{ state.reading }}"/>
 <on event="news-changed" action="reload"/>
 <on event="pickview" action="state" state="limit" value="24"/>
+<on event="pickview" action="state" state="topic" value=""/>
+<on event="pickview" action="state" state="like" value=""/>
+<on event="topic-changed" action="state" state="limit" value="24"/>
+<on event="storyshown" run="news.act" with="op=seen, ids={{ state.story }}"/>
+<on event="storylike" run="news.act" with="op=vote, id={{ state.story }}, value=1" emit="news-changed"/>
+<on event="storysave" run="news.act" with="op=state, id={{ state.story }}, state=saved" emit="news-changed"/>
+<on event="cardseen" run="news.act" with="op=seen, ids={{ state.seenids }}"/>
+<on when="{{ data.news.items and not data.news.hasMore and not data.news.topic and data.news.view != 'discover' }}" run="news.auto-find" emit="news-changed"/>
 <on event="pickcat" action="state" state="limit" value="24"/>
 <on event="all" action="state" state="limit" value="24"/>
 <on event="pickview" action="state" state="category" value=""/>
@@ -42,7 +51,7 @@
 </row>
 </box>
 {{/if}}
-
+{{#if data.news.stories}}<stories groups="data.news.stories" bind="story" emit="storyshown" actions="storylike|🤍|More like this; storysave|🔖|Save for later" read="reading"/>{{/if}}
 {{#if data.news.taste}}
 <box tone=accent title="✨ Your taste">
 {{#if data.news.taste.text}}<text>{{ data.news.taste.text }}</text>{{#else}}<text tone=muted>{{ data.news.taste.none }}</text>{{/if}}
@@ -55,7 +64,7 @@
 </box>{{/if}}
 {{#if data.news.overview}}
 <box tone=accent>
-<row gap=2 align=center><small><b>Overview · {{ data.news.overview.ago }}</b></small></row>
+<row gap=2 align=center><small><b>Overview · {{ data.news.overview.ago }}</b></small><speak text="{{ data.news.overview.spoken }}" label="Listen to the briefing" lang="{{ data.news.voice }}"/></row>
 <text>{{ data.news.overview.text }}</text>
 {{#if data.news.overview.themes}}
 <grid cols=2 gap=2 min=260>
@@ -78,20 +87,33 @@
 </box>
 {{#else}}
 {{#if data.news.like}}<row gap=2 align=center><small><muted>More like this</muted></small><button action="state" state="like" value="" emit="news-changed" label="Back" variant=quiet/></row>{{/if}}
-<grid cols=3 gap=3 min=280>
+{{#if data.fresh.count}}<row gap=2 justify=center><button emit="news-changed" label="↑ {{ data.fresh.count }} new — show" variant=primary/></row>{{/if}}
+{{#if data.news.topic}}
+<box tone=accent>
+<row gap=2 align=center wrap=true><b>{{#if data.news.topicIsStory}}🧵 {{ data.news.topicLabel }}{{#else}}# {{ data.news.topicLabel }}{{/if}}</b><grow/>
+<button run="news.ask" with="question={{ data.news.topicAsk }}" into="sofar" label="📖 Story so far" variant=quiet/>
+<button action="state" state="topic" value="" emit="topic-changed" label="✕ Stop" variant=quiet/></row>
+{{#if data.sofar.answer}}<text>{{ data.sofar.answer }}</text><row gap=1 wrap=true>{{#each data.sofar.sources}}<small><a href="{{ url }}">[{{ n }}] {{ sourceName }}</a></small>{{/each}}</row>{{/if}}
+</box>
+{{/if}}
+<row gap=2 justify=end><button action="state" state="stream" value="{{ state.stream == '1' ? '0' : '1' }}" label="{{ state.stream == '1' ? 'Grid' : 'Stream' }}" variant="{{ state.stream == '1' ? 'primary' : 'plain' }}" tip="{{ state.stream == '1' ? 'Cards in columns' : 'One column to read, like a phone feed' }}"/></row>
+<grid masonry=true cols="{{ state.stream == '1' ? 1 : 3 }}" min="{{ state.stream == '1' ? 520 : 260 }}" gap=3>
 {{#each data.news.items}}
+{{#if caught}}<divider label="✓ You're all caught up — Below: what you have seen already"/>{{/if}}
 <box>
 <col gap=2>
+<visible value="{{ id }}" bind="seenids" emit="cardseen"/>
 {{#if image}}<img src="{{ image }}" alt="{{ title }}"/>{{/if}}
-<small><muted>{{ sourceName }} · {{ ago }}{{#if top}} · ★{{/if}}</muted></small>
+<small><muted>{{ sourceName }} · {{ ago }}{{#if outlets}} · 📣 {{ outlets }}{{/if}}{{#if top}} · ★{{/if}}</muted></small>
 <b>{{ title }}</b>
 {{#if summary}}<text tone=muted>{{ summary }}</text>{{/if}}
-{{#if gateWhy}}<small><muted>{{ gateWhy }}</muted></small>{{/if}}
-<row gap=1 wrap=true>{{#each tagList}}<chip>{{ tag }}</chip>{{/each}}</row>
+{{#if gateWhy}}<small><muted>{{ gateWhy }}</muted></small>{{#else}}{{#if why}}<small><muted>{{ why }}</muted></small>{{/if}}{{/if}}
+<row gap=1 wrap=true>{{#each tagList}}<button action="state" state="topic" value="{{ tag }}" emit="topic-changed" label="{{ tag }}" variant=quiet tip="Follow this topic"/>{{/each}}</row>
 <row gap=1 wrap=true>
 <button action="state" state="reading" value="{{ id }}" label="Read here" variant=quiet/>
 <a href="{{ url }}">Open</a>
 <button run="news.more-like" with="id={{ id }}" done="More like this found." then="like={{ id }}" emit="news-changed" label="≈ More" variant=quiet/>
+{{#if thread}}<button action="state" state="topic" value="{{ thread }}" emit="topic-changed" label="🧵 Follow the thread" variant=quiet/>{{/if}}
 <button run="news.act" with="op=vote, id={{ id }}, value={{ liked ? 0 : 1 }}" emit="news-changed" label="👍" variant="{{ liked ? 'primary' : 'quiet' }}"/>
 <button run="news.act" with="op=vote, id={{ id }}, value={{ disliked ? 0 : -1 }}" emit="news-changed" label="👎" variant="{{ disliked ? 'primary' : 'quiet' }}"/>
 <button run="news.act" with="op=state, id={{ id }}, state={{ saved ? 'new' : 'saved' }}" emit="news-changed" label="🔖" variant="{{ saved ? 'primary' : 'quiet' }}"/>

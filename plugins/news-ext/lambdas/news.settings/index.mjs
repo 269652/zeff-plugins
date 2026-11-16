@@ -1,4 +1,4 @@
-import { ALL_FEEDS, DEFAULT_PREFS, STARTER_NAMES, categoriesOf, formatInterests, parseInterests, parseMutes } from "./lib.mjs";
+import { ALL_FEEDS, DEFAULT_PREFS, STARTER_NAMES, categoriesOf, formatInterests, parseInterests, parseMutes, termsOf } from "./lib.mjs";
 
 /**
  * What the settings page shows (the plugin's view views/settings.html reads it as data.s.*), and the change of one setting: the sources (with how many items each has, when it
@@ -38,6 +38,30 @@ export async function handler(event, context) {
   const taste = (await zeff.call("pref.get", { key: "news:taste" })).value ?? {};
   const discoveries = ((await zeff.call("pref.get", { key: "news:discoveries" })).value ?? []).slice(0, 12);
   const cats = categoriesOf().map((c) => ({ category: c.category, count: c.count, left: ALL_FEEDS.filter((f) => f.category === c.category && !have.has(f.url)).length }));
+  // The catalog, filtered by a search and a language (the built-in's CatalogBrowser): per category its feeds, what is there already marked.
+  const cq = String(event?.cq ?? "").trim().toLowerCase();
+  const cl = String(event?.cl ?? "").trim();
+  const matches = ALL_FEEDS.filter((f) => (!cl || f.lang === cl) && (!cq || `${f.name} ${f.category} ${f.url}`.toLowerCase().includes(cq)));
+  const LANGS = { de: "Deutsch", en: "English", es: "Español", fr: "Français", it: "Italiano" };
+  const catalog = categoriesOf(matches).map(({ category }) => {
+    const feeds = matches.filter((f) => f.category === category);
+    const todo = feeds.filter((f) => !have.has(f.url));
+    return { category, total: feeds.length, todo: todo.length, added: feeds.length - todo.length, more: Math.max(0, feeds.length - 80), feeds: feeds.slice(0, 80).map((f) => ({ category, name: f.name, url: f.url, lang: f.lang ?? "", langName: String(f.lang ?? "").toUpperCase(), have: have.has(f.url) })) };
+  });
+  const langs = [...new Set(ALL_FEEDS.map((f) => f.lang).filter(Boolean))].sort().map((l) => ({ id: l, name: LANGS[l] ?? l.toUpperCase(), on: l === cl }));
+  const starterLeft = ALL_FEEDS.filter((f) => STARTER_NAMES.includes(f.name) && !have.has(f.url)).length;
+  // What Zeff knows about you, as words that lift a headline (the built-in's profileTerms).
+  let profileNow = [];
+  if (had.useProfile) {
+    try {
+      const todos = (await zeff.call("todos.open", {})).todos;
+      const facts = (await zeff.call("facts.list", { limit: 200 })).facts.map((f) => ({ subject: f.subject, text: f.text }));
+      const tickets = (await zeff.call("jira.tickets-open", { limit: 60 })).tickets;
+      profileNow = termsOf({ facts, todos: todos.map((t) => ({ ref: `T-${t.id}`, text: t.text })), tickets }).slice(0, 14).map((p) => p.term);
+    } catch {
+      // what Zeff knows is a bonus
+    }
+  }
   const flag = (key, label, what) => ({ key, label, what, on: !!had[key], word: had[key] ? "✓" : "○" });
   return {
     prefs: { ...had, interestsText: formatInterests(had.interests), mutesText: (had.mutes ?? []).join(", ") },
@@ -57,7 +81,13 @@ export async function handler(event, context) {
     sourceCount: sources.length,
     categories: cats,
     starter: STARTER_NAMES.length,
-    taste: { text: taste.text ?? "", pending: (taste.pending ?? []).length, edited: !!taste.edited },
+    taste: { text: taste.text ?? "", pending: (taste.pending ?? []).length, edited: !!taste.edited, updatedAt: taste.updatedAt ? String(taste.updatedAt).slice(0, 16).replace("T", " ") : "", likes: (taste.likes ?? []).join(", "), avoids: (taste.avoids ?? []).join(", ") },
+    catalog,
+    catalogAll: ALL_FEEDS.length,
+    langs,
+    starterLeft,
+    profileNow: profileNow.join(", "),
+    learned: (await q("select count(*) n from news_terms", [], 1))[0]?.n ?? 0,
     discoveries: discoveries.map((d) => ({ at: String(d.at ?? "").slice(0, 10), topic: d.topic, name: d.name, url: d.url, why: d.why })),
   };
 }

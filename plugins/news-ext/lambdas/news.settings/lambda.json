@@ -5,7 +5,10 @@
   "kind": "function",
   "zeff": [
     "pref.get",
-    "sql.query"
+    "sql.query",
+    "facts.list",
+    "todos.open",
+    "jira.tickets-open"
   ],
   "timeoutMs": 30000,
   "memoryMb": 256

@@ -1,0 +1,11 @@
+{
+  "name": "news.kept",
+  "label": "News: the news you kept",
+  "what": "The news you saved or liked, with their text, as records a Workspace database can follow.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

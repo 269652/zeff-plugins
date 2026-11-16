@@ -28,6 +28,11 @@ const tagsOf = (raw) => {
 };
 
 export async function handler(event, context) {
+  // A button of the widget "News for you" (save, like, hide an item): the same as the page's.
+  if (event?.op === "widget") {
+    const map = { save: { op: "state", state: "saved" }, like: { op: "vote", value: 1 }, hide: { op: "state", state: "hidden" } }[String(event.action)];
+    return map ? handler({ id: event.id, ...map }, context) : { ok: false, error: "unknown action" };
+  }
   const zeff = context.zeff;
   const op = String(event?.op ?? "");
   const nowIso = new Date().toISOString();
@@ -65,7 +70,7 @@ export async function handler(event, context) {
       return { ok: true, statements, taste };
     }
     case "seen": {
-      const ids = (Array.isArray(event?.ids) ? event.ids : []).map(Number).filter(Number.isInteger).slice(0, 300);
+      const ids = (Array.isArray(event?.ids) ? event.ids : String(event?.ids ?? "").split(",")).map(Number).filter(Number.isInteger).slice(0, 300);
       if (!ids.length) return { ok: true, statements: [] };
       return { ok: true, statements: [{ sql: `update news_items set seen_at = ? where id in (${ids.map(() => "?").join(",")}) and seen_at is null`, params: [nowIso, ...ids] }] };
     }
@@ -87,7 +92,7 @@ export async function handler(event, context) {
       return { ok: true, statements: [{ sql: "delete from news_items where source_id = ? and state != 'saved'", params: [id] }, { sql: "delete from news_sources where id = ?", params: [id] }] };
     case "starter":
     case "category": {
-      const feeds = op === "starter" ? ALL_FEEDS.filter((f) => STARTER_NAMES.includes(f.name)) : ALL_FEEDS.filter((f) => f.category === String(event?.name ?? ""));
+      const feeds = op === "starter" ? ALL_FEEDS.filter((f) => STARTER_NAMES.includes(f.name)) : ALL_FEEDS.filter((f) => f.category === String(event?.name ?? "") && (!event?.lang || f.lang === String(event.lang)));
       return { ok: true, statements: feeds.map((f) => ({ sql: "insert or ignore into news_sources (name, url, created_at, category, lang) values (?, ?, ?, ?, ?)", params: [f.name, f.url, nowIso, f.category ?? "", f.lang ?? ""] })), added: feeds.length };
     }
     case "taste-edit": {

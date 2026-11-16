@@ -1,7 +1,7 @@
 {
   "format": 1,
   "id": "news-ext",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "News",
   "description": "Your news, gathered for you: the feeds you pick, everything scored for you.",
   "icon": "📰",
@@ -301,7 +301,7 @@
             "sorts": [],
             "hidden": [],
             "app": "template",
-            "template": "<state name=\"s_interests\" value=\"\"/><state name=\"s_mutes\" value=\"\"/><state name=\"s_url\" value=\"\"/><state name=\"s_name\" value=\"\"/><state name=\"s_taste\" value=\"\"/><state name=\"s_find\" value=\"\"/><state name=\"n_maxAge\" value=\"\"/><state name=\"n_perSource\" value=\"\"/><state name=\"n_perRun\" value=\"\"/><state name=\"n_keepDays\" value=\"\"/><state name=\"n_batch\" value=\"\"/><state name=\"n_keepLatest\" value=\"\"/>\n<data name=\"s\" lambda=\"news.settings\" with=\"mode=data\"/>\n<on event=\"settings-changed\" action=\"reload\"/>\n<text tone=muted>Where your news comes from and what makes it yours. Everything is fetched from public feeds; nothing of yours is sent.</text>\n{{#if not data.s}}<muted>Loading …</muted>{{#else}}\n<box title=\"What suits you\">\n<col gap=3>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_interests\" rows=3 label=\"Interests (one per line or comma; a number 1–3 after × says how much it counts)\" value=\"{{ data.s.prefs.interestsText }}\"/></col><button run=\"news.pref\" with=\"key=interests, value={{ state.s_interests }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/></row>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_mutes\" rows=2 label=\"Muted words (items with one are left out)\" value=\"{{ data.s.prefs.mutesText }}\"/></col><button run=\"news.pref\" with=\"key=mutes, value={{ state.s_mutes }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/></row>\n<row gap=2><small><muted>Language of the topic searches</muted></small>\n<button run=\"news.pref\" with=\"key=language, value=de\" emit=\"settings-changed\" label=\"Deutsch\" variant=\"{{ data.s.prefs.language == 'de' ? 'primary' : 'plain' }}\"/>\n<button run=\"news.pref\" with=\"key=language, value=en\" emit=\"settings-changed\" label=\"English\" variant=\"{{ data.s.prefs.language == 'en' ? 'primary' : 'plain' }}\"/>\n<button run=\"news.pref\" with=\"key=language, value=any\" emit=\"settings-changed\" label=\"Both\" variant=\"{{ data.s.prefs.language == 'any' ? 'primary' : 'plain' }}\"/></row>\n<col gap=1>\n{{#each data.s.flags}}\n<row gap=2 align=center wrap=false><button run=\"news.pref\" with=\"key={{ key }}, value={{ on ? 'false' : 'true' }}\" emit=\"settings-changed\" label=\"{{ word }} {{ label }}\" variant=\"{{ on ? 'primary' : 'quiet' }}\"/><small><muted>{{ what }}</muted></small></row>\n{{/each}}\n</col>\n<grid cols=3 gap=2 min=200>\n<row gap=1 wrap=false><input bind=\"n_maxAge\" type=number label=\"Days of news\" value=\"{{ data.s.prefs.maxAgeDays }}\"/><button run=\"news.pref\" with=\"key=maxAgeDays, value={{ state.n_maxAge }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_perSource\" type=number label=\"Most per source\" value=\"{{ data.s.prefs.perSource }}\"/><button run=\"news.pref\" with=\"key=perSource, value={{ state.n_perSource }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_perRun\" type=number label=\"Feeds per round\" value=\"{{ data.s.prefs.perRun }}\"/><button run=\"news.pref\" with=\"key=perRun, value={{ state.n_perRun }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_keepDays\" type=number label=\"Keep read items (days)\" value=\"{{ data.s.prefs.keepDays }}\"/><button run=\"news.pref\" with=\"key=keepDays, value={{ state.n_keepDays }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_batch\" type=number label=\"Agent reads per round\" value=\"{{ data.s.prefs.funnelBatch }}\"/><button run=\"news.pref\" with=\"key=funnelBatch, value={{ state.n_batch }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_keepLatest\" type=number label=\"Newest and best kept\" value=\"{{ data.s.prefs.keepLatest }}\"/><button run=\"news.pref\" with=\"key=keepLatest, value={{ state.n_keepLatest }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n</grid>\n</col>\n</box>\n<box title=\"Sources ({{ data.s.sourceCount }})\">\n<col gap=3>\n<row gap=2 wrap=true>\n<input bind=\"s_url\" label=\"Feed address (https://…)\"/><input bind=\"s_name\" label=\"Name (optional)\"/>\n<button run=\"news.act\" with=\"op=source-add, url={{ state.s_url }}, name={{ state.s_name }}\" done=\"Added.\" emit=\"settings-changed\" label=\"Add\" variant=primary disabled=\"{{ not state.s_url }}\"/>\n</row>\n<row gap=2 wrap=true>\n<button run=\"news.act\" with=\"op=starter\" done=\"Starter pack added.\" emit=\"settings-changed\" label=\"Starter pack ({{ data.s.starter }})\"/>\n{{#each data.s.categories}}{{#if left}}<button run=\"news.act\" with=\"op=category, name={{ category }}\" done=\"Added.\" emit=\"settings-changed\" label=\"+ {{ category }} ({{ left }})\" variant=quiet/>{{/if}}{{/each}}\n</row>\n{{#each data.s.sources}}\n<row gap=2 align=center wrap=false>\n<col fill=true><b>{{ name }}</b><small><muted>{{ category }} · {{ items }} items{{#if lastAt}} · fetched {{ lastAt }}{{/if}}{{#if votes}} · votes {{ votes }}{{/if}}</muted></small>{{#if lastError}}<small><muted>{{ lastError }}</muted></small>{{/if}}</col>\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, enabled={{ enabled ? 'false' : 'true' }}\" emit=\"settings-changed\" label=\"{{ enabled ? 'On' : 'Off' }}\" variant=\"{{ enabled ? 'primary' : 'plain' }}\"/>\n<button run=\"news.act\" with=\"op=source-remove, id={{ id }}\" confirm=\"Remove this source? Saved items stay.\" emit=\"settings-changed\" label=\"✕\" variant=quiet/>\n</row>\n{{/each}}\n</col>\n</box>\n<box title=\"Find feeds\">\n<col gap=2>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_find\" label=\"A website or a profile on one\"/></col><button run=\"news.find-feeds\" with=\"address={{ state.s_find }}\" into=\"found\" label=\"Find\" disabled=\"{{ not state.s_find }}\"/></row>\n{{#each data.found.feeds}}\n<row gap=2 align=center wrap=false><col fill=true><b>{{ title }}</b><small><muted>{{ url }} · {{ items }} items</muted></small></col><button run=\"news.act\" with=\"op=source-add, url={{ url }}, name={{ title }}, category=Found\" done=\"Added.\" emit=\"settings-changed\" label=\"Add\" variant=primary/></row>\n{{/each}}\n{{#if data.s.discoveries}}<small><muted>Found by itself lately</muted></small>\n{{#each data.s.discoveries}}<small><muted>{{ at }} · {{ topic }} → {{ name }}</muted></small>{{/each}}{{/if}}\n</col>\n</box>\n<box title=\"✨ Your taste\">\n<col gap=2>\n<text tone=muted>{{ data.s.taste.text }}</text>\n<small><muted>{{ data.s.taste.pending }} signals waiting to be taken in</muted></small>\n<input bind=\"s_taste\" rows=4 label=\"Edit it (the AI continues from your version)\" value=\"{{ data.s.taste.text }}\"/>\n<row gap=2>\n<button run=\"news.act\" with=\"op=taste-edit, text={{ state.s_taste }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/>\n<button run=\"news.taste\" done=\"Updated.\" emit=\"settings-changed\" label=\"Update now\"/>\n<button run=\"news.act\" with=\"op=taste-forget\" confirm=\"Forget your written taste?\" emit=\"settings-changed\" label=\"Forget it\" variant=quiet/>\n<button run=\"news.act\" with=\"op=forget, rescore=true\" confirm=\"Forget what your likes and dislikes taught?\" done=\"Forgotten.\" emit=\"settings-changed\" label=\"Forget what I liked\" variant=quiet/>\n</row>\n</col>\n</box>\n{{/if}}\n"
+            "template": "<state name=\"s_interests\" value=\"\"/><state name=\"s_mutes\" value=\"\"/><state name=\"s_url\" value=\"\"/><state name=\"s_name\" value=\"\"/><state name=\"s_taste\" value=\"\"/><state name=\"s_find\" value=\"\"/><state name=\"s_cq\" value=\"\"/><state name=\"s_cl\" value=\"\"/><state name=\"n_maxAge\" value=\"\"/><state name=\"n_perSource\" value=\"\"/><state name=\"n_perRun\" value=\"\"/><state name=\"n_keepDays\" value=\"\"/><state name=\"n_batch\" value=\"\"/><state name=\"n_keepLatest\" value=\"\"/>\r\n<data name=\"s\" lambda=\"news.settings\" with=\"mode=data, cq={{ state.s_cq }}, cl={{ state.s_cl }}\" debounce=400/>\r\n<on event=\"settings-changed\" action=\"reload\"/>\r\n<text tone=muted>Where your news comes from and what makes it yours. Everything is fetched from public feeds; nothing of yours is sent.</text>\r\n{{#if not data.s}}<muted>Loading …</muted>{{#else}}\r\n<box title=\"What suits you\">\r\n<col gap=3>\r\n<row gap=2 wrap=false><col fill=true><input bind=\"s_interests\" rows=3 label=\"Interests (one per line or comma; a number 1–3 after × says how much it counts)\" value=\"{{ data.s.prefs.interestsText }}\"/></col><button run=\"news.pref\" with=\"key=interests, value={{ state.s_interests }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/></row>\r\n<row gap=2 wrap=false><col fill=true><input bind=\"s_mutes\" rows=2 label=\"Muted words (items with one are left out)\" value=\"{{ data.s.prefs.mutesText }}\"/></col><button run=\"news.pref\" with=\"key=mutes, value={{ state.s_mutes }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/></row>\r\n<row gap=2><small><muted>Language of the topic searches</muted></small>\r\n<button run=\"news.pref\" with=\"key=language, value=de\" emit=\"settings-changed\" label=\"Deutsch\" variant=\"{{ data.s.prefs.language == 'de' ? 'primary' : 'plain' }}\"/>\r\n<button run=\"news.pref\" with=\"key=language, value=en\" emit=\"settings-changed\" label=\"English\" variant=\"{{ data.s.prefs.language == 'en' ? 'primary' : 'plain' }}\"/>\r\n<button run=\"news.pref\" with=\"key=language, value=any\" emit=\"settings-changed\" label=\"Both\" variant=\"{{ data.s.prefs.language == 'any' ? 'primary' : 'plain' }}\"/></row>\r\n<col gap=1>\r\n{{#each data.s.flags}}\r\n<row gap=2 align=center wrap=false><button run=\"news.pref\" with=\"key={{ key }}, value={{ on ? 'false' : 'true' }}\" emit=\"settings-changed\" label=\"{{ word }} {{ label }}\" variant=\"{{ on ? 'primary' : 'quiet' }}\"/><small><muted>{{ what }}</muted></small></row>\r\n{{/each}}\r\n</col>\r\n{{#if data.s.profileNow}}<small><muted>Right now: {{ data.s.profileNow }}</muted></small>{{/if}}\r\n<grid cols=3 gap=2 min=200>\r\n<row gap=1 wrap=false><input bind=\"n_maxAge\" type=number label=\"Days of news\" value=\"{{ data.s.prefs.maxAgeDays }}\"/><button run=\"news.pref\" with=\"key=maxAgeDays, value={{ state.n_maxAge }}\" emit=\"settings-changed\" label=\"Set\"/></row>\r\n<row gap=1 wrap=false><input bind=\"n_perSource\" type=number label=\"Most per source\" value=\"{{ data.s.prefs.perSource }}\"/><button run=\"news.pref\" with=\"key=perSource, value={{ state.n_perSource }}\" emit=\"settings-changed\" label=\"Set\"/></row>\r\n<row gap=1 wrap=false><input bind=\"n_perRun\" type=number label=\"Feeds per round\" value=\"{{ data.s.prefs.perRun }}\"/><button run=\"news.pref\" with=\"key=perRun, value={{ state.n_perRun }}\" emit=\"settings-changed\" label=\"Set\"/></row>\r\n<row gap=1 wrap=false><input bind=\"n_keepDays\" type=number label=\"Keep read items (days)\" value=\"{{ data.s.prefs.keepDays }}\"/><button run=\"news.pref\" with=\"key=keepDays, value={{ state.n_keepDays }}\" emit=\"settings-changed\" label=\"Set\"/></row>\r\n<row gap=1 wrap=false><input bind=\"n_batch\" type=number label=\"Agent reads per round\" value=\"{{ data.s.prefs.funnelBatch }}\"/><button run=\"news.pref\" with=\"key=funnelBatch, value={{ state.n_batch }}\" emit=\"settings-changed\" label=\"Set\"/></row>\r\n<row gap=1 wrap=false><input bind=\"n_keepLatest\" type=number label=\"Newest and best kept\" value=\"{{ data.s.prefs.keepLatest }}\"/><button run=\"news.pref\" with=\"key=keepLatest, value={{ state.n_keepLatest }}\" emit=\"settings-changed\" label=\"Set\"/></row>\r\n</grid>\r\n</col>\r\n</box>\r\n<box title=\"Sources ({{ data.s.sourceCount }})\">\r\n<col gap=3>\r\n<row gap=2 wrap=true>\r\n<input bind=\"s_url\" label=\"Feed address (https://…)\"/><input bind=\"s_name\" label=\"Name (optional)\"/>\r\n<button run=\"news.act\" with=\"op=source-add, url={{ state.s_url }}, name={{ state.s_name }}\" done=\"Added.\" emit=\"settings-changed\" label=\"Add\" variant=primary disabled=\"{{ not state.s_url }}\"/>\r\n</row>\r\n<row gap=2 wrap=true>\r\n<button run=\"news.act\" with=\"op=starter\" done=\"Starter pack added.\" emit=\"settings-changed\" label=\"Starter pack ({{ data.s.starter }})\"/>\r\n{{#each data.s.categories}}{{#if left}}<button run=\"news.act\" with=\"op=category, name={{ category }}\" done=\"Added.\" emit=\"settings-changed\" label=\"+ {{ category }} ({{ left }})\" variant=quiet/>{{/if}}{{/each}}\r\n</row>\r\n{{#each data.s.sources}}\r\n<row gap=2 align=center wrap=false>\r\n<col fill=true><b>{{ name }}</b><small><muted>{{ category }} · {{ items }} items{{#if lastAt}} · fetched {{ lastAt }}{{/if}}{{#if votes}} · votes {{ votes }}{{/if}}</muted></small>{{#if lastError}}<small><muted>{{ lastError }}</muted></small>{{/if}}</col>\r\n<row gap=1 wrap=false><small><muted tip=\"How much you trust it: its good items count more or less\">Trust</muted></small>\r\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, weight=0.5\" emit=\"settings-changed\" label=\"low\" variant=\"{{ weight == 0.5 ? 'primary' : 'quiet' }}\"/>\r\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, weight=1\" emit=\"settings-changed\" label=\"normal\" variant=\"{{ weight == 1 ? 'primary' : 'quiet' }}\"/>\r\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, weight=1.5\" emit=\"settings-changed\" label=\"high\" variant=\"{{ weight == 1.5 ? 'primary' : 'quiet' }}\"/>\r\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, weight=2\" emit=\"settings-changed\" label=\"first\" variant=\"{{ weight == 2 ? 'primary' : 'quiet' }}\"/></row>\r\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, enabled={{ enabled ? 'false' : 'true' }}\" emit=\"settings-changed\" label=\"{{ enabled ? 'On' : 'Off' }}\" variant=\"{{ enabled ? 'primary' : 'plain' }}\"/>\r\n<button run=\"news.act\" with=\"op=source-remove, id={{ id }}\" confirm=\"Remove this source? Saved items stay.\" emit=\"settings-changed\" label=\"✕\" variant=quiet/>\r\n</row>\r\n{{/each}}\r\n</col>\r\n</box>\r\n<box title=\"Catalog ({{ data.s.catalogAll }} feeds)\">\r\n<col gap=2>\r\n<small><muted>Outlets checked against the live internet, and topic packs (a news search per topic). Add what you like.</muted></small>\r\n{{#if data.s.starterLeft}}<row gap=2 align=center><button run=\"news.act\" with=\"op=starter\" done=\"Starter pack added.\" emit=\"settings-changed\" label=\"Add the starter pack\" variant=primary/><small><muted>About fifty well-known sources ({{ data.s.starterLeft }} not yet added).</muted></small></row>{{/if}}\r\n<row gap=2 wrap=true align=center>\r\n<col fill=true><input bind=\"s_cq\" label=\"Search the catalog …\"/></col>\r\n<button action=\"state\" state=\"s_cl\" value=\"\" label=\"All languages\" variant=\"{{ state.s_cl == '' ? 'primary' : 'quiet' }}\"/>\r\n{{#each data.s.langs}}<button action=\"state\" state=\"s_cl\" value=\"{{ id }}\" label=\"{{ name }}\" variant=\"{{ on ? 'primary' : 'quiet' }}\"/>{{/each}}\r\n</row>\r\n{{#each data.s.catalog}}\r\n<section title=\"{{ category }} ({{ total }}, {{ added }} added)\" collapsible=true open=false>\r\n<col gap=2>\r\n{{#if todo}}<row><button run=\"news.act\" with=\"op=category, name={{ category }}, lang={{ state.s_cl }}\" done=\"Added.\" emit=\"settings-changed\" label=\"Add all {{ todo }}\"/></row>{{/if}}\r\n<row gap=1 wrap=true>\r\n{{#each feeds}}{{#if have}}<small><text tone=good>✓ {{ name }}</text></small>{{#else}}<button run=\"news.act\" with=\"op=source-add, url={{ url }}, name={{ name }}, category={{ category }}, lang={{ lang }}\" emit=\"settings-changed\" label=\"+ {{ name }}\" variant=quiet tip=\"{{ langName }} · {{ url }}\"/>{{/if}}{{/each}}\r\n</row>\r\n{{#if more}}<small><muted>{{ more }} more — search to narrow it down, or add them all.</muted></small>{{/if}}\r\n</col>\r\n</section>\r\n{{/each}}\r\n{{#if not data.s.catalog}}<text tone=muted>Nothing in the catalog matches.</text>{{/if}}\r\n</col>\r\n</box>\r\n<box title=\"Find feeds\">\r\n<col gap=2>\r\n<row gap=2 wrap=false><col fill=true><input bind=\"s_find\" label=\"A website or a profile on one\"/></col><button run=\"news.find-feeds\" with=\"address={{ state.s_find }}\" into=\"found\" label=\"Find\" disabled=\"{{ not state.s_find }}\"/></row>\r\n{{#each data.found.feeds}}\r\n<row gap=2 align=center wrap=false><col fill=true><b>{{ title }}</b><small><muted>{{ url }} · {{ items }} items</muted></small></col><button run=\"news.act\" with=\"op=source-add, url={{ url }}, name={{ title }}, category=Found\" done=\"Added.\" emit=\"settings-changed\" label=\"Add\" variant=primary/></row>\r\n{{/each}}\r\n{{#if data.s.discoveries}}<small><muted>Found by itself lately</muted></small>\r\n{{#each data.s.discoveries}}<small><muted>{{ at }} · {{ topic }} → {{ name }}</muted></small>{{/each}}{{/if}}\r\n</col>\r\n</box>\r\n<box title=\"✨ Your taste\">\r\n<col gap=2>\r\n<text tone=muted>{{ data.s.taste.text }}</text>\r\n<small><muted>{{#if data.s.taste.updatedAt}}Updated {{ data.s.taste.updatedAt }}{{#else}}not written yet{{/if}} · {{ data.s.taste.pending }} signals waiting to be taken in</muted></small>\r\n{{#if data.s.taste.likes}}<small><muted>Likes: {{ data.s.taste.likes }}.</muted></small>{{/if}}{{#if data.s.taste.avoids}}<small><muted>Avoids: {{ data.s.taste.avoids }}.</muted></small>{{/if}}\r\n<input bind=\"s_taste\" rows=4 label=\"Edit it (the AI continues from your version)\" value=\"{{ data.s.taste.text }}\"/>\r\n<row gap=2>\r\n<button run=\"news.act\" with=\"op=taste-edit, text={{ state.s_taste }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/>\r\n<button run=\"news.taste\" done=\"Updated.\" emit=\"settings-changed\" label=\"Update now\"/>\r\n<button run=\"news.act\" with=\"op=taste-forget\" confirm=\"Forget your written taste?\" emit=\"settings-changed\" label=\"Forget it\" variant=quiet/>\r\n<button run=\"news.act\" with=\"op=forget, rescore=true\" confirm=\"Forget what your likes and dislikes taught?\" done=\"Forgotten.\" emit=\"settings-changed\" label=\"Forget what I liked\" variant=quiet/>\r\n</row>\r\n</col>\r\n</box>\r\n{{/if}}\r\n"
           }
         ]
       },
@@ -872,6 +872,206 @@
             "value": {
               "ok": "{{ steps.do.ok }}",
               "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i13",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Look for new feeds",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.auto-find",
+        "title": "Look for new feeds",
+        "description": "When fresh news run low (the end of the feed is reached): feeds for the things you care about, from the catalog and the internet, are looked for and fetched. Same as the sync's first step; it keeps its own pace (every two hours at most).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "find",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.auto-discover",
+              "event": {}
+            }
+          },
+          {
+            "id": "found",
+            "kind": "foreach",
+            "items": "{{ steps.find.batches }}",
+            "as": "b",
+            "nodes": [
+              {
+                "id": "foundw",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ b }}"
+                }
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "sets",
+            "kind": "foreach",
+            "items": "{{ steps.find.sets }}",
+            "as": "p",
+            "nodes": [
+              {
+                "id": "setp",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "{{ p.key }}",
+                  "value": "{{ p.value }}"
+                }
+              }
+            ],
+            "max": 10
+          },
+          {
+            "id": "fetch",
+            "kind": "if",
+            "when": "{{ steps.find.added }}",
+            "then": [
+              {
+                "id": "round",
+                "kind": "call",
+                "flow": "news.fetch-round",
+                "input": {}
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "added": "{{ steps.find.added }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ],
+          "web": [
+            "*"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i14",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Widget: News for you",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.widget-act",
+        "title": "Widget: save, like or hide a news item",
+        "description": "The buttons of the widget News for you (input action: save, like or hide; payload.id).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.act",
+              "event": {
+                "op": "widget",
+                "action": "{{ input.action }}",
+                "id": "{{ input.payload.id }}"
+              }
+            }
+          },
+          {
+            "id": "write",
+            "kind": "if",
+            "when": "{{ steps.do.ok }}",
+            "then": [
+              {
+                "id": "sql",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.do.statements }}"
+                }
+              },
+              {
+                "id": "signal",
+                "kind": "if",
+                "when": "{{ steps.do.taste }}",
+                "then": [
+                  {
+                    "id": "queue",
+                    "kind": "action",
+                    "action": "pref.set",
+                    "input": {
+                      "plugin": "news-ext",
+                      "key": "news:taste",
+                      "value": "{{ steps.do.taste }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}"
             }
           }
         ],
