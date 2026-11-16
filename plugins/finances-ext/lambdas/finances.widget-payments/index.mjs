@@ -19,7 +19,7 @@ export async function handler(event, context) {
   const { debts: db } = await context.zeff.call("zeff.places", {});
   const rows = db ? (await context.zeff.call("db.cells", { db })).rows : [];
   const ids = [...new Set(rows.flatMap((r) => (Array.isArray(r.cells[DEBT.creditor]) && typeof r.cells[DEBT.creditor][0] === "number" ? [r.cells[DEBT.creditor][0]] : [])))];
-  const names = ids.length ? (await context.zeff.call("people.names", { ids })).names : {};
+  const names = ids.length ? (await context.zeff.call("read.people.names", { ids })).names : {};
   const debts = rows.flatMap((r) => {
     const open = num(r.cells[DEBT.open]);
     if (open == null || open <= 0 || (r.cells[DEBT.dir] === "owed" ? "owed" : "owe") !== dir) return [];

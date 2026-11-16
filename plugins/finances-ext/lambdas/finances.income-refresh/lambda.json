@@ -1,0 +1,11 @@
+{
+  "name": "finances.income-refresh",
+  "label": "Finances: your income from the knowledge",
+  "what": "What the knowledge server read about your net income off your statements, kept for the income Kennzahlen and the debts overview.",
+  "kind": "function",
+  "zeff": [
+    "knowledge.profile"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

@@ -1,0 +1,13 @@
+{
+  "name": "knowledge.ask",
+  "label": "Knowledge: ask",
+  "what": "A question answered from your own data when it is about numbers and dates, else from the pages of the knowledge server, citing them; the conversation with it added.",
+  "kind": "function",
+  "zeff": [
+    "ai.memo-get",
+    "data.answer",
+    "service.read"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 128
+}

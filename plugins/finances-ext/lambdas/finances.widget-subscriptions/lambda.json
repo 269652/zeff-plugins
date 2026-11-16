@@ -1,0 +1,13 @@
+{
+  "name": "finances.widget-subscriptions",
+  "label": "Finances: subscriptions not in your contracts",
+  "what": "The widget's list: what goes out regularly but isn't in your contracts database, with its cost a month and next payment.",
+  "kind": "function",
+  "zeff": [
+    "bank.bookings",
+    "pref.get",
+    "workspace.value-sources"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

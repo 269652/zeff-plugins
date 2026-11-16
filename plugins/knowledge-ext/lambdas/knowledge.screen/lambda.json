@@ -1,0 +1,11 @@
+{
+  "name": "knowledge.screen",
+  "label": "Knowledge: the server's state",
+  "what": "What the knowledge server holds and is doing: pages, spaces, entities, relations, what isn't compiled yet, the last run.",
+  "kind": "function",
+  "zeff": [
+    "service.read"
+  ],
+  "timeoutMs": 15000,
+  "memoryMb": 128
+}

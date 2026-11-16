@@ -1,0 +1,431 @@
+{
+  "format": 1,
+  "id": "finances-ext",
+  "version": "0.2.0",
+  "name": "Finances",
+  "description": "The flow behind the Subscriptions widget's button.",
+  "icon": "💶",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Finances",
+      "icon": "💶",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "The flow below adds a subscription to your contracts database — what the button of the Subscriptions widget runs."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add a subscription to the contracts",
+      "icon": "➕",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "finances.add-subscription",
+        "title": "Add a subscription to the contracts",
+        "description": "A recurring payment as a row of your contracts database — run by the Subscriptions widget's button with { action: add, payload: { id } }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "row",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "finances.subscription-row",
+              "event": {
+                "key": "{{ input.payload.id }}"
+              }
+            }
+          },
+          {
+            "id": "add",
+            "kind": "action",
+            "action": "db.add",
+            "input": {
+              "database": "{{ steps.row.database }}",
+              "title": "{{ steps.row.title }}",
+              "values": "{{ steps.row.values }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A promise as a debt",
+      "icon": "🤝",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "finances.debt-from-claim",
+        "title": "A promise as a debt",
+        "description": "A promise with an amount written down as a debt or a claim: the contact, the amount, the due day, the promise it came from. Run by the debts overview's suggestions.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "who",
+            "kind": "action",
+            "action": "people.contacts",
+            "input": {
+              "items": [
+                {
+                  "name": "{{ input.who }}",
+                  "make": true
+                }
+              ]
+            }
+          },
+          {
+            "id": "places",
+            "kind": "action",
+            "action": "zeff.places",
+            "input": {}
+          },
+          {
+            "id": "add",
+            "kind": "action",
+            "action": "db.add-cells",
+            "input": {
+              "database": "{{ steps.places.debts }}",
+              "title": "{{ input.who }}",
+              "cells": {
+                "debtdir": "{{ input.dir | default('owe') }}",
+                "debtcreditor": "{{ steps.who.ids }}",
+                "debttotal": "{{ input.amount }}",
+                "debtopen": "{{ input.amount }}",
+                "debtdue": "{{ input.due }}",
+                "debtclaim": "{{ input.claim }}"
+              }
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Refresh your income",
+      "icon": "💰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "finances.refresh-income",
+        "title": "Refresh your income from the knowledge",
+        "description": "Reads what the knowledge server knows about your income off your statements and keeps it. Run after the briefing (and daily).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "income",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "finances.income-refresh",
+              "event": {}
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ steps.income.ok }}",
+            "then": [
+              {
+                "id": "set",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "finances-ext",
+                  "key": "cases.incomeFacts",
+                  "value": "{{ steps.income.facts }}"
+                }
+              }
+            ],
+            "else": []
+          }
+        ],
+        "requested": {
+          "write": "all"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          },
+          {
+            "kind": "schedule",
+            "everyMinutes": 720
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Mark an account",
+      "icon": "🏦",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "finances.mark-account",
+        "title": "Mark an account as yours",
+        "description": "A recipient of your transfers marked as an account of your own, a credit account, or neither. Run by the own-accounts page.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "mark",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "finances.account-mark",
+              "event": {
+                "key": "{{ input.key }}",
+                "kind": "{{ input.kind }}"
+              }
+            }
+          },
+          {
+            "id": "set",
+            "kind": "action",
+            "action": "pref.set",
+            "input": {
+              "plugin": "finances-ext",
+              "key": "finances.ownAccounts",
+              "value": "{{ steps.mark.value }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Your own accounts",
+      "icon": "🏦",
+      "schema": {
+        "titleName": "Settings",
+        "properties": [],
+        "views": [
+          {
+            "id": "vacc1",
+            "name": "Your own accounts",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"x\" value=\"\"/>\n<data name=\"acc\" lambda=\"finances.accounts-app\"/>\n<on event=\"mark-changed\" action=\"reload\"/>\n<text tone=muted>Money you send to an account of your own is no spending: a second current account or a depot (it only moved), a credit card or loan account you pay into (it pays a debt off). Mark those recipients here — Ausgaben and Sparquote leave them out, and they aren't suggested as contracts. Pockets and savings with money going both ways are recognised by themselves.</text>\n{{#if not data.acc}}<muted>Loading …</muted>{{#else}}\n{{#if data.acc.any}}\n<list source=\"data.acc.recipients\" open=true>\n  <row wrap=false gap=2>\n    <col fill=true><b>{{ name }}</b><small><muted>{{ count }}× · {{ out | euro }} · {{ last }}{{#if moved}} · only moves there and back{{/if}}</muted></small></col>\n    <button run=\"finances.mark-account\" with=\"key={{ key }}, kind=own\" emit=\"mark-changed\" label=\"Mine\" variant=\"{{ kind == 'own' ? 'primary' : 'plain' }}\"/>\n    <button run=\"finances.mark-account\" with=\"key={{ key }}, kind=credit\" emit=\"mark-changed\" label=\"Credit\" variant=\"{{ kind == 'credit' ? 'primary' : 'plain' }}\"/>\n    <button run=\"finances.mark-account\" with=\"key={{ key }}, kind=\" emit=\"mark-changed\" label=\"No\" variant=\"quiet\"/>\n  </row>\n</list>\n{{#else}}<muted>No transfers in your bank statements of the last six months.</muted>{{/if}}\n{{/if}}"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Your own accounts",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change who is on a debt's other side",
+      "icon": "✎",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "finances.set-side",
+        "title": "Change who is on a debt's other side",
+        "description": "The contact on a debt's other side changed (made when there is none of that name). Run by the debts overview.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "who",
+            "kind": "action",
+            "action": "people.contacts",
+            "input": {
+              "items": [
+                {
+                  "name": "{{ input.who }}",
+                  "make": true
+                }
+              ]
+            }
+          },
+          {
+            "id": "set",
+            "kind": "action",
+            "action": "db.set-cells",
+            "input": {
+              "row": "{{ input.row }}",
+              "cells": {
+                "debtcreditor": "{{ steps.who.ids }}"
+              }
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add a debt or a claim",
+      "icon": "💶",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "finances.add-debt",
+        "title": "Add a debt or a claim",
+        "description": "A debt of your own (or a claim): the other side a contact — made when there is none of that name —, what for, the amount, the instalment, the next due day. Run by the debts overview's form.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "who",
+            "kind": "action",
+            "action": "people.contacts",
+            "input": {
+              "items": [
+                {
+                  "name": "{{ input.who }}",
+                  "make": true
+                }
+              ]
+            }
+          },
+          {
+            "id": "places",
+            "kind": "action",
+            "action": "zeff.places",
+            "input": {}
+          },
+          {
+            "id": "add",
+            "kind": "action",
+            "action": "db.add-cells",
+            "input": {
+              "database": "{{ steps.places.debts }}",
+              "title": "{{ input.what | default(input.who) }}",
+              "cells": {
+                "debtdir": "{{ input.dir | default('owe') }}",
+                "debtcreditor": "{{ steps.who.ids }}",
+                "debttotal": "{{ input.amount }}",
+                "debtopen": "{{ input.amount }}",
+                "debtrate": "{{ input.installment }}",
+                "debtdue": "{{ input.due }}"
+              }
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

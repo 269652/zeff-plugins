@@ -1,0 +1,12 @@
+{
+  "name": "finances.formula",
+  "label": "Finances: the snapshot of Schulden, Forderungen, Rate",
+  "what": "What you owe or are owed, or pay a month, summed per contact — the snapshot the formulas Schulden(@Person), Forderungen, Rate read.",
+  "kind": "function",
+  "zeff": [
+    "zeff.places",
+    "db.cells"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

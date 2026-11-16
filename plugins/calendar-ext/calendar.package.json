@@ -1,0 +1,799 @@
+{
+  "format": 1,
+  "id": "calendar-ext",
+  "version": "1.0.0",
+  "name": "Calendar",
+  "description": "Your calendars on one page: what you do on it and the briefing's two AI steps.",
+  "icon": "📅",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Calendar",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Save an appointment",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.save",
+        "title": "Make or change an appointment",
+        "description": "An appointment in one of Zeff's own calendars — new (no id) or changed; a series' occurrence alone, with the following ones or all; in a Google calendar you may write to, there.",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "calendarId",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "name": "start",
+            "type": "text"
+          },
+          {
+            "name": "end",
+            "type": "text"
+          },
+          {
+            "name": "allDay",
+            "type": "text"
+          },
+          {
+            "name": "location",
+            "type": "text"
+          },
+          {
+            "name": "description",
+            "type": "text"
+          },
+          {
+            "name": "occurrence",
+            "type": "text"
+          },
+          {
+            "name": "scope",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "save",
+            "kind": "action",
+            "action": "appointments.save",
+            "input": {
+              "id": "{{ input.id }}",
+              "calendarId": "{{ input.calendarId }}",
+              "title": "{{ input.title }}",
+              "start": "{{ input.start }}",
+              "end": "{{ input.end }}",
+              "allDay": "{{ input.allDay }}",
+              "location": "{{ input.location }}",
+              "description": "{{ input.description }}",
+              "occurrence": "{{ input.occurrence }}",
+              "scope": "{{ input.scope }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.save.ok }}",
+              "message": "{{ steps.save.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Propose an appointment",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.propose",
+        "title": "Propose an appointment",
+        "description": "A new appointment as a proposal (dashed in the calendar) — you accept or dismiss it later.",
+        "inputs": [
+          {
+            "name": "calendarId",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "name": "start",
+            "type": "text"
+          },
+          {
+            "name": "end",
+            "type": "text"
+          },
+          {
+            "name": "allDay",
+            "type": "text"
+          },
+          {
+            "name": "location",
+            "type": "text"
+          },
+          {
+            "name": "description",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "propose",
+            "kind": "action",
+            "action": "appointments.propose",
+            "input": {
+              "calendarId": "{{ input.calendarId }}",
+              "title": "{{ input.title }}",
+              "allDay": "{{ input.allDay }}",
+              "location": "{{ input.location }}",
+              "description": "{{ input.description }}",
+              "times": [
+                {
+                  "start": "{{ input.start }}",
+                  "end": "{{ input.end }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.propose.ok }}",
+              "message": "{{ steps.propose.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Delete an appointment",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.delete",
+        "title": "Delete an appointment",
+        "description": "An appointment of Zeff's own calendars deleted — a series' occurrence alone, with the following ones, or the whole series.",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "occurrence",
+            "type": "text"
+          },
+          {
+            "name": "scope",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "del",
+            "kind": "action",
+            "action": "appointments.delete",
+            "input": {
+              "id": "{{ input.id }}",
+              "occurrence": "{{ input.occurrence }}",
+              "scope": "{{ input.scope }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.del.ok }}",
+              "message": "{{ steps.del.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Answer an invitation",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.respond",
+        "title": "Answer an invitation",
+        "description": "Accepted, maybe or declined — an invitation in a Google calendar you may write to, answered through Google's API.",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "response",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "answer",
+            "kind": "action",
+            "action": "appointments.respond",
+            "input": {
+              "id": "{{ input.id }}",
+              "response": "{{ input.response }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.answer.ok }}",
+              "message": "{{ steps.answer.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Accept or dismiss a proposal",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.decide",
+        "title": "Accept or dismiss a proposed appointment",
+        "description": "A calendar's proposed appointment accepted (an appointment like any other) or dismissed (taken out, not proposed again).",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "verdict",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "decide",
+            "kind": "action",
+            "action": "appointments.decide",
+            "input": {
+              "id": "{{ input.id }}",
+              "verdict": "{{ input.verdict }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.decide.ok }}",
+              "message": "{{ steps.decide.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Accept what a todo proposes",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.accept-todo-proposal",
+        "title": "Accept the appointment a todo proposes",
+        "description": "The appointment among a todo's actions entered in the calendar and taken off the todo, noted on it.",
+        "inputs": [
+          {
+            "name": "todo",
+            "type": "text"
+          },
+          {
+            "name": "index",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "accept",
+            "kind": "action",
+            "action": "appointments.accept-todo-proposal",
+            "input": {
+              "todo": "{{ input.todo }}",
+              "index": "{{ input.index }}",
+              "title": "{{ input.title }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.accept.ok }}",
+              "message": "{{ steps.accept.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Move an appointment",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.move",
+        "title": "An appointment dragged or resized",
+        "description": "The new times of an appointment (an occurrence of a series alone) or of the appointment a todo proposes.",
+        "inputs": [
+          {
+            "name": "item",
+            "type": "text"
+          },
+          {
+            "name": "start",
+            "type": "text"
+          },
+          {
+            "name": "end",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "calendar.move",
+              "event": {
+                "item": "{{ input.item }}",
+                "start": "{{ input.start }}",
+                "end": "{{ input.end }}"
+              }
+            }
+          },
+          {
+            "id": "write",
+            "kind": "if",
+            "when": "{{ steps.plan.kind == 'save' }}",
+            "then": [
+              {
+                "id": "save",
+                "kind": "action",
+                "action": "appointments.save",
+                "input": {
+                  "id": "{{ steps.plan.input.id }}",
+                  "calendarId": "{{ steps.plan.input.calendarId }}",
+                  "title": "{{ steps.plan.input.title }}",
+                  "start": "{{ steps.plan.input.start }}",
+                  "end": "{{ steps.plan.input.end }}",
+                  "allDay": "{{ steps.plan.input.allDay }}",
+                  "location": "{{ steps.plan.input.location }}",
+                  "description": "{{ steps.plan.input.description }}",
+                  "occurrence": "{{ steps.plan.input.occurrence }}",
+                  "scope": "{{ steps.plan.input.scope }}"
+                }
+              }
+            ],
+            "else": [
+              {
+                "id": "todo",
+                "kind": "if",
+                "when": "{{ steps.plan.kind == 'todo' }}",
+                "then": [
+                  {
+                    "id": "move",
+                    "kind": "action",
+                    "action": "appointments.move-todo-proposal",
+                    "input": {
+                      "todo": "{{ steps.plan.todo }}",
+                      "index": "{{ steps.plan.index }}",
+                      "start": "{{ steps.plan.start }}",
+                      "end": "{{ steps.plan.end }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ]
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.plan.kind != 'none' }}",
+              "error": "{{ steps.plan.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change the calendars",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.calendar",
+        "title": "Change the calendars",
+        "description": "A calendar shown or hidden, recoloured, renamed, counted as busy, offered for booking, set to make todos — or made, or deleted; how many days ahead the todos look.",
+        "inputs": [
+          {
+            "name": "op",
+            "type": "text"
+          },
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "color",
+            "type": "text"
+          },
+          {
+            "name": "visible",
+            "type": "text"
+          },
+          {
+            "name": "busy",
+            "type": "text"
+          },
+          {
+            "name": "book",
+            "type": "text"
+          },
+          {
+            "name": "todos",
+            "type": "text"
+          },
+          {
+            "name": "days",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "change",
+            "kind": "action",
+            "action": "appointments.calendar",
+            "input": {
+              "op": "{{ input.op }}",
+              "id": "{{ input.id }}",
+              "name": "{{ input.name }}",
+              "color": "{{ input.color }}",
+              "visible": "{{ input.visible }}",
+              "busy": "{{ input.busy }}",
+              "book": "{{ input.book }}",
+              "todos": "{{ input.todos }}",
+              "days": "{{ input.days }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.change.ok }}",
+              "message": "{{ steps.change.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Appointments to todos",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.todos",
+        "title": "Todos from appointments",
+        "description": "The appointments of the next days (calendars set to Todos) that give you something to do become todos on their day — the AI says which, once per appointment. Run with the briefing and every 15 minutes.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "calendar.todos",
+              "event": {}
+            }
+          },
+          {
+            "id": "add",
+            "kind": "action",
+            "action": "todos.add-by-ref",
+            "input": {
+              "items": "{{ steps.run.adds }}"
+            }
+          },
+          {
+            "id": "gone",
+            "kind": "action",
+            "action": "todos.dismiss-by-ref",
+            "input": {
+              "items": "{{ steps.run.dismiss }}",
+              "source": "Kalender"
+            }
+          },
+          {
+            "id": "due",
+            "kind": "action",
+            "action": "todos.ensure-due",
+            "input": {
+              "items": "{{ steps.run.ensureDue }}"
+            }
+          },
+          {
+            "id": "kept",
+            "kind": "if",
+            "when": "{{ steps.run.verdicts }}",
+            "then": [
+              {
+                "id": "keep",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "calendar-ext",
+                  "key": "calendar:todo-verdicts",
+                  "value": "{{ steps.run.verdicts }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "added": "{{ steps.add.added }}",
+              "asked": "{{ steps.run.asked }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true,
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i11",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Match todos to appointments",
+      "icon": "📅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "calendar.relate",
+        "title": "Which appointments each todo is about",
+        "description": "For each open todo the appointments it is about — shown at the todo, in its context. Run with the briefing.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "calendar.relations",
+              "event": {}
+            }
+          },
+          {
+            "id": "set",
+            "kind": "action",
+            "action": "todos.set-related",
+            "input": {
+              "kind": "calendar",
+              "picks": "{{ steps.run.picks }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "todos": "{{ steps.run.todos }}",
+              "changed": "{{ steps.set.changed }}",
+              "batches": "{{ steps.run.batches }}",
+              "failed": "{{ steps.run.failed }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true,
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

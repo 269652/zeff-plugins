@@ -1,0 +1,12 @@
+{
+  "name": "explorer.screen",
+  "label": "Explorer: what the screen shows",
+  "what": "A folder's entries ready to draw (icon, type, size, date, whether it is in Documents), the address bar's crumbs, the places and what the folder actions are about.",
+  "kind": "function",
+  "zeff": [
+    "fs.list",
+    "fs.places"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

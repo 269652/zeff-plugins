@@ -1,0 +1,15 @@
+{
+  "name": "news.rescore",
+  "label": "News: scored for you",
+  "what": "Every recent item scored again — your interests, mutes, what you liked, your todos and profile, the sources you trust — handed back as statements.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "todos.open",
+    "facts.list",
+    "jira.tickets-open",
+    "sql.query"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

@@ -1,0 +1,13 @@
+{
+  "name": "know.summary",
+  "label": "Know: the summary of a brief",
+  "what": "The AI's short summary on top of a brief: a few points, each resting on numbered lines of the brief and linked to them; made again only when the brief changed.",
+  "kind": "function",
+  "zeff": [
+    "ai.memo-get",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 240000,
+  "memoryMb": 128
+}

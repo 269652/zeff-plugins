@@ -1,0 +1,14 @@
+{
+  "name": "calendar.todos",
+  "label": "Calendar: appointments to todos",
+  "what": "Which of the appointments of the next days (calendars set to Todos) give you something to do — the AI judges each once; handed back as todos to make, to take away and the verdicts to keep.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "appointments.window",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

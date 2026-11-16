@@ -1,0 +1,9 @@
+{
+  "name": "jira-lage.report",
+  "label": "Board briefing: how it went",
+  "what": "What the board briefing step says in the Sync menu — the tickets, how many reassessed, unchanged, failed — in your language, or why it failed.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 10000,
+  "memoryMb": 128
+}

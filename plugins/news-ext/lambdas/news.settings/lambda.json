@@ -1,0 +1,12 @@
+{
+  "name": "news.settings",
+  "label": "News: the settings page",
+  "what": "What the settings page shows, and the change of one setting.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

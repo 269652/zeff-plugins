@@ -1,0 +1,400 @@
+{
+  "format": 1,
+  "id": "people-ext",
+  "version": "1.0.0",
+  "name": "People",
+  "description": "The AI steps of People: what the messages say about people, their overviews, who is a person or an organisation, which names are one person.",
+  "icon": "👥",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "People",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "What the messages say",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.extract",
+        "title": "Read what the messages say about people",
+        "description": "The messages since the last run that name someone you keep a profile of go to the AI: roles, tasks, facts, preferences, promises, links — kept as proposals for you to confirm. sinceDays: look back that far; only: just these profiles (the marks then stay).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "derive",
+            "kind": "action",
+            "action": "people.derive-links",
+            "input": {}
+          },
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "people.extract",
+              "event": {
+                "sinceDays": "{{ input.sinceDays }}",
+                "only": "{{ input.only }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "action",
+            "action": "people.extract-save",
+            "input": {
+              "claims": "{{ steps.run.claims }}",
+              "links": "{{ steps.run.links }}",
+              "marks": "{{ steps.run.marks }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "items": "{{ steps.run.items }}",
+              "claims": "{{ steps.keep.claims }}",
+              "links": "{{ steps.keep.links }}",
+              "derived": "{{ steps.derive.derived }}",
+              "open": "{{ steps.run.open }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A person's overview",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.compile",
+        "title": "A person's overview",
+        "description": "The AI's short overview of a person from everything Zeff has on them (what connects you, key facts, fun facts), kept on their profile — one compiled lately is left unless force. Output { state, summary }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "people.compile",
+              "event": {
+                "id": "{{ input.id }}",
+                "force": "{{ input.force }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ steps.run.answer }}",
+            "then": [
+              {
+                "id": "save",
+                "kind": "action",
+                "action": "people.compile-save",
+                "input": {
+                  "id": "{{ input.id }}",
+                  "answer": "{{ steps.run.answer }}",
+                  "count": "{{ steps.run.count }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "state": "{{ steps.run.state }}",
+              "summary": "{{ steps.keep.summary }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Overviews out of date",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.compile-stale",
+        "title": "Make the overviews that are out of date",
+        "description": "The contacts whose overview is missing or out of date after the briefing are compiled, one after the other; a failing one doesn't stop the rest.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "stale",
+            "kind": "action",
+            "action": "people.stale",
+            "input": {}
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "{{ steps.stale.ids }}",
+            "as": "id",
+            "nodes": [
+              {
+                "id": "one",
+                "kind": "call",
+                "flow": "people.compile",
+                "input": {
+                  "id": "{{ id }}"
+                },
+                "onError": "continue"
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "asked": "{{ steps.stale.ids }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Person or organisation, and circle",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.classify",
+        "title": "Place the contacts",
+        "description": "The contacts not placed yet — a person or an organisation, and their circle (family, friends, work, authorities, services) — placed by the AI; what you chose stays. force: all; ids: these.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "people.classify",
+              "event": {
+                "ids": "{{ input.ids }}",
+                "force": "{{ input.force }}"
+              }
+            }
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "{{ steps.run.results }}",
+            "as": "r",
+            "nodes": [
+              {
+                "id": "save",
+                "kind": "action",
+                "action": "people.classify-save",
+                "input": {
+                  "ids": "{{ r.ids }}",
+                  "answer": "{{ r.answer }}"
+                }
+              }
+            ],
+            "max": 100
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "asked": "{{ steps.run.asked }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "People matching",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.normalize",
+        "title": "People matching",
+        "description": "After each briefing: the names matched (aliases, profiles for contacts, duplicates merged), what the new messages say read, the promises kept since closed, the contacts placed, the overviews made and the points before your meetings.",
+        "sync": {
+          "label": "People matching",
+          "what": "Who is meant by the names in your todos — aliases added, profiles for contacts made, duplicates merged; what the new messages say about people read (after each briefing)",
+          "replaces": "peoplenorm"
+        },
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "maintain",
+            "kind": "action",
+            "action": "people.maintain",
+            "input": {}
+          },
+          {
+            "id": "names",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "people.names",
+              "event": {}
+            }
+          },
+          {
+            "id": "apply",
+            "kind": "action",
+            "action": "people.normalize-apply",
+            "input": {
+              "answer": "{{ steps.names.answer }}",
+              "chatNames": "{{ steps.names.chatNames }}",
+              "addresses": "{{ steps.names.addresses }}"
+            }
+          },
+          {
+            "id": "extract",
+            "kind": "call",
+            "flow": "people.extract",
+            "input": {},
+            "onError": "continue"
+          },
+          {
+            "id": "after",
+            "kind": "action",
+            "action": "people.after-extraction",
+            "input": {}
+          },
+          {
+            "id": "briefing",
+            "kind": "action",
+            "action": "people.after-briefing",
+            "input": {}
+          },
+          {
+            "id": "classify",
+            "kind": "call",
+            "flow": "people.classify",
+            "input": {},
+            "onError": "continue"
+          },
+          {
+            "id": "compile",
+            "kind": "call",
+            "flow": "people.compile-stale",
+            "input": {},
+            "onError": "continue"
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.apply.aliases }} aliases, {{ steps.apply.created }} new, {{ steps.apply.merged }} merged, {{ steps.apply.relations }} relations"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

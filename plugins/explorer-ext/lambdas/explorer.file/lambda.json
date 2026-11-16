@@ -1,0 +1,11 @@
+{
+  "name": "explorer.file",
+  "label": "Explorer: a file for the viewer",
+  "what": "A file opened: how it is shown, its text (a CSV's rows), the addresses for pictures, PDFs, audio and video and the download.",
+  "kind": "function",
+  "zeff": [
+    "fs.read-text"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

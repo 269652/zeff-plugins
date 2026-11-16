@@ -1,0 +1,14 @@
+{
+  "name": "questions.ask",
+  "label": "Questions: ask your own data",
+  "what": "A question about numbers and dates, answered from Zeff's own data: the AI plans queries over the named views, Zeff runs them, the AI phrases the answer citing the rows. Or: not about the data (text).",
+  "kind": "function",
+  "zeff": [
+    "data.views",
+    "data.query",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

@@ -1,0 +1,14 @@
+{
+  "name": "documents.review-plan",
+  "label": "Documents: what to go through for todos",
+  "what": "Which read documents the AI goes through for todos now — new and changed since it last did — and in which batches; those a todo already cites are only marked.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "ai.memo-all",
+    "todos.refs",
+    "prompts.fill"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

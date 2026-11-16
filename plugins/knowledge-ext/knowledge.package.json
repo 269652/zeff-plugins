@@ -1,0 +1,360 @@
+{
+  "format": 1,
+  "id": "knowledge-ext",
+  "version": "1.0.0",
+  "name": "Knowledge",
+  "description": "Ask the knowledge — Confluence's pages compiled into a knowledge graph — in a chat; have it read, keep something in it, and have its pages matched to your todos.",
+  "icon": "📚",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Knowledge",
+      "icon": "📚",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Chat",
+      "icon": "💬",
+      "schema": {
+        "titleName": "Chat",
+        "properties": [],
+        "views": [
+          {
+            "id": "vknowledge1",
+            "name": "Chat",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"q\" value=\"\"/><state name=\"add\" value=\"\"/>\n<data name=\"k\" lambda=\"knowledge.screen\"/>\n<data name=\"chat\" lambda=\"knowledge.chat\"/>\n<on event=\"asked\" action=\"reload\"/>\n<on event=\"knowledge-changed\" action=\"reload\"/>\n<split side=left width=300>\n<col gap=4>\n<col gap=1><heading level=2>Chat</heading><small><muted>Questions to the knowledge — Confluence and what Zeff has synced; every answer with its sources.</muted></small></col>\n{{#if data.k.ok}}\n<grid cols=2 gap=3>\n{{#each data.k.counts}}<col gap=0><small><muted>{{ label }}</muted></small><b>{{ n }}</b></col>{{/each}}\n</grid>\n{{#if data.k.notCompiled}}<small><text tone=warn>{{ data.k.notCompiled }}</text></small>{{/if}}\n{{#if data.k.confluence}}<small><muted>{{ data.k.confluence }}</muted></small>{{/if}}\n{{#if data.k.last}}<small><muted>{{ data.k.last }}</muted></small>{{/if}}\n{{#else}}\n<box tone=bad><text>{{ data.k.error }}</text></box>\n{{/if}}\n<row gap=2 wrap=true>\n{{#if data.k.ok}}<button run=\"knowledge.sync\" done=\"The knowledge server is reading Confluence and compiling what's new — that takes a while.\" emit=\"knowledge-changed\" label=\"Read Confluence now\" disabled=\"{{ data.k.busy }}\"/>{{/if}}\n<button action=\"url\" href=\"/graph\" label=\"Graph ↗\"/>\n</row>\n{{#if data.k.ok}}\n<col gap=1>\n<small><b>Add knowledge</b></small>\n<input bind=\"add\" type=textarea placeholder=\"A fact, a note, how something works — or a link\"/>\n<button run=\"knowledge.add\" with=\"text={{ state.add }}\" done=\"Remembered — being compiled.\" then=\"add=\" label=\"Remember\" disabled=\"{{ not state.add }}\"/>\n</col>\n{{/if}}\n</col>\n<col gap=3>\n{{#if data.chat.turns}}\n{{#each data.chat.turns}}\n{{#if mine}}\n<row justify=end><box tone=accent><text>{{ text }}</text></box></row>\n{{#else}}\n<box>\n<text pre=true>{{ text }}</text>\n{{#if sources}}<col gap=0>{{#each sources}}<small>[{{ n }}] {{#if url}}<a href=\"{{ url }}\">{{ title }}</a>{{#else}}{{ title }}{{/if}}{{#if heading}} <muted>› {{ heading }}</muted>{{/if}}</small>{{/each}}</col>{{/if}}\n{{#if queries}}<section title=\"How it was computed\" collapsible=true open=false>\n{{#each queries}}<col gap=0><code>{{ explain }}</code><small>Total: <b>{{ total }}</b> · {{ rows }} rows</small>{{#each groups}}<small>{{ key }}: {{ value }} ({{ count }})</small>{{/each}}{{#if more}}<small><muted>… and {{ more }} more</muted></small>{{/if}}</col>{{/each}}\n</section>{{/if}}\n{{#if entities}}<row gap=1 wrap=true>{{#each entities}}<chip tip=\"{{ tip }}\">{{ name }} {{ type }}</chip>{{/each}}</row>{{/if}}\n</box>\n{{/if}}\n{{/each}}\n{{#else}}\n<text tone=muted>Ask something about the documentation — e.g. “How does code get onto the test environment?” or “Who runs the ordering system?”</text>\n{{/if}}\n{{#if data.asked.error}}<box tone=bad><text>{{ data.asked.error }}</text></box>{{/if}}\n<row gap=2 wrap=false><col fill=true><input bind=\"q\" placeholder=\"Ask a question …\"/></col><button run=\"knowledge.ask\" with=\"question={{ state.q }}\" into=\"asked\" emit=\"asked\" then=\"q=\" label=\"Ask\" variant=primary disabled=\"{{ not state.q }}\"/><button run=\"knowledge.chat-new\" emit=\"asked\" label=\"New\"/></row>\n</col>\n</split>\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Chat",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Ask the knowledge",
+      "icon": "💬",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "knowledge.ask",
+        "title": "Ask the knowledge",
+        "description": "A question (input question) answered from your own data when it is about numbers and dates, else from the knowledge's pages, citing them — kept in the conversation. Output { turns, error }.",
+        "inputs": [
+          {
+            "name": "question",
+            "type": "text",
+            "required": false
+          }
+        ],
+        "nodes": [
+          {
+            "id": "a",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "knowledge.ask",
+              "event": {
+                "question": "{{ input.question }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ steps.a.at }}",
+            "then": [
+              {
+                "id": "memo",
+                "kind": "action",
+                "action": "ai.memo-set",
+                "input": {
+                  "scope": "knowledge-chat",
+                  "ref": "main",
+                  "hash": "{{ steps.a.at }}",
+                  "value": "{{ steps.a.turns }}",
+                  "at": "{{ steps.a.at }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "turns": "{{ steps.a.turns }}",
+              "error": "{{ steps.a.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "New conversation",
+      "icon": "🆕",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "knowledge.chat-new",
+        "title": "New conversation",
+        "description": "The conversation with the knowledge started anew.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "memo",
+            "kind": "action",
+            "action": "ai.memo-set",
+            "input": {
+              "scope": "knowledge-chat",
+              "ref": "main",
+              "hash": "new",
+              "value": []
+            }
+          }
+        ],
+        "requested": {
+          "write": "all"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read Confluence now",
+      "icon": "🔄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "knowledge.sync",
+        "title": "Read Confluence now",
+        "description": "Has the knowledge server read Confluence and compile what is new (it takes a while).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "s",
+            "kind": "action",
+            "action": "service.send",
+            "input": {
+              "connection": "knowledge-ext",
+              "service": "knowledge",
+              "method": "POST",
+              "path": "/api/sync?compile=1"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "started": "{{ steps.s.started }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add knowledge",
+      "icon": "➕",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "knowledge.add",
+        "title": "Add knowledge",
+        "description": "Something to keep in the knowledge (input text): a fact, a note, how something works — or a link (the page behind it is read). Compiled right after.",
+        "inputs": [
+          {
+            "name": "text",
+            "type": "text",
+            "required": false
+          }
+        ],
+        "nodes": [
+          {
+            "id": "s",
+            "kind": "action",
+            "action": "service.send",
+            "input": {
+              "connection": "knowledge-ext",
+              "service": "knowledge",
+              "method": "POST",
+              "path": "/api/own",
+              "body": {
+                "text": "{{ input.text }}"
+              },
+              "timeoutMs": 30000
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "title": "{{ steps.s.entry.title }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Match knowledge to todos",
+      "icon": "🧩",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "knowledge.relate",
+        "title": "Match knowledge to todos",
+        "description": "For each new or changed open todo the knowledge's pages and terms that really fit it — kept on the todo, where its Knowledge toggle shows them. Run with the briefing (the Knowledge matching step).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "m",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "knowledge.match",
+              "event": {}
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ steps.m.items }}",
+            "then": [
+              {
+                "id": "attach",
+                "kind": "action",
+                "action": "todos.attach",
+                "input": {
+                  "slot": "matches",
+                  "items": "{{ steps.m.items }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "todos": "{{ steps.m.todos }}",
+              "assigned": "{{ steps.m.assigned }}",
+              "failed": "{{ steps.m.failed }}",
+              "batches": "{{ steps.m.batches }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

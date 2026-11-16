@@ -1,0 +1,12 @@
+{
+  "name": "news.find",
+  "label": "News: find the feeds of a site",
+  "what": "The feeds a website (or a profile on one) offers — each fetched and checked.",
+  "kind": "function",
+  "zeff": [],
+  "web": [
+    "*"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

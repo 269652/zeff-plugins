@@ -1,0 +1,19 @@
+{
+  "name": "drive.backup-plan",
+  "label": "Google Drive: backups to Drive",
+  "what": "backups to Drive: which go up (encrypted ones, unless you allow others) and which the retention removed that go from Drive too.",
+  "kind": "function",
+  "zeff": [
+    "backup.files",
+    "oauth.status",
+    "store.query"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256,
+  "secrets": [
+    "folderName",
+    "mirrorBackupRetention",
+    "uploadUnencrypted",
+    "pullDocuments"
+  ]
+}

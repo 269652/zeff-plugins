@@ -8,10 +8,13 @@
     "store.query",
     "zeff.installed",
     "people.list",
-    "todos.by-ids",
+    "read.todos.by-ids",
     "money.allocations",
     "people.accounts"
   ],
   "timeoutMs": 120000,
-  "memoryMb": 512
+  "memoryMb": 512,
+  "sql": [
+    "todos"
+  ]
 }

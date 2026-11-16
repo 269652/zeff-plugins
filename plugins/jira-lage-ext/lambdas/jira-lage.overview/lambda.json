@@ -1,0 +1,13 @@
+{
+  "name": "jira-lage.overview",
+  "label": "Board briefing: the page",
+  "what": "Your enabled Jira boards with their open tickets, and how many tickets the next board briefing would read (with you, and all of them).",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "runs.analyzed-tickets",
+    "todos.followed"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

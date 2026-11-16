@@ -1,0 +1,11 @@
+{
+  "name": "finances.account-mark",
+  "label": "Finances: mark an account",
+  "what": "A recipient marked as an account of yours, a credit account, or neither (the preference finances.ownAccounts).",
+  "kind": "function",
+  "zeff": [
+    "pref.get"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

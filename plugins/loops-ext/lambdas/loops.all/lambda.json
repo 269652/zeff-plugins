@@ -1,0 +1,15 @@
+{
+  "name": "loops.all",
+  "label": "Open loops: all of them",
+  "what": "Every open loop (the rules' and the AI's), the closed ones of the last two weeks and the rest — what the Today page, the inbox chips, the people's pages and the MCP read.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "people.claims",
+    "messages.of-ref",
+    "messages.recent",
+    "people.resolve"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

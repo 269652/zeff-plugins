@@ -1,0 +1,11 @@
+{
+  "name": "documents.read-plan",
+  "label": "Documents: what waits to be read",
+  "what": "The documents waiting to be read (and those left half-read by a run that is gone) — not those held for your confirmation.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

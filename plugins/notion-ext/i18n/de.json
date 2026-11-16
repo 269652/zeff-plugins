@@ -1,6 +1,5 @@
 {
   "Notion": "Notion",
-  "Your Notion workspace in the Workspace, both ways and close to live: the pages, databases and rows you share with your Notion integration come in under the page My Notion, and what you change on either side reaches the other within seconds — text with its blocks, titles, icons, covers, a row's fields. Use Zeff in place of Notion, or beside it. What only one side can show stays there.": "Dein Notion-Arbeitsbereich im Workspace, in beide Richtungen und nahezu live: die Seiten, Datenbanken und Zeilen, die du mit deiner Notion-Integration teilst, kommen unter die Seite „My Notion“, und was du auf einer Seite änderst, ist nach Sekunden auf der anderen — Text mit seinen Blöcken, Titel, Icons, Titelbilder, die Felder einer Zeile. Nutze Zeff statt Notion oder daneben. Was nur eine Seite zeigen kann, bleibt dort.",
   "Notion token": "Notion-Token",
   "Your integration's secret: in Notion, Settings → Connections → Develop or manage integrations → New integration (internal) → copy the secret. Then share the pages you want in Zeff with it (a page's ••• → Connections).": "Das Secret deiner Integration: in Notion Einstellungen → Verbindungen → Integrationen entwickeln oder verwalten → Neue Integration (intern) → Secret kopieren. Dann die Seiten, die du in Zeff haben willst, mit ihr teilen (••• einer Seite → Verbindungen).",
   "New pages from Zeff go to": "Neue Seiten aus Zeff kommen nach",
@@ -14,5 +13,6 @@
   "Notion: what changed": "Notion: was sich geändert hat",
   "Notion: anything new?": "Notion: etwas Neues?",
   "Notion: merge a page": "Notion: eine Seite zusammenführen",
-  "Notion: write a page": "Notion: eine Seite schreiben"
+  "Notion: write a page": "Notion: eine Seite schreiben",
+  "Notion in the Workspace, both ways and close to live: the pages, databases and rows you share with your integration come in under My Notion; what you change on either side reaches the other within seconds. Use Zeff in place of Notion, or beside it.": "Notion im Workspace, in beide Richtungen und nahezu live: die Seiten, Datenbanken und Zeilen, die du mit deiner Integration teilst, kommen unter „My Notion“; was du auf einer Seite änderst, ist nach Sekunden auf der anderen. Nutze Zeff statt Notion oder daneben."
 }

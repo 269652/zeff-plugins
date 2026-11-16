@@ -1,0 +1,240 @@
+{
+  "format": 1,
+  "id": "jira-lage-ext",
+  "version": "1.0.0",
+  "name": "Jira briefing",
+  "description": "The board briefing of your Jira boards: which tickets matter now, read fresh from Jira, assessed by the Workspace's AI review.",
+  "icon": "🧭",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Jira briefing",
+      "icon": "🧭",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "The board briefing: the tickets of your Jira boards that moved lately, read fresh from Jira and assessed by the Workspace's AI review — the cards fill in as parts are done. The run is the flow below (by hand: “Analyse” on a Jira board or on the page Board briefing); which tickets matter is the lambda jira-lage.relevant (Studio → Lambdas)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Board briefing run",
+      "icon": "🧭",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "jira-lage.board-lage",
+        "title": "Board briefing",
+        "description": "The relevant tickets of your Jira boards (with you, or all) read fresh from Jira, their comments kept, then the boards' AI reviews, the AI blocks and the pipelines with AI steps — the Sync menu's step “Board briefing”, by hand.",
+        "inputs": [
+          {
+            "name": "all",
+            "type": "boolean",
+            "help": "All relevant tickets, also those without you"
+          },
+          {
+            "name": "force",
+            "type": "boolean",
+            "help": "Assess all cards again, not only those that changed"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "rel",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "jira-lage.relevant",
+              "event": {
+                "all": "{{ input.all }}"
+              }
+            }
+          },
+          {
+            "id": "fresh",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "read",
+                "kind": "action",
+                "action": "jira.read-issues",
+                "input": {
+                  "keys": "{{ steps.rel.keys }}"
+                }
+              },
+              {
+                "id": "kept",
+                "kind": "if",
+                "when": "{{ steps.read.comments }}",
+                "then": [
+                  {
+                    "id": "put",
+                    "kind": "action",
+                    "action": "store.put",
+                    "input": {
+                      "store": "jira-lage-ext.comments",
+                      "rows": "{{ steps.read.comments }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "catch": [
+              {
+                "id": "note",
+                "kind": "set",
+                "vars": {
+                  "note": "{{ error.message | truncate(300) }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "setup",
+            "kind": "action",
+            "action": "workspace.ensure-reviews",
+            "input": {}
+          },
+          {
+            "id": "review",
+            "kind": "action",
+            "action": "workspace.review-databases",
+            "input": {
+              "force": "{{ input.force }}"
+            }
+          },
+          {
+            "id": "blocks",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "refresh",
+                "kind": "action",
+                "action": "workspace.refresh-ai-blocks",
+                "input": {}
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "pipes",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "run",
+                "kind": "action",
+                "action": "workspace.run-pipelines",
+                "input": {
+                  "ai": true
+                }
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "report",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "jira-lage.report",
+              "event": {
+                "all": "{{ input.all }}",
+                "reviewed": "{{ steps.review.reviewed }}",
+                "unchanged": "{{ steps.review.unchanged }}",
+                "failed": "{{ steps.review.failed }}",
+                "error": "{{ steps.review.error }}",
+                "note": "{{ vars.note }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.report.ok }}",
+              "message": "{{ steps.report.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "jira-lage-ext.comments"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ],
+        "sync": {
+          "label": "Board briefing",
+          "what": "The briefing on every relevant card of your boards — the Jira boards' tickets (not only yours) and your own boards' cards — shown on the cards (only what changed)",
+          "replaces": "boardlage"
+        }
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Board briefing",
+      "icon": "🧭",
+      "schema": {
+        "titleName": "Board briefing",
+        "properties": [],
+        "views": [
+          {
+            "id": "vjl1",
+            "name": "Board briefing",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<data name=\"o\" lambda=\"jira-lage.overview\"/>\n<on event=\"briefing-changed\" action=\"reload\"/>\n<text tone=muted>The tickets of your Jira boards that moved lately, read fresh from Jira and assessed by the AI — the cards fill in as parts are done. Only what changed is assessed again.</text>\n{{#if not data.o}}<muted>Loading …</muted>{{#else}}\n<box title=\"Analyse\">\n<col gap=2>\n<text>{{ data.o.withMe.count }} tickets with you · {{ data.o.all.count }} tickets in all would be read.</text>\n<row gap=2>\n<button run=\"jira-lage.board-lage\" with=\"all=false\" done=\"Done.\" emit=\"briefing-changed\" label=\"Analyse — with me\" variant=primary/>\n<button run=\"jira-lage.board-lage\" with=\"all=true\" done=\"Done.\" emit=\"briefing-changed\" label=\"Analyse — all tickets\"/>\n</row>\n</col>\n</box>\n<box title=\"Your Jira boards\">\n<col gap=1>\n{{#each data.o.boards}}\n<row gap=2 align=center wrap=false><col fill=true><b>{{ name }}</b><small><muted>{{ project }} {{ type }} · {{ open }} open</muted></small></col></row>\n{{/each}}\n{{#if not data.o.boards}}<muted>No Jira board is chosen — choose them under Jira.</muted>{{/if}}\n</col>\n</box>\n<box title=\"With you, next\">\n<col gap=1>\n{{#each data.o.withMe.tickets}}\n<row gap=2 align=center wrap=false><b>{{ key }}</b><col fill=true><text>{{ summary }}</text><small><muted>{{ status }} · {{ assignee }}</muted></small></col></row>\n{{/each}}\n</col>\n</box>\n{{/if}}\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Board briefing",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

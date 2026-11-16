@@ -1,0 +1,123 @@
+{
+  "format": 1,
+  "id": "auto-actions-ext",
+  "version": "1.0.0",
+  "name": "Auto actions",
+  "description": "The AI step after the briefing: every open todo without a button gets ready-made actions from what the installed plugins can do.",
+  "icon": "⚡",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Auto actions",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Review the todos for actions",
+      "icon": "⚡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "autoactions.review",
+        "title": "Review the todos for actions",
+        "description": "The AI goes through the open todos without actions and proposes ready-made ones, one click each. Run with every briefing (its last step); input ids: only those todos, all: every one again.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "review",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "auto-actions.review",
+              "event": {
+                "all": "{{ input.all }}",
+                "ids": "{{ input.ids }}"
+              }
+            }
+          },
+          {
+            "id": "put",
+            "kind": "foreach",
+            "items": "{{ steps.review.changes }}",
+            "as": "c",
+            "nodes": [
+              {
+                "id": "set",
+                "kind": "action",
+                "action": "todos.set-actions",
+                "input": {
+                  "id": "{{ c.id }}",
+                  "ops": "{{ c.ops }}",
+                  "why": "{{ c.why }}",
+                  "mode": "{{ c.mode }}",
+                  "replace": "{{ c.replace }}",
+                  "reviewedAt": "{{ c.reviewedAt }}"
+                }
+              }
+            ],
+            "max": 500
+          },
+          {
+            "id": "kept",
+            "kind": "if",
+            "when": "{{ steps.review.setOffered }}",
+            "then": [
+              {
+                "id": "offered",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "auto-actions-ext",
+                  "key": "autoactions:offered",
+                  "value": "{{ steps.review.offered }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.review.ok }}",
+              "message": "{{ steps.review.message }}",
+              "reviewed": "{{ steps.review.reviewed }}",
+              "withActions": "{{ steps.review.withActions }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "sync": {
+          "label": "Auto actions",
+          "what": "Ready actions for the todos without a button — by the AI, from what the installed plugins can do (after each briefing)",
+          "replaces": "autoactions"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

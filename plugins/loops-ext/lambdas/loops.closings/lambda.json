@@ -1,0 +1,16 @@
+{
+  "name": "loops.closings",
+  "label": "Open loops: closing by rule",
+  "what": "Promises whose ticket or thread shows them kept, closed — a reply about one proposed.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "people.claims",
+    "messages.of-ref",
+    "messages.recent",
+    "people.resolve",
+    "messages.later"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

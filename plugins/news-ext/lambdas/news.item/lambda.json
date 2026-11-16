@@ -1,0 +1,11 @@
+{
+  "name": "news.item",
+  "label": "News: an item to read here",
+  "what": "One item's title, picture and whole article, for the reading dialog.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 256
+}

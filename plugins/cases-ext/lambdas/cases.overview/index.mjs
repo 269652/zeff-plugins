@@ -23,7 +23,7 @@ export async function handler(_event, context) {
   const running = cases.filter((c) => c.status === "open" && !c.compiled?.done && !c.compiled?.manual);
   const partyRows = await all(zeff, "cases-ext.parties");
   const people = [...new Set([...partyRows.map((p) => p.person_id), ...cases.map((c) => c.personId)].filter(Boolean))];
-  const { names } = people.length ? await zeff.call("people.names", { ids: people }).catch(() => ({ names: {} })) : { names: {} };
+  const { names } = people.length ? await zeff.call("read.people.names", { ids: people }).catch(() => ({ names: {} })) : { names: {} };
   const parties = {};
   for (const p of partyRows) if (names[p.person_id] && (p.role === "creditor" || p.role === "collector")) (parties[p.case_id] ??= {})[p.role] = names[p.person_id];
   const { allocations } = running.length ? await zeff.call("money.allocations", { refs: running.map((c) => "case:" + c.id) }) : { allocations: {} };

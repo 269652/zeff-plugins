@@ -1,0 +1,116 @@
+<state name="path" value=""/><state name="filter" value=""/><state name="picked" value="[]"/><state name="file" value=""/><state name="edit" value=""/><state name="editkey" value=""/><state name="addr" value=""/><state name="newname" value=""/><state name="watchmode" value="confirm"/>
+<data name="x" lambda="explorer.screen" with="path={{ state.path }}, filter={{ state.filter }}, picked={{ state.picked }}" debounce="300"/>
+<data name="file" lambda="explorer.file" with="path={{ state.file }}" when="{{ state.file }}"/>
+<on event="explorer-changed" action="reload"/>
+<on event="edit-start" action="state" state="edit" value="{{ data.file.text }}"/>
+<on event="edit-start" action="state" state="editkey" value="{{ data.file.key }}"/>
+<on event="edit-stop" action="state" state="editkey" value=""/>
+{{#if not data.x}}<muted>Loading …</muted>{{#else}}
+<col gap=3>
+<row gap=2 wrap=true align=center>
+<button action="state" state="path" value="{{ data.x.parent }}" label="↑" tip="Up" disabled="{{ data.x.atPc }}"/>
+<button action="reload" label="⟳" tip="Refresh"/>
+<button action="state" state="path" value="" label="This PC" variant=quiet/>
+{{#each data.x.crumbs}}<muted>›</muted><button action="state" state="path" value="{{ path }}" label="{{ name }}" variant=quiet/>{{/each}}
+<grow/>
+<input bind="filter" placeholder="Search this folder"/>
+</row>
+<row gap=2 wrap=false align=center>
+<col fill=true><input bind="addr" placeholder="Address"/></col>
+<button action="state" state="path" value="{{ state.addr }}" label="Go" disabled="{{ not state.addr }}"/>
+</row>
+{{#if data.x.error}}<text tone=warn>{{ data.x.error }}</text>{{/if}}
+{{#if data.result.message}}<text tone=good>{{ data.result.message }}</text>{{/if}}
+{{#if data.x.path}}
+<row gap=2 wrap=true align=center>
+<input bind="newname" placeholder="Folder name"/>
+<button run="explorer.make" with="parent={{ data.x.path }}, name={{ state.newname }}, kind=folder" then="newname=" done="Created." emit="explorer-changed" label="📁 New folder" disabled="{{ not state.newname }}"/>
+<button run="explorer.make" with="parent={{ data.x.path }}, name={{ state.newname }}, kind=file" then="newname=" done="Created." emit="explorer-changed" label="📄 New text file" disabled="{{ not state.newname }}"/>
+</row>
+{{/if}}
+<row gap=2 wrap=true align=center>
+{{#if data.x.nPickedFiles}}<button run="explorer.import" with="paths={{ data.x.pickedFiles }}" into="result" emit="explorer-changed" label="📥 Import to Documents" variant=primary/>{{/if}}
+{{#if data.x.folder}}
+<button run="explorer.import-folder" with="path={{ data.x.folder }}" into="result" confirm="Import every readable file of this folder (subfolders too) into Documents?" emit="explorer-changed" label="📥 Import folder"/>
+{{#if data.x.watched.here}}
+<small><muted>👁 {{#if data.x.watched.live}}Watched live{{#else}}Watched{{/if}}</muted></small>
+<button run="explorer.watch-mode" with="id={{ data.x.watched.id }}, mode=confirm" into="result" emit="explorer-changed" label="Wait for my confirmation" variant="{{ data.x.watched.mode == 'confirm' ? 'primary' : 'quiet' }}"/>
+<button run="explorer.watch-mode" with="id={{ data.x.watched.id }}, mode=auto" into="result" emit="explorer-changed" label="Automatically" variant="{{ data.x.watched.mode == 'auto' ? 'primary' : 'quiet' }}"/>
+<button run="explorer.unwatch" with="id={{ data.x.watched.id }}" into="result" confirm="Stop watching this folder? Its documents stay in Documents." emit="explorer-changed" label="Stop watching"/>
+{{#else}}
+{{#if data.x.watched}}<small><muted>👁 Inside the watched folder “{{ data.x.watched.name }}”</muted></small>{{#else}}
+<tabs bind="watchmode" options="confirm:Wait for my confirmation, auto:Automatically"/>
+<button run="explorer.watch" with="path={{ data.x.folder }}, mode={{ state.watchmode }}" into="result" emit="explorer-changed" label="👁 Watch folder"/>
+{{/if}}
+{{/if}}
+{{#if data.x.canOpen}}<button run="explorer.open-here" with="path={{ data.x.folder }}, reveal=false" into="result" label="🗔 Open in Windows Explorer"/>{{/if}}
+{{/if}}
+</row>
+<row gap=3 wrap=true>
+<section title="Places" collapsible=true open=wide>
+<col gap=1>
+<small><b>Quick access</b></small>
+{{#each data.x.quick}}<button action="state" state="path" value="{{ path }}" label="{{ icon }} {{ name }}" variant=quiet/>{{/each}}
+{{#if data.x.watchedPlaces}}<small><b>Watched folders</b></small>{{/if}}
+{{#each data.x.watchedPlaces}}<button action="state" state="path" value="{{ path }}" label="{{ icon }} {{ name }}{{ live ? ' ●' : '' }}" variant=quiet/>{{/each}}
+<small><b>This PC</b></small>
+{{#each data.x.drives}}<button action="state" state="path" value="{{ path }}" label="{{ icon }} {{ name }}" variant=quiet/>{{/each}}
+</col>
+</section>
+<col fill=true gap=2>
+<check bind="picked" all="data.x.entries" label="Pick all"/>
+<datatable source="data.x.entries" empty="{{ data.x.labels.empty }}" sort=true>
+<column label=""><check bind="picked" label=""/></column>
+<column label="Name" sort="{{ name }}">{{#if dir}}<button action="state" state="path" value="{{ path }}" label="{{ icon }} {{ name }}{{ live ? ' 👁' : '' }}" variant=quiet/>{{#else}}<button action="state" state="file" value="{{ path }}" label="{{ icon }} {{ name }}" variant=quiet/>{{/if}}</column>
+<column label="Date modified" sort="{{ mtime }}" nowrap=true><small><muted>{{ date }}</muted></small></column>
+<column label="Type" sort="{{ type }}"><small><muted>{{ type }}</muted></small></column>
+<column label="Size" align=right sort="{{ sizeBytes }}" nowrap=true><small><muted>{{ size }}</muted></small></column>
+<column label="In Documents" align=center><small>{{ docMark }}</small></column>
+</datatable>
+<row gap=3><small><muted>{{ data.x.labels.items }}</muted></small>{{#if data.x.nPicked}}<small><muted>{{ data.x.labels.picked }}</muted></small>{{/if}}{{#if data.x.cut}}<small><muted>{{ data.x.labels.cut }}</muted></small>{{/if}}</row>
+</col>
+</row>
+</col>
+<dialog bind="file" title="{{ data.file.name }}" side=right wide=true>
+{{#if data.file.found}}
+<col gap=3>
+<row gap=2 wrap=true align=center>
+<small><muted>{{ data.file.size }} · {{ data.file.date }}</muted></small>
+{{#if data.file.inDocs}}<small><a href="/documents">{{#if data.file.changed}}in Documents (changed since){{#else}}in Documents{{/if}}</a></small>{{/if}}
+</row>
+<row gap=2 wrap=true align=center>
+{{#if data.file.editable}}{{#if state.editkey == data.file.key}}
+<button run="explorer.save" with="path={{ data.file.path }}, mtime={{ data.file.mtime }}, text={{ state.edit }}" done="Saved." emit="explorer-changed" label="Save" variant=primary/>
+<button emit="edit-stop" label="Cancel"/>
+{{#else}}<button emit="edit-start" label="✎ Edit"/>{{/if}}{{/if}}
+{{#if data.file.importable}}{{#if not data.file.inDocs}}<button run="explorer.import" with="paths={{ data.file.path }}" into="result" emit="explorer-changed" label="Import to Documents"/>{{/if}}{{#if data.file.changed}}<button run="explorer.import" with="paths={{ data.file.path }}" into="result" emit="explorer-changed" label="Update in Documents"/>{{/if}}{{/if}}
+{{#if data.x.canOpen}}<button run="explorer.open-here" with="path={{ data.file.path }}, reveal=false" into="result" label="Open"/><button run="explorer.open-here" with="path={{ data.file.path }}, reveal=true" into="result" label="Show in folder"/>{{/if}}
+<a href="{{ data.file.downloadUrl }}">Download</a>
+</row>
+{{#if data.file.readOnlyWhy}}<text tone=warn>{{ data.file.readOnlyWhy }}</text>{{/if}}
+{{#if data.file.textual}}
+{{#if state.editkey == data.file.key}}
+<input bind="edit" rows=24 value="{{ data.file.text }}"/>
+{{#else}}
+{{#if data.file.hasText}}
+{{#if data.file.view == 'markdown'}}<markdown value="{{ data.file.text }}"/>
+{{#else}}{{#if data.file.view == 'csv'}}
+<grid cols="{{ data.file.csvCols }}" gap=1>
+{{#each data.file.csvRows}}{{#each cells}}{{#if head}}<b>{{ v }}</b>{{#else}}<small>{{ v }}</small>{{/if}}{{/each}}{{/each}}
+</grid>
+{{#else}}<text pre=true>{{ data.file.text }}</text>{{/if}}{{/if}}
+{{/if}}
+{{/if}}
+{{/if}}
+{{#if data.file.view == 'image'}}<img src="{{ data.file.url }}" alt="{{ data.file.name }}"/>{{/if}}
+{{#if data.file.view == 'pdf'}}<media kind=pdf src="{{ data.file.url }}" h=640 label="{{ data.file.name }}"/>{{/if}}
+{{#if data.file.view == 'audio'}}<media kind=audio src="{{ data.file.url }}" label="{{ data.file.name }}"/>{{/if}}
+{{#if data.file.view == 'video'}}<media kind=video src="{{ data.file.url }}" h=520 label="{{ data.file.name }}"/>{{/if}}
+{{#if data.file.view == 'office'}}<text pre=true>{{ data.file.officeText }}</text>{{/if}}
+{{#if data.file.view == 'none'}}<text tone=muted>Zeff can't show this kind of file — open it with this computer's program, or download it.</text>{{/if}}
+</col>
+{{#else}}
+<text tone=warn>{{ data.file.error }}</text>
+{{/if}}
+</dialog>
+{{/if}}

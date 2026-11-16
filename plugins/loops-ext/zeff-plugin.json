@@ -1,0 +1,92 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "loops-ext",
+  "name": "Open loops",
+  "version": "0.1.0",
+  "description": "What is still open between you and others: promises, questions and requests nobody answered, Jira comments addressed to you. A loop closes where the source leaves no doubt; a reply or the AI's reading is proposed for you to confirm. The engine is lambdas you or the AI can change.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "stores": [
+      {
+        "name": "state",
+        "adopts": "loops_state",
+        "key": "ref",
+        "columns": [
+          {
+            "name": "ref",
+            "type": "text"
+          },
+          {
+            "name": "state",
+            "type": "text"
+          },
+          {
+            "name": "closed_by",
+            "type": "text"
+          },
+          {
+            "name": "close_ref",
+            "type": "text"
+          },
+          {
+            "name": "close_quote",
+            "type": "text"
+          },
+          {
+            "name": "closed_at",
+            "type": "text"
+          },
+          {
+            "name": "proposal_ref",
+            "type": "text"
+          },
+          {
+            "name": "proposal_quote",
+            "type": "text"
+          },
+          {
+            "name": "proposal_href",
+            "type": "text"
+          },
+          {
+            "name": "proposal_at",
+            "type": "text"
+          },
+          {
+            "name": "proposal_by",
+            "type": "text"
+          },
+          {
+            "name": "rejected",
+            "type": "json"
+          },
+          {
+            "name": "snooze_until",
+            "type": "text"
+          },
+          {
+            "name": "snapshot",
+            "type": "json"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "workspacePackages": [
+      "loops.package.json"
+    ],
+    "aiTasks": [
+      {
+        "id": "close",
+        "label": "Open loops: kept?",
+        "what": "Whether a message shows an open promise kept."
+      }
+    ]
+  }
+}

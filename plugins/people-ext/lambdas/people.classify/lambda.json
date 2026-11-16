@@ -1,0 +1,13 @@
+{
+  "name": "people.classify",
+  "label": "People: person or organisation, and their circle",
+  "what": "For the contacts not placed yet: a person or an organisation (a bank, an authority, a company) and the circle they belong to (family, friends, work, authorities, services).",
+  "kind": "function",
+  "zeff": [
+    "people.classify-input",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 1200000,
+  "memoryMb": 256
+}

@@ -1,0 +1,11 @@
+{
+  "name": "knowledge.chat",
+  "label": "Knowledge: the conversation",
+  "what": "The conversation with the knowledge as kept so far.",
+  "kind": "function",
+  "zeff": [
+    "ai.memo-get"
+  ],
+  "timeoutMs": 15000,
+  "memoryMb": 128
+}

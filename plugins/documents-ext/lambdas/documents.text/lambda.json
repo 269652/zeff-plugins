@@ -1,0 +1,11 @@
+{
+  "name": "documents.text",
+  "label": "Documents: a document's text",
+  "what": "A document's whole text and its summary.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 128
+}

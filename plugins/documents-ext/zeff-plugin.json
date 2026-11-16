@@ -1,0 +1,151 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "documents-ext",
+  "name": "Documents",
+  "version": "0.1.0",
+  "description": "Your documents: the text read out of text files, Office files, PDFs, pictures and recordings, the AI's todos from them, which documents belong to which todo, your local folders read in by themselves. Its steps are lambdas and flows you or the AI can change.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "documents.package.json"
+    ],
+    "stores": [
+      {
+        "name": "documents",
+        "adopts": "documents",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "mime",
+            "type": "text"
+          },
+          {
+            "name": "size",
+            "type": "integer"
+          },
+          {
+            "name": "sha256",
+            "type": "text"
+          },
+          {
+            "name": "kind",
+            "type": "text"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "error",
+            "type": "text"
+          },
+          {
+            "name": "file",
+            "type": "text"
+          },
+          {
+            "name": "text",
+            "type": "text"
+          },
+          {
+            "name": "summary",
+            "type": "text"
+          },
+          {
+            "name": "concepts",
+            "type": "text"
+          },
+          {
+            "name": "compiled",
+            "type": "integer"
+          },
+          {
+            "name": "created_at",
+            "type": "text"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "gate",
+        "adopts": "doc_gate",
+        "key": "doc_id",
+        "columns": [
+          {
+            "name": "doc_id",
+            "type": "integer"
+          },
+          {
+            "name": "state",
+            "type": "text"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "local_files",
+        "adopts": "doc_local_files",
+        "key": "path",
+        "columns": [
+          {
+            "name": "path",
+            "type": "text"
+          },
+          {
+            "name": "folder_id",
+            "type": "text"
+          },
+          {
+            "name": "rel",
+            "type": "text"
+          },
+          {
+            "name": "doc_id",
+            "type": "integer"
+          },
+          {
+            "name": "size",
+            "type": "integer"
+          },
+          {
+            "name": "mtime",
+            "type": "integer"
+          },
+          {
+            "name": "missing_at",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "aiTasks": [
+      {
+        "id": "doc-todos",
+        "label": "Document review",
+        "what": "Finds what you have to do in new and changed documents (Documents plugin)."
+      },
+      {
+        "id": "doc-relations",
+        "label": "Document matching",
+        "what": "Matches each todo with the documents it is about."
+      }
+    ]
+  }
+}

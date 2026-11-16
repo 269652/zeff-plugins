@@ -1,0 +1,15 @@
+{
+  "name": "news.read-ahead",
+  "label": "News: reading ahead",
+  "what": "The whole text and a picture of the best unread items, so they open at once.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "web": [
+    "*"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

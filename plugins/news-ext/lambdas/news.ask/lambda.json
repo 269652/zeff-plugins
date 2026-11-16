@@ -1,0 +1,13 @@
+{
+  "name": "news.ask",
+  "label": "News: ask your news",
+  "what": "A question answered from the news you collected, citing the numbered sources.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

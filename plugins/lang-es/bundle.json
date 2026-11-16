@@ -8766,5 +8766,7 @@
   "Zeff's Jira connection isn't set up (Jira tab).": "La conexión de Zeff con Jira no está configurada (pestaña Jira).",
   "Zeff's structure": "Estructura de Zeff",
   "Zeff's, changed by you": "de Zeff, cambiada por ti",
-  "zeff/… (no words to make a name of)": "zeff/… (sin palabras para hacer un nombre)"
+  "zeff/… (no words to make a name of)": "zeff/… (sin palabras para hacer un nombre)",
+  "read pages: their title, text and fields": "leer páginas: su título, texto y campos",
+  "A page's title, icon, text (as the editor keeps it) and, for a row, its fields — nothing is changed.": "El título, el icono y el texto de una página (tal como lo guarda el editor) y, en una fila, sus campos: no se cambia nada."
 }

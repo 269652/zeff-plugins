@@ -1,0 +1,23 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "know-ext",
+  "name": "What you should know",
+  "version": "0.1.0",
+  "description": "What you should know right now: the few points before a meeting or beside a mail, a chat, a ticket, a person — from what Zeff put together about the people and things (open promises, last contacts, related tickets), each point linked to its source. Its summary is a lambda you (or the AI) can change.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "know.package.json"
+    ],
+    "aiTasks": [
+      {
+        "id": "summary",
+        "label": "What you should know",
+        "what": "Sums up in a few points what you should know before a meeting or about a mail, a chat, a ticket, a person — each point linked to its source."
+      }
+    ]
+  }
+}

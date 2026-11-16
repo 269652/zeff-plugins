@@ -1,0 +1,11 @@
+{
+  "name": "finances.widget-figures",
+  "label": "Finances: debts in figures",
+  "what": "The widget's tiles: what is open, the instalments a month, when you are debt-free and what is left of your income — or the same for what you are owed.",
+  "kind": "function",
+  "zeff": [
+    "metrics.stats"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

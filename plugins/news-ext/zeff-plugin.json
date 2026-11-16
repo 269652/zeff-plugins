@@ -1,0 +1,271 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "news-ext",
+  "name": "News",
+  "version": "0.1.0",
+  "description": "Your news, gathered for you: the feeds you pick plus a search per interest, everything scored for you. Slice 1 of the port: the sync's heart (fetching, keeping what is new, scoring) — the rest of News (the agent's filter, tags, overview, discovery, the page) is still the built-in's.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "news.package.json"
+    ],
+    "appViews": [
+      {
+        "id": "news",
+        "dataType": "news",
+        "label": "News",
+        "icon": "📰",
+        "template": "views/news.html"
+      }
+    ],
+    "aiTasks": [
+      {
+        "id": "funnel",
+        "label": "News: the agent's filter",
+        "what": "Reads the best new headlines like an editor who knows you and lets through what interests you."
+      },
+      {
+        "id": "discover",
+        "label": "News: Discover",
+        "what": "Plans searches from your taste."
+      },
+      {
+        "id": "similar",
+        "label": "News: more like this",
+        "what": "Reads an article, says why it matters to you and which searches would find more."
+      },
+      {
+        "id": "feeds",
+        "label": "News: finding sources",
+        "what": "Suggests outlets, blogs and newsletters for a topic."
+      },
+      {
+        "id": "taste",
+        "label": "News: your taste",
+        "what": "Keeps the written description of what you like to read."
+      },
+      {
+        "id": "tags",
+        "label": "News: the tagger",
+        "what": "Tags and a story label for the best unseen headlines: names, topics, the event they are about."
+      },
+      {
+        "id": "ask",
+        "label": "News: ask your news",
+        "what": "Answers a question from the news you collected, citing the sources."
+      },
+      {
+        "id": "digest",
+        "label": "News: the overview",
+        "what": "The briefing of the day: what matters, the themes, the few to read first."
+      }
+    ],
+    "stores": [
+      {
+        "name": "sources",
+        "adopts": "news_sources",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "url",
+            "type": "text"
+          },
+          {
+            "name": "enabled",
+            "type": "integer"
+          },
+          {
+            "name": "weight",
+            "type": "real"
+          },
+          {
+            "name": "votes",
+            "type": "integer"
+          },
+          {
+            "name": "last_at",
+            "type": "text"
+          },
+          {
+            "name": "last_error",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "text"
+          },
+          {
+            "name": "category",
+            "type": "text"
+          },
+          {
+            "name": "lang",
+            "type": "text"
+          },
+          {
+            "name": "etag",
+            "type": "text"
+          },
+          {
+            "name": "modified",
+            "type": "text"
+          },
+          {
+            "name": "fails",
+            "type": "integer"
+          }
+        ]
+      },
+      {
+        "name": "items",
+        "adopts": "news_items",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "source_id",
+            "type": "integer"
+          },
+          {
+            "name": "source_name",
+            "type": "text"
+          },
+          {
+            "name": "guid",
+            "type": "text"
+          },
+          {
+            "name": "url",
+            "type": "text"
+          },
+          {
+            "name": "url_key",
+            "type": "text"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "name": "title_key",
+            "type": "text"
+          },
+          {
+            "name": "summary",
+            "type": "text"
+          },
+          {
+            "name": "published_at",
+            "type": "text"
+          },
+          {
+            "name": "fetched_at",
+            "type": "text"
+          },
+          {
+            "name": "state",
+            "type": "text"
+          },
+          {
+            "name": "vote",
+            "type": "integer"
+          },
+          {
+            "name": "score",
+            "type": "real"
+          },
+          {
+            "name": "reasons",
+            "type": "text"
+          },
+          {
+            "name": "image",
+            "type": "text"
+          },
+          {
+            "name": "content",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "gone",
+        "adopts": "news_gone",
+        "key": "url_key",
+        "columns": [
+          {
+            "name": "url_key",
+            "type": "text"
+          },
+          {
+            "name": "title_key",
+            "type": "text"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "terms",
+        "adopts": "news_terms",
+        "key": "term",
+        "columns": [
+          {
+            "name": "term",
+            "type": "text"
+          },
+          {
+            "name": "score",
+            "type": "real"
+          }
+        ]
+      },
+      {
+        "name": "similar",
+        "adopts": "news_similar",
+        "key": [
+          "item_id",
+          "like_of"
+        ],
+        "columns": [
+          {
+            "name": "item_id",
+            "type": "integer"
+          },
+          {
+            "name": "like_of",
+            "type": "integer"
+          },
+          {
+            "name": "score",
+            "type": "real"
+          },
+          {
+            "name": "why",
+            "type": "text"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

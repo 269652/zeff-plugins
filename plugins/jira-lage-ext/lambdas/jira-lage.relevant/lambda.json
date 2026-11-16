@@ -1,0 +1,13 @@
+{
+  "name": "jira-lage.relevant",
+  "label": "Board briefing: the tickets that matter now",
+  "what": "The open tickets of your enabled Jira boards that moved lately (or are in progress), less those the last board run assessed — yours and followed ones, or all (event.all): the keys the board briefing reads fresh from Jira.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "runs.analyzed-tickets",
+    "todos.followed"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

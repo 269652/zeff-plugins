@@ -1,0 +1,38 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "people-ext",
+  "name": "People (AI steps)",
+  "version": "0.1.0",
+  "description": "What the AI does with your people: reads what new messages say about them (roles, tasks, promises, links), writes their overview, tells a person from an organisation and places them in a circle, and matches the names. The contacts themselves stay Zeff's.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "people.package.json"
+    ],
+    "aiTasks": [
+      {
+        "id": "extract",
+        "label": "People: what the messages say",
+        "what": "Reads new messages for what they say about the people you keep a profile of: roles, tasks, facts, promises, links."
+      },
+      {
+        "id": "compile",
+        "label": "People: a person's overview",
+        "what": "Writes a person's short overview from everything Zeff has on them."
+      },
+      {
+        "id": "classify",
+        "label": "People: person or organisation, circle",
+        "what": "Places contacts: a person or an organisation, and their circle."
+      },
+      {
+        "id": "normalize",
+        "label": "People: one identity per person",
+        "what": "Matches the names in your todos, chats and mails to your profiles."
+      }
+    ]
+  }
+}

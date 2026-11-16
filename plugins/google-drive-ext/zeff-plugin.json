@@ -1,0 +1,172 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "google-drive-ext",
+  "name": "Google Drive",
+  "version": "1.0.0",
+  "description": "Keeps a copy of your documents in your Google Drive — and, if you turn it on, of your backups. Files you add to Zeff's Documents folder in Drive can come into Zeff too. Signs in with an OAuth client of your own: by default Zeff only sees the files it puts in Drive itself.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "google-drive.package.json"
+    ],
+    "settings": [
+      {
+        "key": "clientId",
+        "label": "OAuth client ID",
+        "kind": "text",
+        "required": true,
+        "help": "From your Google Cloud project: Credentials → OAuth client ID (Web application). Looks like 123456-abc….apps.googleusercontent.com."
+      },
+      {
+        "key": "clientSecret",
+        "label": "OAuth client secret",
+        "kind": "secret",
+        "required": true,
+        "help": "Its secret — kept encrypted, never shown again. Leave empty to keep the one saved."
+      },
+      {
+        "key": "folderName",
+        "label": "Folder in Drive",
+        "kind": "text",
+        "help": "Zeff's folder in your Drive. Empty: “Zeff”. Another name: made (or found) at the next sync."
+      },
+      {
+        "key": "mirrorBackupRetention",
+        "label": "Backups: what the retention removes goes from Drive too",
+        "kind": "checkbox",
+        "default": true
+      },
+      {
+        "key": "uploadUnencrypted",
+        "label": "Backups: also those without a password",
+        "kind": "checkbox",
+        "default": false,
+        "help": "A backup without a password is the whole database, readable by anyone with the file."
+      },
+      {
+        "key": "pullDocuments",
+        "label": "Documents: files you add to Zeff's Drive folder come in",
+        "kind": "checkbox",
+        "default": false,
+        "help": "Needs access to all of Drive: connect again after switching it on."
+      }
+    ],
+    "oauth": [
+      {
+        "id": "drive",
+        "label": "Google Drive",
+        "authUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+        "tokenUrl": "https://oauth2.googleapis.com/token",
+        "scopes": [
+          "openid",
+          "email",
+          "https://www.googleapis.com/auth/drive.file"
+        ],
+        "scopeSets": {
+          "full": [
+            "openid",
+            "email",
+            "https://www.googleapis.com/auth/drive"
+          ]
+        },
+        "clientId": "clientId",
+        "clientSecret": "clientSecret",
+        "authParams": {
+          "access_type": "offline",
+          "prompt": "consent select_account"
+        },
+        "identity": "id_token"
+      }
+    ],
+    "stores": [
+      {
+        "name": "files",
+        "adopts": "google_drive_files",
+        "key": "drive_id",
+        "columns": [
+          {
+            "name": "kind",
+            "type": "text"
+          },
+          {
+            "name": "key",
+            "type": "text"
+          },
+          {
+            "name": "drive_id",
+            "type": "text"
+          },
+          {
+            "name": "version",
+            "type": "text"
+          },
+          {
+            "name": "size",
+            "type": "integer"
+          },
+          {
+            "name": "origin",
+            "type": "text"
+          },
+          {
+            "name": "synced_at",
+            "type": "text"
+          }
+        ],
+        "indexes": [
+          [
+            "kind",
+            "key"
+          ]
+        ]
+      },
+      {
+        "name": "state",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "root_id",
+            "type": "text"
+          },
+          {
+            "name": "backups_id",
+            "type": "text"
+          },
+          {
+            "name": "documents_id",
+            "type": "text"
+          },
+          {
+            "name": "folder_name",
+            "type": "text"
+          },
+          {
+            "name": "email",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "pullfolders",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "path",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

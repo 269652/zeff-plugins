@@ -1,0 +1,11 @@
+{
+  "name": "documents.read-result",
+  "label": "Documents: what came of reading",
+  "what": "What happened to a document that was read: ready with its text, waiting for the slow reading or for your confirmation, unreadable, failed.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

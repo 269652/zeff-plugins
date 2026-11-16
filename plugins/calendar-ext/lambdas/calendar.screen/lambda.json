@@ -1,0 +1,11 @@
+{
+  "name": "calendar.screen",
+  "label": "Calendar: what the page shows",
+  "what": "The toolbar's figures, the calendars by source and the appointments of the view and the day asked (a series as its occurrences, the proposed ones, those todos propose) with their details — what the Calendar page reads.",
+  "kind": "function",
+  "zeff": [
+    "appointments.window"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

@@ -6,8 +6,11 @@
   "zeff": [
     "zeff.places",
     "db.cells",
-    "people.names"
+    "read.people.names"
   ],
   "timeoutMs": 30000,
-  "memoryMb": 128
+  "memoryMb": 128,
+  "sql": [
+    "people"
+  ]
 }

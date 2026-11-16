@@ -1,0 +1,15 @@
+{
+  "name": "documents.relate",
+  "label": "Documents: which belong to which todo",
+  "what": "For each open todo the few documents likeliest to be about it (shared words), then the AI picks by content — handed back as picks for the flow to add to the todos.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "todos.open",
+    "jira.summaries",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 1800000,
+  "memoryMb": 256
+}

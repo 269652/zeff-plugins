@@ -1,0 +1,15 @@
+{
+  "name": "documents.review-batch",
+  "label": "Documents: todos from a batch",
+  "what": "The AI reads a batch of documents (beginning and end of each) against your tickets and open todos and says what you have to do — handed back as todos for the flow to make.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "board.tickets",
+    "todos.open",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 1800000,
+  "memoryMb": 256
+}

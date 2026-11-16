@@ -1,0 +1,448 @@
+{
+  "format": 1,
+  "id": "explorer-ext",
+  "version": "1.0.0",
+  "name": "Explorer",
+  "description": "The files of this computer in the Workspace: drives, folders, files; import into Documents, watch folders, open and edit files.",
+  "icon": "🗂️",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Explorer",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Files",
+      "icon": "🗂️",
+      "schema": {
+        "titleName": "Explorer",
+        "properties": [],
+        "views": [
+          {
+            "id": "vexp1",
+            "name": "Explorer",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"path\" value=\"\"/><state name=\"filter\" value=\"\"/><state name=\"picked\" value=\"[]\"/><state name=\"file\" value=\"\"/><state name=\"edit\" value=\"\"/><state name=\"editkey\" value=\"\"/><state name=\"addr\" value=\"\"/><state name=\"newname\" value=\"\"/><state name=\"watchmode\" value=\"confirm\"/>\n<data name=\"x\" lambda=\"explorer.screen\" with=\"path={{ state.path }}, filter={{ state.filter }}, picked={{ state.picked }}\" debounce=\"300\"/>\n<data name=\"file\" lambda=\"explorer.file\" with=\"path={{ state.file }}\" when=\"{{ state.file }}\"/>\n<on event=\"explorer-changed\" action=\"reload\"/>\n<on event=\"edit-start\" action=\"state\" state=\"edit\" value=\"{{ data.file.text }}\"/>\n<on event=\"edit-start\" action=\"state\" state=\"editkey\" value=\"{{ data.file.key }}\"/>\n<on event=\"edit-stop\" action=\"state\" state=\"editkey\" value=\"\"/>\n{{#if not data.x}}<muted>Loading …</muted>{{#else}}\n<col gap=3>\n<row gap=2 wrap=true align=center>\n<button action=\"state\" state=\"path\" value=\"{{ data.x.parent }}\" label=\"↑\" tip=\"Up\" disabled=\"{{ data.x.atPc }}\"/>\n<button action=\"reload\" label=\"⟳\" tip=\"Refresh\"/>\n<button action=\"state\" state=\"path\" value=\"\" label=\"This PC\" variant=quiet/>\n{{#each data.x.crumbs}}<muted>›</muted><button action=\"state\" state=\"path\" value=\"{{ path }}\" label=\"{{ name }}\" variant=quiet/>{{/each}}\n<grow/>\n<input bind=\"filter\" placeholder=\"Search this folder\"/>\n</row>\n<row gap=2 wrap=false align=center>\n<col fill=true><input bind=\"addr\" placeholder=\"Address\"/></col>\n<button action=\"state\" state=\"path\" value=\"{{ state.addr }}\" label=\"Go\" disabled=\"{{ not state.addr }}\"/>\n</row>\n{{#if data.x.error}}<text tone=warn>{{ data.x.error }}</text>{{/if}}\n{{#if data.result.message}}<text tone=good>{{ data.result.message }}</text>{{/if}}\n{{#if data.x.path}}\n<row gap=2 wrap=true align=center>\n<input bind=\"newname\" placeholder=\"Folder name\"/>\n<button run=\"explorer.make\" with=\"parent={{ data.x.path }}, name={{ state.newname }}, kind=folder\" then=\"newname=\" done=\"Created.\" emit=\"explorer-changed\" label=\"📁 New folder\" disabled=\"{{ not state.newname }}\"/>\n<button run=\"explorer.make\" with=\"parent={{ data.x.path }}, name={{ state.newname }}, kind=file\" then=\"newname=\" done=\"Created.\" emit=\"explorer-changed\" label=\"📄 New text file\" disabled=\"{{ not state.newname }}\"/>\n</row>\n{{/if}}\n<row gap=2 wrap=true align=center>\n{{#if data.x.nPickedFiles}}<button run=\"explorer.import\" with=\"paths={{ data.x.pickedFiles }}\" into=\"result\" emit=\"explorer-changed\" label=\"📥 Import to Documents\" variant=primary/>{{/if}}\n{{#if data.x.folder}}\n<button run=\"explorer.import-folder\" with=\"path={{ data.x.folder }}\" into=\"result\" confirm=\"Import every readable file of this folder (subfolders too) into Documents?\" emit=\"explorer-changed\" label=\"📥 Import folder\"/>\n{{#if data.x.watched.here}}\n<small><muted>👁 {{#if data.x.watched.live}}Watched live{{#else}}Watched{{/if}}</muted></small>\n<button run=\"explorer.watch-mode\" with=\"id={{ data.x.watched.id }}, mode=confirm\" into=\"result\" emit=\"explorer-changed\" label=\"Wait for my confirmation\" variant=\"{{ data.x.watched.mode == 'confirm' ? 'primary' : 'quiet' }}\"/>\n<button run=\"explorer.watch-mode\" with=\"id={{ data.x.watched.id }}, mode=auto\" into=\"result\" emit=\"explorer-changed\" label=\"Automatically\" variant=\"{{ data.x.watched.mode == 'auto' ? 'primary' : 'quiet' }}\"/>\n<button run=\"explorer.unwatch\" with=\"id={{ data.x.watched.id }}\" into=\"result\" confirm=\"Stop watching this folder? Its documents stay in Documents.\" emit=\"explorer-changed\" label=\"Stop watching\"/>\n{{#else}}\n{{#if data.x.watched}}<small><muted>👁 Inside the watched folder “{{ data.x.watched.name }}”</muted></small>{{#else}}\n<tabs bind=\"watchmode\" options=\"confirm:Wait for my confirmation, auto:Automatically\"/>\n<button run=\"explorer.watch\" with=\"path={{ data.x.folder }}, mode={{ state.watchmode }}\" into=\"result\" emit=\"explorer-changed\" label=\"👁 Watch folder\"/>\n{{/if}}\n{{/if}}\n{{#if data.x.canOpen}}<button run=\"explorer.open-here\" with=\"path={{ data.x.folder }}, reveal=false\" into=\"result\" label=\"🗔 Open in Windows Explorer\"/>{{/if}}\n{{/if}}\n</row>\n<row gap=3 wrap=true>\n<section title=\"Places\" collapsible=true open=wide>\n<col gap=1>\n<small><b>Quick access</b></small>\n{{#each data.x.quick}}<button action=\"state\" state=\"path\" value=\"{{ path }}\" label=\"{{ icon }} {{ name }}\" variant=quiet/>{{/each}}\n{{#if data.x.watchedPlaces}}<small><b>Watched folders</b></small>{{/if}}\n{{#each data.x.watchedPlaces}}<button action=\"state\" state=\"path\" value=\"{{ path }}\" label=\"{{ icon }} {{ name }}{{ live ? ' ●' : '' }}\" variant=quiet/>{{/each}}\n<small><b>This PC</b></small>\n{{#each data.x.drives}}<button action=\"state\" state=\"path\" value=\"{{ path }}\" label=\"{{ icon }} {{ name }}\" variant=quiet/>{{/each}}\n</col>\n</section>\n<col fill=true gap=2>\n<check bind=\"picked\" all=\"data.x.entries\" label=\"Pick all\"/>\n<datatable source=\"data.x.entries\" empty=\"{{ data.x.labels.empty }}\" sort=true>\n<column label=\"\"><check bind=\"picked\" label=\"\"/></column>\n<column label=\"Name\" sort=\"{{ name }}\">{{#if dir}}<button action=\"state\" state=\"path\" value=\"{{ path }}\" label=\"{{ icon }} {{ name }}{{ live ? ' 👁' : '' }}\" variant=quiet/>{{#else}}<button action=\"state\" state=\"file\" value=\"{{ path }}\" label=\"{{ icon }} {{ name }}\" variant=quiet/>{{/if}}</column>\n<column label=\"Date modified\" sort=\"{{ mtime }}\" nowrap=true><small><muted>{{ date }}</muted></small></column>\n<column label=\"Type\" sort=\"{{ type }}\"><small><muted>{{ type }}</muted></small></column>\n<column label=\"Size\" align=right sort=\"{{ sizeBytes }}\" nowrap=true><small><muted>{{ size }}</muted></small></column>\n<column label=\"In Documents\" align=center><small>{{ docMark }}</small></column>\n</datatable>\n<row gap=3><small><muted>{{ data.x.labels.items }}</muted></small>{{#if data.x.nPicked}}<small><muted>{{ data.x.labels.picked }}</muted></small>{{/if}}{{#if data.x.cut}}<small><muted>{{ data.x.labels.cut }}</muted></small>{{/if}}</row>\n</col>\n</row>\n</col>\n<dialog bind=\"file\" title=\"{{ data.file.name }}\" side=right wide=true>\n{{#if data.file.found}}\n<col gap=3>\n<row gap=2 wrap=true align=center>\n<small><muted>{{ data.file.size }} · {{ data.file.date }}</muted></small>\n{{#if data.file.inDocs}}<small><a href=\"/documents\">{{#if data.file.changed}}in Documents (changed since){{#else}}in Documents{{/if}}</a></small>{{/if}}\n</row>\n<row gap=2 wrap=true align=center>\n{{#if data.file.editable}}{{#if state.editkey == data.file.key}}\n<button run=\"explorer.save\" with=\"path={{ data.file.path }}, mtime={{ data.file.mtime }}, text={{ state.edit }}\" done=\"Saved.\" emit=\"explorer-changed\" label=\"Save\" variant=primary/>\n<button emit=\"edit-stop\" label=\"Cancel\"/>\n{{#else}}<button emit=\"edit-start\" label=\"✎ Edit\"/>{{/if}}{{/if}}\n{{#if data.file.importable}}{{#if not data.file.inDocs}}<button run=\"explorer.import\" with=\"paths={{ data.file.path }}\" into=\"result\" emit=\"explorer-changed\" label=\"Import to Documents\"/>{{/if}}{{#if data.file.changed}}<button run=\"explorer.import\" with=\"paths={{ data.file.path }}\" into=\"result\" emit=\"explorer-changed\" label=\"Update in Documents\"/>{{/if}}{{/if}}\n{{#if data.x.canOpen}}<button run=\"explorer.open-here\" with=\"path={{ data.file.path }}, reveal=false\" into=\"result\" label=\"Open\"/><button run=\"explorer.open-here\" with=\"path={{ data.file.path }}, reveal=true\" into=\"result\" label=\"Show in folder\"/>{{/if}}\n<a href=\"{{ data.file.downloadUrl }}\">Download</a>\n</row>\n{{#if data.file.readOnlyWhy}}<text tone=warn>{{ data.file.readOnlyWhy }}</text>{{/if}}\n{{#if data.file.textual}}\n{{#if state.editkey == data.file.key}}\n<input bind=\"edit\" rows=24 value=\"{{ data.file.text }}\"/>\n{{#else}}\n{{#if data.file.hasText}}\n{{#if data.file.view == 'markdown'}}<markdown value=\"{{ data.file.text }}\"/>\n{{#else}}{{#if data.file.view == 'csv'}}\n<grid cols=\"{{ data.file.csvCols }}\" gap=1>\n{{#each data.file.csvRows}}{{#each cells}}{{#if head}}<b>{{ v }}</b>{{#else}}<small>{{ v }}</small>{{/if}}{{/each}}{{/each}}\n</grid>\n{{#else}}<text pre=true>{{ data.file.text }}</text>{{/if}}{{/if}}\n{{/if}}\n{{/if}}\n{{/if}}\n{{#if data.file.view == 'image'}}<img src=\"{{ data.file.url }}\" alt=\"{{ data.file.name }}\"/>{{/if}}\n{{#if data.file.view == 'pdf'}}<media kind=pdf src=\"{{ data.file.url }}\" h=640 label=\"{{ data.file.name }}\"/>{{/if}}\n{{#if data.file.view == 'audio'}}<media kind=audio src=\"{{ data.file.url }}\" label=\"{{ data.file.name }}\"/>{{/if}}\n{{#if data.file.view == 'video'}}<media kind=video src=\"{{ data.file.url }}\" h=520 label=\"{{ data.file.name }}\"/>{{/if}}\n{{#if data.file.view == 'office'}}<text pre=true>{{ data.file.officeText }}</text>{{/if}}\n{{#if data.file.view == 'none'}}<text tone=muted>Zeff can't show this kind of file — open it with this computer's program, or download it.</text>{{/if}}\n</col>\n{{#else}}\n<text tone=warn>{{ data.file.error }}</text>\n{{/if}}\n</dialog>\n{{/if}}\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Explorer",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Save a text file",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.save",
+        "title": "Save a text file",
+        "description": "A text file saved (input path, text, mtime: the file's time when it was opened — refused when it changed since). Output { message, mtime, size }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "fs.save-text",
+            "input": {
+              "path": "{{ input.path }}",
+              "text": "{{ input.text }}",
+              "mtime": "{{ input.mtime }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A new folder or text file",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.make",
+        "title": "A new folder or text file",
+        "description": "A new folder or empty text file in a folder (input parent, name, kind: folder | file). Output { path }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "fs.make",
+            "input": {
+              "parent": "{{ input.parent }}",
+              "name": "{{ input.name }}",
+              "kind": "{{ input.kind }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Import files into Documents",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.import",
+        "title": "Import files into Documents",
+        "description": "Files (input paths: a list or its JSON text) imported into Documents; a changed one updates its document. Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "explorer.import-files",
+            "input": {
+              "paths": "{{ input.paths }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Import a folder into Documents",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.import-folder",
+        "title": "Import a folder into Documents",
+        "description": "Every file of a folder Documents reads (subfolders too, at most 500) imported once (input path). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "explorer.import-folder",
+            "input": {
+              "path": "{{ input.path }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Watch a folder",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.watch",
+        "title": "Watch a folder",
+        "description": "A folder watched: what changes in it comes into Documents (input path, mode: auto | confirm). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "explorer.watch",
+            "input": {
+              "path": "{{ input.path }}",
+              "mode": "{{ input.mode }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Stop watching a folder",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.unwatch",
+        "title": "Stop watching a folder",
+        "description": "A watched folder no longer watched (input id); its documents stay. Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "explorer.unwatch",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "When the AI may read a watched folder",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.watch-mode",
+        "title": "When the AI may read a watched folder",
+        "description": "A watched folder's mode (input id, mode: auto | confirm). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "explorer.watch-mode",
+            "input": {
+              "id": "{{ input.id }}",
+              "mode": "{{ input.mode }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Open a file on this computer",
+      "icon": "🗂️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "explorer.open-here",
+        "title": "Open a file on this computer",
+        "description": "A file opened with this computer's program for it, or shown in Windows Explorer (input path, reveal). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "fs.open-here",
+            "input": {
+              "path": "{{ input.path }}",
+              "reveal": "{{ input.reveal }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}",
+              "path": "{{ steps.do.path }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

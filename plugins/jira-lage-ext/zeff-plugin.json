@@ -1,0 +1,119 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "jira-lage-ext",
+  "name": "Jira briefing",
+  "version": "0.1.0",
+  "description": "The board briefing of your Jira boards: which tickets matter now, read fresh from Jira (through the Jira plugin or Zeff's connection) and assessed by the Workspace's AI review. By hand, on a Jira board or on its page.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "stores": [
+      {
+        "name": "tickets",
+        "adopts": "jira_tickets",
+        "key": "key",
+        "columns": [
+          {
+            "name": "key",
+            "type": "text"
+          },
+          {
+            "name": "summary",
+            "type": "text"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "status_category",
+            "type": "text"
+          },
+          {
+            "name": "assignee",
+            "type": "text"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          },
+          {
+            "name": "resolved_at",
+            "type": "text"
+          },
+          {
+            "name": "board_id",
+            "type": "integer"
+          },
+          {
+            "name": "mine",
+            "type": "integer"
+          }
+        ]
+      },
+      {
+        "name": "boards",
+        "adopts": "jira_boards",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "type",
+            "type": "text"
+          },
+          {
+            "name": "project_key",
+            "type": "text"
+          },
+          {
+            "name": "enabled",
+            "type": "integer"
+          },
+          {
+            "name": "synced_at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "comments",
+        "adopts": "jira_comments",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "ticket",
+            "type": "text"
+          },
+          {
+            "name": "author",
+            "type": "text"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          },
+          {
+            "name": "body",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "workspacePackages": [
+      "jira-lage.package.json"
+    ]
+  }
+}

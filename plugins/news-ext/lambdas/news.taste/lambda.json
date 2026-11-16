@@ -1,0 +1,17 @@
+{
+  "name": "news.taste",
+  "label": "News: your taste, written down",
+  "what": "Your queued likes, saves and dislikes taken into the description of your taste (by the AI, else from the tags).",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "facts.list",
+    "people.known-in",
+    "todos.open",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

@@ -6,11 +6,14 @@
   "zeff": [
     "zeff.places",
     "db.cells",
-    "people.names",
+    "read.people.names",
     "pref.get",
     "bank.bookings",
     "workspace.value-sources"
   ],
   "timeoutMs": 60000,
-  "memoryMb": 256
+  "memoryMb": 256,
+  "sql": [
+    "people"
+  ]
 }

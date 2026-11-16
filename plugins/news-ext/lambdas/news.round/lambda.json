@@ -1,0 +1,15 @@
+{
+  "name": "news.round",
+  "label": "News: one round of the sync",
+  "what": "The feeds due fetched and read, what is new against what is kept — handed back as statements to write.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "web": [
+    "*"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

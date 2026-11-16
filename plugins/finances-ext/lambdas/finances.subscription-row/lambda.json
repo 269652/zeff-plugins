@@ -1,0 +1,12 @@
+{
+  "name": "finances.subscription-row",
+  "label": "Finances: a subscription as a contracts row",
+  "what": "A subscription (by its recipient's key) as the row it becomes in the contracts database: its title and values by the fields' names.",
+  "kind": "function",
+  "zeff": [
+    "bank.bookings",
+    "workspace.value-sources"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

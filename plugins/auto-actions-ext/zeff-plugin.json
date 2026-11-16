@@ -1,0 +1,23 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "auto-actions-ext",
+  "name": "Auto actions",
+  "version": "0.1.0",
+  "description": "The AI step after the briefing: every open todo without a button gets ready-made actions from what the installed plugins can do (a message, a comment, a mail draft, a meeting, a hand-over). Its review is a lambda you or the AI can change.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "auto-actions.package.json"
+    ],
+    "aiTasks": [
+      {
+        "id": "review",
+        "label": "Auto actions",
+        "what": "Turns todos into ready-made actions (message, comment, mail, meeting, hand-over)."
+      }
+    ]
+  }
+}

@@ -9,7 +9,173 @@
   "permissions": [],
   "contributes": {
     "lambdas": "lambdas",
+    "stores": [
+      {
+        "name": "cases",
+        "adopts": "cases",
+        "key": "id",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "key",
+            "type": "text"
+          },
+          {
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "person_id",
+            "type": "integer"
+          },
+          {
+            "name": "note",
+            "type": "text"
+          },
+          {
+            "name": "compiled",
+            "type": "text"
+          },
+          {
+            "name": "overrides",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "text"
+          },
+          {
+            "name": "updated_at",
+            "type": "text"
+          },
+          {
+            "name": "last_at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "parties",
+        "adopts": "case_parties",
+        "key": [
+          "case_id",
+          "role"
+        ],
+        "columns": [
+          {
+            "name": "case_id",
+            "type": "integer"
+          },
+          {
+            "name": "role",
+            "type": "text"
+          },
+          {
+            "name": "person_id",
+            "type": "integer"
+          },
+          {
+            "name": "source",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "workspacePackages": [
+      "finances.package.json"
+    ],
+    "appViews": [
+      {
+        "id": "overview",
+        "dataType": "debts",
+        "label": "Debts and claims",
+        "icon": "💶",
+        "template": "views/debts.html"
+      }
+    ],
+    "knowledgeDocs": [
+      {
+        "id": "bank",
+        "lambda": "finances.bank-docs",
+        "args": {},
+        "everyMinutes": 30,
+        "replaces": "finances"
+      }
+    ],
+    "personFormulas": [
+      {
+        "name": "Schulden",
+        "aliases": [
+          "Debts",
+          "Deudas"
+        ],
+        "unit": "€",
+        "what": "What you owe them, still open — a circle: one number per person; empty: all you owe",
+        "lambda": "finances.formula",
+        "args": {
+          "which": "owe-open"
+        },
+        "everyMinutes": 5
+      },
+      {
+        "name": "Forderungen",
+        "aliases": [
+          "Claims",
+          "Owed"
+        ],
+        "unit": "€",
+        "what": "What they owe you, still open — a circle: one number per person; empty: all you are owed",
+        "lambda": "finances.formula",
+        "args": {
+          "which": "owed-open"
+        },
+        "everyMinutes": 5
+      },
+      {
+        "name": "Rate",
+        "aliases": [
+          "Instalment",
+          "Installment"
+        ],
+        "unit": "€/Monat",
+        "what": "What you pay them a month (the plans running now)",
+        "lambda": "finances.formula",
+        "args": {
+          "which": "owe-rate"
+        },
+        "everyMinutes": 5
+      }
+    ],
     "sources": [
+      {
+        "id": "debts",
+        "label": "Debts",
+        "icon": "💶",
+        "hint": "The cases with money open as debts — creditor, who collects it, total, open, instalment, due day. Rows of your own go beside them.",
+        "lambda": "finances.debts",
+        "replaces": "debts",
+        "noNewRows": false,
+        "lockedFields": [
+          "debtdir",
+          "debtcreditor",
+          "debtcollector",
+          "debttotal",
+          "debtopen",
+          "debtrate",
+          "debtdue",
+          "debtday",
+          "debtcase",
+          "debtnext",
+          "debtclaim"
+        ]
+      },
       {
         "id": "recurring",
         "label": "Recurring payments",
@@ -28,6 +194,61 @@
       }
     ],
     "widgets": [
+      {
+        "id": "figures",
+        "label": "Debts in figures",
+        "icon": "💶",
+        "description": "What is open, the instalments a month, when you are debt-free and what is left of your income — or the same for what you are owed.",
+        "size": "full",
+        "ttl": 60,
+        "replaces": "finances.figures",
+        "lambda": "finances.widget-figures",
+        "settings": [
+          {
+            "key": "dir",
+            "label": "Whose",
+            "kind": "select",
+            "default": "owe",
+            "options": [
+              {
+                "value": "owe",
+                "label": "What I owe"
+              },
+              {
+                "value": "owed",
+                "label": "What I am owed"
+              }
+            ]
+          },
+          {
+            "key": "names",
+            "label": "Which metrics (names, commas; empty: usual)",
+            "kind": "text",
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "subscriptions",
+        "label": "Subscriptions not in your contracts",
+        "icon": "🔁",
+        "description": "What goes out regularly but isn't in your contracts database: each with its cost a month and next payment, one click adds it.",
+        "size": "half",
+        "ttl": 300,
+        "replaces": "finances.subscriptions",
+        "lambda": "finances.widget-subscriptions",
+        "actFlow": "finances.add-subscription",
+        "settings": [
+          {
+            "key": "limit",
+            "label": "How many",
+            "kind": "number",
+            "default": 8,
+            "min": 1,
+            "max": 30
+          }
+        ]
+      },
       {
         "id": "payments",
         "label": "Payments coming up",
@@ -110,178 +331,194 @@
     "metrics": [
       {
         "id": "owe-open",
-        "label": "Schuldenstand (Plugin)",
+        "label": "Schuldenstand",
         "unit": "€",
         "what": "What you owe in all, still open",
         "lambda": "finances.metric",
         "args": {
           "which": "owe-open"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owe-count",
-        "label": "Offene Schulden (Plugin)",
+        "label": "Offene Schulden",
         "unit": "",
         "what": "How many debts are still open",
         "lambda": "finances.metric",
         "args": {
           "which": "owe-count"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "rates",
-        "label": "Tilgungsrate (Plugin)",
+        "label": "Tilgungsrate",
         "unit": "€/Monat",
         "what": "The instalments you pay a month (the plans running now)",
         "lambda": "finances.metric",
         "args": {
           "which": "rates"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "free-in",
-        "label": "Schuldenfrei in (Plugin)",
+        "label": "Schuldenfrei in",
         "unit": "Monate",
         "what": "Months until the last debt with a plan is paid off",
         "lambda": "finances.metric",
         "args": {
           "which": "free-in"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owe-unplanned",
-        "label": "Schulden ohne Plan (Plugin)",
+        "label": "Schulden ohne Plan",
         "unit": "€",
         "what": "What you owe without a payment plan",
         "lambda": "finances.metric",
         "args": {
           "which": "owe-unplanned"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owed-open",
-        "label": "Forderungen (Plugin)",
+        "label": "Forderungen",
         "unit": "€",
         "what": "What others owe you, still open",
         "lambda": "finances.metric",
         "args": {
           "which": "owed-open"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owed-count",
-        "label": "Offene Forderungen (Plugin)",
+        "label": "Offene Forderungen",
         "unit": "",
         "what": "How many debts others have with you, still open",
         "lambda": "finances.metric",
         "args": {
           "which": "owed-count"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owed-rates",
-        "label": "Rückzahlungen (Plugin)",
+        "label": "Rückzahlungen",
         "unit": "€/Monat",
         "what": "What comes back to you a month",
         "lambda": "finances.metric",
         "args": {
           "which": "owed-rates"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owed-free-in",
-        "label": "Alles zurück in (Plugin)",
+        "label": "Alles zurück in",
         "unit": "Monate",
         "what": "Months until the last debt to you with a plan is paid back",
         "lambda": "finances.metric",
         "args": {
           "which": "owed-free-in"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "owed-unplanned",
-        "label": "Forderungen ohne Plan (Plugin)",
+        "label": "Forderungen ohne Plan",
         "unit": "€",
         "what": "What you are owed without a payment plan",
         "lambda": "finances.metric",
         "args": {
           "which": "owed-unplanned"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "income",
-        "label": "Nettoeinkommen (Plugin)",
+        "label": "Nettoeinkommen",
         "unit": "€/Monat",
         "what": "Your net income a month (set by hand, or read off your statements)",
         "lambda": "finances.metric",
         "args": {
           "which": "income"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "spending",
-        "label": "Ausgaben (Plugin)",
+        "label": "Ausgaben",
         "unit": "€/Monat",
         "what": "What was spent a month — the last three whole months of your bank statements, on average",
         "lambda": "finances.metric",
         "args": {
           "which": "spending"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "credit",
-        "label": "Auf Kreditkonten (Plugin)",
+        "label": "Auf Kreditkonten",
         "unit": "€/Monat",
         "what": "What went to the accounts you marked as credit accounts a month",
         "lambda": "finances.metric",
         "args": {
           "which": "credit"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "free-monthly",
-        "label": "Frei im Monat (Plugin)",
+        "label": "Frei im Monat",
         "unit": "€/Monat",
         "what": "What is left of your income after the instalments and the fixed costs",
         "lambda": "finances.metric",
         "args": {
           "which": "free-monthly"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "savings-rate",
-        "label": "Sparquote (Plugin)",
+        "label": "Sparquote",
         "unit": "%",
         "what": "Of your income, the part that didn't go out",
         "lambda": "finances.metric",
         "args": {
           "which": "savings-rate"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       },
       {
         "id": "debt-service-rate",
-        "label": "Schuldendienstquote (Plugin)",
+        "label": "Schuldendienstquote",
         "unit": "%",
         "what": "Of your income, the part the instalments take",
         "lambda": "finances.metric",
         "args": {
           "which": "debt-service-rate"
         },
+        "replaces": "finances",
         "everyMinutes": 15
       }
     ]

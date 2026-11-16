@@ -1,0 +1,12 @@
+{
+  "name": "news.act",
+  "label": "News: what you do to the news",
+  "what": "Read, save, hide, like, dislike, seen, sources added or changed, the learning forgotten, the clearing away — handed back as statements to write.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

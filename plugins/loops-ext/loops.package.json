@@ -1,0 +1,277 @@
+{
+  "format": 1,
+  "id": "loops-ext",
+  "version": "1.0.0",
+  "name": "Open loops",
+  "description": "What is still open between you and others: your word on a loop, the closing by rule and by the AI.",
+  "icon": "🔁",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Open loops",
+      "icon": "🔁",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Your word on a loop",
+      "icon": "🔁",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "loops.decide",
+        "title": "Your word on a loop",
+        "description": "Close, dismiss (not a loop), confirm, reopen, accept-close / reject-close (a proposal to close it) or later — for the loop ref. Run by the Today page and the people's pages.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "loops.decision",
+              "event": {
+                "ref": "{{ input.ref }}",
+                "op": "{{ input.op }}"
+              }
+            }
+          },
+          {
+            "id": "write",
+            "kind": "if",
+            "when": "{{ steps.run.ok }}",
+            "then": [
+              {
+                "id": "reviews",
+                "kind": "foreach",
+                "items": "{{ steps.run.claimReviews }}",
+                "as": "r",
+                "nodes": [
+                  {
+                    "id": "review",
+                    "kind": "action",
+                    "action": "people.claim-review",
+                    "input": {
+                      "id": "{{ r.id }}",
+                      "op": "{{ r.op }}"
+                    }
+                  }
+                ],
+                "max": 5
+              },
+              {
+                "id": "closes",
+                "kind": "foreach",
+                "items": "{{ steps.run.claimCloses }}",
+                "as": "c",
+                "nodes": [
+                  {
+                    "id": "close",
+                    "kind": "action",
+                    "action": "people.claim-close",
+                    "input": {
+                      "id": "{{ c.id }}",
+                      "by": "{{ c.by }}",
+                      "closeRef": "{{ c.closeRef }}",
+                      "quote": "{{ c.quote }}",
+                      "href": "{{ c.href }}"
+                    }
+                  }
+                ],
+                "max": 5
+              },
+              {
+                "id": "ledger",
+                "kind": "foreach",
+                "items": "{{ steps.run.feedbacks }}",
+                "as": "f",
+                "nodes": [
+                  {
+                    "id": "note",
+                    "kind": "action",
+                    "action": "learning.feedback",
+                    "input": {
+                      "feedback": "{{ f }}"
+                    }
+                  }
+                ],
+                "max": 5
+              },
+              {
+                "id": "state",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "loops-ext.state",
+                  "rows": "{{ steps.run.stateRows }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.run.ok }}",
+              "error": "{{ steps.run.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "store": [
+            "loops-ext.state"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Close loops by rule",
+      "icon": "🔁",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "loops.close-by-rule",
+        "title": "Close the open loops by rule",
+        "description": "The promises whose ticket or thread shows them kept are closed — a reply about one is proposed for you to confirm. Run after the People step reads the messages, and now and then.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "loops.closings",
+              "event": {}
+            }
+          },
+          {
+            "id": "claims",
+            "kind": "foreach",
+            "items": "{{ steps.run.closes }}",
+            "as": "c",
+            "nodes": [
+              {
+                "id": "close",
+                "kind": "action",
+                "action": "people.claim-close",
+                "input": {
+                  "id": "{{ c.id }}",
+                  "by": "rule",
+                  "closeRef": "{{ c.closeRef }}",
+                  "quote": "{{ c.quote }}",
+                  "href": "{{ c.href }}"
+                }
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "state",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "loops-ext.state",
+              "rows": "{{ steps.run.stateRows }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "store": [
+            "loops-ext.state"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "The AI's closings",
+      "icon": "🔁",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "loops.close-by-ai",
+        "title": "The AI looks at the open promises",
+        "description": "For the promises still open, what came since from those people: a message that shows one kept is proposed, with a quote — you confirm. Run after the People step.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "loops.ai-close",
+              "event": {}
+            }
+          },
+          {
+            "id": "state",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "loops-ext.state",
+              "rows": "{{ steps.run.stateRows }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "loops-ext.state"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "calendar-ext",
+  "name": "Calendar",
+  "version": "0.1.0",
+  "description": "One calendar for everything: your own calendars and those of your sources in one page (day, week, month, agenda), appointments made and moved, proposals accepted, todos made from appointments and matched to them. The model stays Zeff's; the page and the AI steps are yours to change.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "calendar.package.json"
+    ],
+    "appViews": [
+      {
+        "id": "calendar",
+        "dataType": "calendar",
+        "label": "Calendar",
+        "icon": "📅",
+        "template": "views/calendar.html"
+      }
+    ],
+    "aiTasks": [
+      {
+        "id": "todos",
+        "label": "Calendar: appointments to todos",
+        "what": "Decides which of the next days' appointments give you something to do — only those become todos (a blocker like “Pause” doesn't)."
+      },
+      {
+        "id": "relations",
+        "label": "Calendar: matching",
+        "what": "Matches the open todos to the appointments they are about (by content)."
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "news.match",
+  "label": "News: match unread news to your taste",
+  "what": "Everything unread that is kept matched against your taste: the closest become the Discover view.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

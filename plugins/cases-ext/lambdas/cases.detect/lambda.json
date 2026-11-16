@@ -5,11 +5,18 @@
   "kind": "function",
   "zeff": [
     "store.query",
-    "mail.messages",
-    "documents.texts",
-    "todos.texts",
-    "people.emails"
+    "read.mail.messages",
+    "read.documents.texts",
+    "read.todos.texts",
+    "read.people.emails"
   ],
   "timeoutMs": 120000,
-  "memoryMb": 512
+  "memoryMb": 512,
+  "sql": [
+    "documents",
+    "emails",
+    "people",
+    "todos"
+  ],
+  "sqlMaxRows": 50000
 }

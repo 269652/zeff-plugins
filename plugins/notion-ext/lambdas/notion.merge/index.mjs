@@ -13,5 +13,6 @@ export async function handler(event) {
   const mine = unitsOfFlat(flat, [...base, ...theirs.map((u) => ({ key: u.key, n: u.n }))]);
   const merged = merge3(base, mine, theirs);
   const same = merged.length === mine.length && merged.every((u, i) => u.key === mine[i].key);
-  return { doc: same ? event.current : docFromFlat(merged.flatMap((u) => u.flat)), base: merged.map((u) => ({ key: u.key, n: u.n })), same };
+  // (The base of the next merge is what Notion has now — not what only Zeff shows, which Notion never had.)
+  return { doc: same ? event.current : docFromFlat(merged.flatMap((u) => u.flat)), base: theirs.map((u) => ({ key: u.key, n: u.n })), same };
 }

@@ -1,0 +1,17 @@
+{
+  "name": "news.funnel",
+  "label": "News: the agent's filter",
+  "what": "The best new items go to an agent that lets through what interests you (pass), marks what is important (top) and filters out the rest (drop).",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "facts.list",
+    "people.known-in",
+    "todos.open",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 1800000,
+  "memoryMb": 256
+}

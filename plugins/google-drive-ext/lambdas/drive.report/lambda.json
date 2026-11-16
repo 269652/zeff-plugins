@@ -1,0 +1,9 @@
+{
+  "name": "drive.report",
+  "label": "Google Drive: what a sync says when it is done.",
+  "what": "what a sync says when it is done.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

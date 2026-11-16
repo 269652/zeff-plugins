@@ -160,26 +160,43 @@ async function applyContent(up, pageId, doc, link, ctx) {
   const snap = json(link.snap, []);
   const hints = [...snap.filter((e) => e.n > 1), ...json(link.base, [])];
   const units = unitsOfFlat(flatOfDoc(doc ?? { content: [] }), hints);
-  const base = units.map((u) => ({ key: u.key, n: u.n }));
   const S = snap.filter((e) => !isAnchor(e));
   const sKeys = new Set(S.map((e) => e.key));
+  const anchorIds = new Set(snap.filter(isAnchor).map((e) => e.id));
   const D = [];
+  // (What Notion has after this — the base of the next merge: not what only Zeff shows, which Notion never had.)
+  const base = [];
   for (const u of units) {
+    const node = u.n === 1 ? u.flat[0].node : null;
+    // A sub-page shown on its page: Notion keeps it where it is — a place to add after, nothing to write.
+    if (node && (node.type === "pageEmbed" || node.type === "databaseView")) {
+      const target = ctx.notionOf(Number(node.attrs?.pageId ?? node.attrs?.dbId));
+      if (target && anchorIds.has(target)) {
+        D.push({ key: u.key, n: u.n, anchor: target });
+        base.push({ key: u.key, n: u.n });
+        continue;
+      }
+    }
     const block = u.n === 1 ? blockOf(u.flat[0], ctx) : null;
-    if (block || sKeys.has(u.key)) D.push({ key: u.key, n: u.n, block });
+    if (block || sKeys.has(u.key)) {
+      D.push({ key: u.key, n: u.n, block });
+      base.push({ key: u.key, n: u.n });
+    }
   }
   // (The editor's empty last line isn't written to Notion.)
-  while (D.length && emptyPara(D[D.length - 1].block) && !sKeys.has(D[D.length - 1].key)) D.pop();
+  while (D.length && emptyPara(D[D.length - 1].block) && !sKeys.has(D[D.length - 1].key)) (D.pop(), base.pop());
 
   const mS = new Map();
   const mD = new Map();
-  for (const [i, j] of lcs(S.map((e) => e.key), D.map((d) => d.key))) (mS.set(i, j), mD.set(j, i));
+  const dIdx = D.map((d, j) => j).filter((j) => !D[j].anchor);
+  for (const [i, k] of lcs(S.map((e) => e.key), dIdx.map((j) => D[j].key))) (mS.set(i, dIdx[k]), mD.set(dIdx[k], i));
   const del = new Set(S.filter((_, i) => !mS.has(i)).map((e) => e.id));
   const known = new Set(snap.map((e) => e.id));
   let prev = null;
   let wrote = false;
   // Something new before everything: Notion adds only after a block — after the first one, which then goes and comes again after it.
-  if (D.length && !mD.has(0) && snap.length) {
+  const moved = new Set();
+  if (D.length && !mD.has(0) && !D[0].anchor && snap.length) {
     let lead = 0;
     while (lead < snap.length && isAnchor(snap[lead])) lead++;
     if (lead > 0) prev = snap[lead - 1].id;
@@ -190,6 +207,7 @@ async function applyContent(up, pageId, doc, link, ctx) {
         mS.delete(i0);
         del.add(S[i0].id);
       }
+      moved.add(S[i0].id);
       prev = S[i0].id;
     }
   }
@@ -208,6 +226,11 @@ async function applyContent(up, pageId, doc, link, ctx) {
   let gapPos = 0;
   for (let j = 0; j < D.length; j++) {
     const d = D[j];
+    if (d.anchor) {
+      await flush();
+      prev = d.anchor;
+      continue;
+    }
     if (mD.has(j)) {
       await flush();
       const i = mD.get(j);
@@ -223,14 +246,16 @@ async function applyContent(up, pageId, doc, link, ctx) {
       gap = S.slice(lastI + 1, next).filter((e) => del.has(e.id));
       gapPos = 0;
     }
-    const s = gap[gapPos];
-    if (s && !d.block.upload && s.type === d.block.type && !s.c && !hasKids(d.block)) {
+    // (A block that went in this gap and is of the same kind — changed in place: its id and comments stay.)
+    const k = d.block.upload || hasKids(d.block) ? -1 : gap.findIndex((x, n) => n >= gapPos && !moved.has(x.id) && del.has(x.id) && x.type === d.block.type && !x.c);
+    const s = k >= 0 ? gap[k] : null;
+    if (s) gapPos = k + 1;
+    if (s) {
       await flush();
       await api.req("PATCH", `/blocks/${s.id}`, { [d.block.type]: bodyOf(d.block) });
       del.delete(s.id);
       out.push({ id: s.id, key: d.key, n: d.n, type: s.type });
       prev = s.id;
-      gapPos++;
       wrote = true;
       continue;
     }

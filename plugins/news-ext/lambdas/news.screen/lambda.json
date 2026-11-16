@@ -1,0 +1,12 @@
+{
+  "name": "news.screen",
+  "label": "News: what the page shows",
+  "what": "The views with their counts, the categories, the funnel strip, your taste, the overview and the cards of the view asked — what the News page reads.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

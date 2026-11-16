@@ -1,0 +1,15 @@
+{
+  "name": "people.extract",
+  "label": "People: what the messages say",
+  "what": "The AI's reading of the new messages (mail, chats, Teams, Jira comments, letters) about the people you keep a profile of: roles, tasks, facts, preferences, promises, who reports to whom — each with a quote, its source and how sure it is. Every pair of message and person judged.",
+  "kind": "function",
+  "zeff": [
+    "people.extract-input",
+    "zeff.installed",
+    "prompts.fill",
+    "ai.json",
+    "rag.retrieve"
+  ],
+  "timeoutMs": 1800000,
+  "memoryMb": 256
+}

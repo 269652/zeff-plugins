@@ -1,0 +1,12 @@
+{
+  "name": "finances.accounts-app",
+  "label": "Finances: your own accounts",
+  "what": "The recipients of your transfers of the last six months with what you marked them as — the list of the own-accounts page.",
+  "kind": "function",
+  "zeff": [
+    "bank.bookings",
+    "pref.get"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

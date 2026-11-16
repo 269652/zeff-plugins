@@ -1,0 +1,167 @@
+{
+  "format": 1,
+  "id": "know-ext",
+  "version": "1.0.0",
+  "name": "What you should know",
+  "description": "The AI's few points before a meeting or beside a mail, a chat, a ticket, a person — from what Zeff put together about it.",
+  "icon": "💡",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "What you should know",
+      "icon": "💡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Summarize a brief",
+      "icon": "💡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "know.summarize",
+        "title": "Summarize what you should know",
+        "description": "The AI's summary of the brief of a meeting (event, occurrence), a Workspace row (row) or refs — kept for it, made again only when it changed (force: anyway). Output { summary }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "brief",
+            "kind": "action",
+            "action": "brief.get",
+            "input": {
+              "event": "{{ input.event }}",
+              "occurrence": "{{ input.occurrence }}",
+              "row": "{{ input.row }}",
+              "refs": "{{ input.refs }}"
+            }
+          },
+          {
+            "id": "summary",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "know.summary",
+              "event": {
+                "key": "{{ steps.brief.key }}",
+                "brief": "{{ steps.brief.brief }}",
+                "force": "{{ input.force }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ steps.summary.made }}",
+            "then": [
+              {
+                "id": "memo",
+                "kind": "action",
+                "action": "ai.memo-set",
+                "input": {
+                  "scope": "know-summary",
+                  "ref": "{{ steps.brief.key }}",
+                  "hash": "{{ steps.summary.summary.hash }}",
+                  "value": "{{ steps.summary.summary.points }}",
+                  "at": "{{ steps.summary.summary.at }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "summary": "{{ steps.summary.summary }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Before your meetings",
+      "icon": "💡",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "know.prepare",
+        "title": "Summaries before your meetings",
+        "description": "The meetings of the next three hours get their summary beforehand (where none is kept for them as they are now). Run with the briefing (the People matching step).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "up",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "know.upcoming",
+              "event": {}
+            }
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "{{ steps.up.meetings }}",
+            "as": "m",
+            "nodes": [
+              {
+                "id": "one",
+                "kind": "call",
+                "flow": "know.summarize",
+                "input": {
+                  "event": "{{ m.id }}",
+                  "occurrence": "{{ m.occurrence }}"
+                },
+                "onError": "continue"
+              }
+            ],
+            "max": 6
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

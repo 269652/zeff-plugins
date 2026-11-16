@@ -1,0 +1,14 @@
+{
+  "name": "drive.folders",
+  "label": "Google Drive: the folders in a folder of your Drive (My Drive",
+  "what": "the folders in a folder of your Drive (My Drive: root), where you are and the way up — to choose from.",
+  "kind": "function",
+  "zeff": [
+    "oauth.token"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256,
+  "web": [
+    "www.googleapis.com"
+  ]
+}

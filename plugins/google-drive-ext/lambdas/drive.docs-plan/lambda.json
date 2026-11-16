@@ -1,0 +1,24 @@
+{
+  "name": "drive.docs-plan",
+  "label": "Google Drive: documents and Drive",
+  "what": "documents and Drive: which documents go up, which files of Drive's folders come in.",
+  "kind": "function",
+  "zeff": [
+    "documents.list",
+    "oauth.token",
+    "oauth.status",
+    "store.query",
+    "pref.get"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256,
+  "web": [
+    "www.googleapis.com"
+  ],
+  "secrets": [
+    "folderName",
+    "mirrorBackupRetention",
+    "uploadUnencrypted",
+    "pullDocuments"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "explorer-ext",
+  "name": "Explorer",
+  "version": "0.1.0",
+  "description": "The files of this computer in the Workspace, like Windows Explorer: drives, folders and files with dates and sizes; import into Documents, watch folders, open text, Markdown, CSV, pictures, PDFs, audio and video — and edit text files.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "explorer.package.json"
+    ]
+  }
+}

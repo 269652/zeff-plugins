@@ -1,0 +1,1223 @@
+{
+  "format": 1,
+  "id": "news-ext",
+  "version": "1.0.0",
+  "name": "News",
+  "description": "Your news, gathered for you: the feeds you pick, everything scored for you.",
+  "icon": "📰",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "News",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Let the agent look",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.funnel",
+        "title": "Let the agent look at the news",
+        "description": "The best new items go to an agent that lets through what interests you, marks what is important and filters out the rest — rounds (3 with the sync, up to 10 by hand).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "gate",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.funnel",
+              "event": {
+                "rounds": "{{ input.rounds }}"
+              }
+            }
+          },
+          {
+            "id": "gated",
+            "kind": "action",
+            "action": "sql.exec",
+            "input": {
+              "statements": "{{ steps.gate.statements }}"
+            }
+          },
+          {
+            "id": "keepstats",
+            "kind": "if",
+            "when": "{{ steps.gate.stats }}",
+            "then": [
+              {
+                "id": "stats",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "news:funnel-stats",
+                  "value": "{{ steps.gate.stats }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "judged": "{{ steps.gate.judged }}",
+              "passed": "{{ steps.gate.passed }}",
+              "top": "{{ steps.gate.top }}",
+              "dropped": "{{ steps.gate.dropped }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "The overview",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.digest",
+        "title": "The overview of the day",
+        "description": "The AI's briefing of the best unread items: what matters, the themes, the few to read first.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "brief",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.digest",
+              "event": {}
+            }
+          },
+          {
+            "id": "briefed",
+            "kind": "if",
+            "when": "{{ steps.brief.digest }}",
+            "then": [
+              {
+                "id": "keepbrief",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "news:digest",
+                  "value": "{{ steps.brief.digest }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "digest": "{{ steps.brief.digest }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i11",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change a news setting",
+      "icon": "⚙️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.pref",
+        "title": "Change a news setting",
+        "description": "One setting of News changed (input key, value): interests, mutes, language, the switches and the numbers — everything is scored again for you. Run by the settings page.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "set",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.settings",
+              "event": {
+                "key": "{{ input.key }}",
+                "value": "{{ input.value }}"
+              }
+            }
+          },
+          {
+            "id": "ok",
+            "kind": "if",
+            "when": "{{ steps.set.prefs }}",
+            "then": [
+              {
+                "id": "keep",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "news:prefs",
+                  "value": "{{ steps.set.prefs }}"
+                }
+              },
+              {
+                "id": "rs",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.rescore",
+                  "event": {}
+                }
+              },
+              {
+                "id": "rsw",
+                "kind": "foreach",
+                "items": "{{ steps.rs.batches }}",
+                "as": "b",
+                "nodes": [
+                  {
+                    "id": "rsx",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ b }}"
+                    }
+                  }
+                ],
+                "max": 200
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "error": "{{ steps.set.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i12",
+      "parent": "i1",
+      "kind": "database",
+      "title": "News settings",
+      "icon": "⚙️",
+      "schema": {
+        "titleName": "Settings",
+        "properties": [],
+        "views": [
+          {
+            "id": "vnews1",
+            "name": "News settings",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"s_interests\" value=\"\"/><state name=\"s_mutes\" value=\"\"/><state name=\"s_url\" value=\"\"/><state name=\"s_name\" value=\"\"/><state name=\"s_taste\" value=\"\"/><state name=\"s_find\" value=\"\"/><state name=\"n_maxAge\" value=\"\"/><state name=\"n_perSource\" value=\"\"/><state name=\"n_perRun\" value=\"\"/><state name=\"n_keepDays\" value=\"\"/><state name=\"n_batch\" value=\"\"/><state name=\"n_keepLatest\" value=\"\"/>\n<data name=\"s\" lambda=\"news.settings\" with=\"mode=data\"/>\n<on event=\"settings-changed\" action=\"reload\"/>\n<text tone=muted>Where your news comes from and what makes it yours. Everything is fetched from public feeds; nothing of yours is sent.</text>\n{{#if not data.s}}<muted>Loading …</muted>{{#else}}\n<box title=\"What suits you\">\n<col gap=3>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_interests\" rows=3 label=\"Interests (one per line or comma; a number 1–3 after × says how much it counts)\" value=\"{{ data.s.prefs.interestsText }}\"/></col><button run=\"news.pref\" with=\"key=interests, value={{ state.s_interests }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/></row>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_mutes\" rows=2 label=\"Muted words (items with one are left out)\" value=\"{{ data.s.prefs.mutesText }}\"/></col><button run=\"news.pref\" with=\"key=mutes, value={{ state.s_mutes }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/></row>\n<row gap=2><small><muted>Language of the topic searches</muted></small>\n<button run=\"news.pref\" with=\"key=language, value=de\" emit=\"settings-changed\" label=\"Deutsch\" variant=\"{{ data.s.prefs.language == 'de' ? 'primary' : 'plain' }}\"/>\n<button run=\"news.pref\" with=\"key=language, value=en\" emit=\"settings-changed\" label=\"English\" variant=\"{{ data.s.prefs.language == 'en' ? 'primary' : 'plain' }}\"/>\n<button run=\"news.pref\" with=\"key=language, value=any\" emit=\"settings-changed\" label=\"Both\" variant=\"{{ data.s.prefs.language == 'any' ? 'primary' : 'plain' }}\"/></row>\n<col gap=1>\n{{#each data.s.flags}}\n<row gap=2 align=center wrap=false><button run=\"news.pref\" with=\"key={{ key }}, value={{ on ? 'false' : 'true' }}\" emit=\"settings-changed\" label=\"{{ word }} {{ label }}\" variant=\"{{ on ? 'primary' : 'quiet' }}\"/><small><muted>{{ what }}</muted></small></row>\n{{/each}}\n</col>\n<grid cols=3 gap=2 min=200>\n<row gap=1 wrap=false><input bind=\"n_maxAge\" type=number label=\"Days of news\" value=\"{{ data.s.prefs.maxAgeDays }}\"/><button run=\"news.pref\" with=\"key=maxAgeDays, value={{ state.n_maxAge }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_perSource\" type=number label=\"Most per source\" value=\"{{ data.s.prefs.perSource }}\"/><button run=\"news.pref\" with=\"key=perSource, value={{ state.n_perSource }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_perRun\" type=number label=\"Feeds per round\" value=\"{{ data.s.prefs.perRun }}\"/><button run=\"news.pref\" with=\"key=perRun, value={{ state.n_perRun }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_keepDays\" type=number label=\"Keep read items (days)\" value=\"{{ data.s.prefs.keepDays }}\"/><button run=\"news.pref\" with=\"key=keepDays, value={{ state.n_keepDays }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_batch\" type=number label=\"Agent reads per round\" value=\"{{ data.s.prefs.funnelBatch }}\"/><button run=\"news.pref\" with=\"key=funnelBatch, value={{ state.n_batch }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n<row gap=1 wrap=false><input bind=\"n_keepLatest\" type=number label=\"Newest and best kept\" value=\"{{ data.s.prefs.keepLatest }}\"/><button run=\"news.pref\" with=\"key=keepLatest, value={{ state.n_keepLatest }}\" emit=\"settings-changed\" label=\"Set\"/></row>\n</grid>\n</col>\n</box>\n<box title=\"Sources ({{ data.s.sourceCount }})\">\n<col gap=3>\n<row gap=2 wrap=true>\n<input bind=\"s_url\" label=\"Feed address (https://…)\"/><input bind=\"s_name\" label=\"Name (optional)\"/>\n<button run=\"news.act\" with=\"op=source-add, url={{ state.s_url }}, name={{ state.s_name }}\" done=\"Added.\" emit=\"settings-changed\" label=\"Add\" variant=primary disabled=\"{{ not state.s_url }}\"/>\n</row>\n<row gap=2 wrap=true>\n<button run=\"news.act\" with=\"op=starter\" done=\"Starter pack added.\" emit=\"settings-changed\" label=\"Starter pack ({{ data.s.starter }})\"/>\n{{#each data.s.categories}}{{#if left}}<button run=\"news.act\" with=\"op=category, name={{ category }}\" done=\"Added.\" emit=\"settings-changed\" label=\"+ {{ category }} ({{ left }})\" variant=quiet/>{{/if}}{{/each}}\n</row>\n{{#each data.s.sources}}\n<row gap=2 align=center wrap=false>\n<col fill=true><b>{{ name }}</b><small><muted>{{ category }} · {{ items }} items{{#if lastAt}} · fetched {{ lastAt }}{{/if}}{{#if votes}} · votes {{ votes }}{{/if}}</muted></small>{{#if lastError}}<small><muted>{{ lastError }}</muted></small>{{/if}}</col>\n<button run=\"news.act\" with=\"op=source-update, id={{ id }}, enabled={{ enabled ? 'false' : 'true' }}\" emit=\"settings-changed\" label=\"{{ enabled ? 'On' : 'Off' }}\" variant=\"{{ enabled ? 'primary' : 'plain' }}\"/>\n<button run=\"news.act\" with=\"op=source-remove, id={{ id }}\" confirm=\"Remove this source? Saved items stay.\" emit=\"settings-changed\" label=\"✕\" variant=quiet/>\n</row>\n{{/each}}\n</col>\n</box>\n<box title=\"Find feeds\">\n<col gap=2>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_find\" label=\"A website or a profile on one\"/></col><button run=\"news.find-feeds\" with=\"address={{ state.s_find }}\" into=\"found\" label=\"Find\" disabled=\"{{ not state.s_find }}\"/></row>\n{{#each data.found.feeds}}\n<row gap=2 align=center wrap=false><col fill=true><b>{{ title }}</b><small><muted>{{ url }} · {{ items }} items</muted></small></col><button run=\"news.act\" with=\"op=source-add, url={{ url }}, name={{ title }}, category=Found\" done=\"Added.\" emit=\"settings-changed\" label=\"Add\" variant=primary/></row>\n{{/each}}\n{{#if data.s.discoveries}}<small><muted>Found by itself lately</muted></small>\n{{#each data.s.discoveries}}<small><muted>{{ at }} · {{ topic }} → {{ name }}</muted></small>{{/each}}{{/if}}\n</col>\n</box>\n<box title=\"✨ Your taste\">\n<col gap=2>\n<text tone=muted>{{ data.s.taste.text }}</text>\n<small><muted>{{ data.s.taste.pending }} signals waiting to be taken in</muted></small>\n<input bind=\"s_taste\" rows=4 label=\"Edit it (the AI continues from your version)\" value=\"{{ data.s.taste.text }}\"/>\n<row gap=2>\n<button run=\"news.act\" with=\"op=taste-edit, text={{ state.s_taste }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/>\n<button run=\"news.taste\" done=\"Updated.\" emit=\"settings-changed\" label=\"Update now\"/>\n<button run=\"news.act\" with=\"op=taste-forget\" confirm=\"Forget your written taste?\" emit=\"settings-changed\" label=\"Forget it\" variant=quiet/>\n<button run=\"news.act\" with=\"op=forget, rescore=true\" confirm=\"Forget what your likes and dislikes taught?\" done=\"Forgotten.\" emit=\"settings-changed\" label=\"Forget what I liked\" variant=quiet/>\n</row>\n</col>\n</box>\n{{/if}}\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "News settings",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Discover",
+      "icon": "✨",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.discover",
+        "title": "Discover from my taste",
+        "description": "Your taste brought up to date, searches planned from it, the web searched, new sources found and added, everything unread matched against your taste — the Discover view.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "taste",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.taste",
+              "event": {}
+            }
+          },
+          {
+            "id": "keeptaste",
+            "kind": "if",
+            "when": "{{ steps.taste.taste }}",
+            "then": [
+              {
+                "id": "settaste",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "news:taste",
+                  "value": "{{ steps.taste.taste }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.discover",
+              "event": {}
+            }
+          },
+          {
+            "id": "write",
+            "kind": "foreach",
+            "items": "{{ steps.run.batches }}",
+            "as": "b",
+            "nodes": [
+              {
+                "id": "writew",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ b }}"
+                }
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "sets",
+            "kind": "foreach",
+            "items": "{{ steps.run.sets }}",
+            "as": "p",
+            "nodes": [
+              {
+                "id": "setp",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "{{ p.key }}",
+                  "value": "{{ p.value }}"
+                }
+              }
+            ],
+            "max": 10
+          },
+          {
+            "id": "match",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.match",
+              "event": {}
+            }
+          },
+          {
+            "id": "matched",
+            "kind": "foreach",
+            "items": "{{ steps.match.batches }}",
+            "as": "b",
+            "nodes": [
+              {
+                "id": "matchedw",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ b }}"
+                }
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.run.ok }}",
+              "message": "{{ steps.run.message }}",
+              "matched": "{{ steps.match.matched }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ],
+          "web": [
+            "*"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "page",
+      "title": "More like this",
+      "icon": "✨",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.more-like",
+        "title": "More like this",
+        "description": "More about what an article is about (input id): the AI's reading, the web searched, the answers ranked and tied to the card, new sources found.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.more-like",
+              "event": {
+                "mode": "search",
+                "id": "{{ input.id }}"
+              }
+            }
+          },
+          {
+            "id": "ok",
+            "kind": "if",
+            "when": "{{ steps.run.ok }}",
+            "then": [
+              {
+                "id": "write",
+                "kind": "foreach",
+                "items": "{{ steps.run.batches }}",
+                "as": "b",
+                "nodes": [
+                  {
+                    "id": "writew",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ b }}"
+                    }
+                  }
+                ],
+                "max": 200
+              },
+              {
+                "id": "tie",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.more-like",
+                  "event": {
+                    "mode": "write",
+                    "id": "{{ input.id }}",
+                    "top": "{{ steps.run.top }}",
+                    "title": "{{ steps.run.title }}"
+                  }
+                }
+              },
+              {
+                "id": "tied",
+                "kind": "foreach",
+                "items": "{{ steps.tie.batches }}",
+                "as": "b",
+                "nodes": [
+                  {
+                    "id": "tiew",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ b }}"
+                    }
+                  }
+                ],
+                "max": 100
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.run.ok }}",
+              "error": "{{ steps.run.error }}",
+              "angle": "{{ steps.run.angle }}",
+              "added": "{{ steps.run.added }}",
+              "sourcesAdded": "{{ steps.run.sourcesAdded }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ],
+          "web": [
+            "*"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Write down my taste",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.taste",
+        "title": "Write down my taste",
+        "description": "The queued likes, saves and dislikes are taken into the description of your taste. Run half a minute after a like (a burst becomes one call) and from the Discover view.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "t",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.taste",
+              "event": {}
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ steps.t.taste }}",
+            "then": [
+              {
+                "id": "set",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "news-ext",
+                  "key": "news:taste",
+                  "value": "{{ steps.t.taste }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "taken": "{{ steps.t.taken }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Find the feeds of a site",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.find-feeds",
+        "title": "Find the feeds of a site",
+        "description": "The feeds a website offers (input address) — each fetched and checked. Output { feeds }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "f",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.find",
+              "event": {
+                "address": "{{ input.address }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "feeds": "{{ steps.f.feeds }}",
+              "error": "{{ steps.f.error }}"
+            }
+          }
+        ],
+        "requested": {},
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Ask your news",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.ask",
+        "title": "Ask your news",
+        "description": "A question (input question) answered from the news Zeff has fetched, citing numbered sources. Output { answer, sources }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "a",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.ask",
+              "event": {
+                "question": "{{ input.question }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "answer": "{{ steps.a.answer }}",
+              "sources": "{{ steps.a.sources }}",
+              "error": "{{ steps.a.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Do something with the news",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.act",
+        "title": "Do something with the news",
+        "description": "op state (id, state: new|read|saved|hidden), vote (id, value 1|0|-1), seen (ids), source-add (url, name, category, lang), source-update (id, name, enabled, weight), source-remove (id), forget, clean. Run by the News screens.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.act",
+              "event": {
+                "op": "{{ input.op }}",
+                "id": "{{ input.id }}",
+                "state": "{{ input.state }}",
+                "value": "{{ input.value }}",
+                "ids": "{{ input.ids }}",
+                "url": "{{ input.url }}",
+                "name": "{{ input.name }}",
+                "category": "{{ input.category }}",
+                "lang": "{{ input.lang }}",
+                "enabled": "{{ input.enabled }}",
+                "weight": "{{ input.weight }}",
+                "text": "{{ input.text }}"
+              }
+            }
+          },
+          {
+            "id": "write",
+            "kind": "if",
+            "when": "{{ steps.do.ok }}",
+            "then": [
+              {
+                "id": "sql",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.do.statements }}"
+                }
+              },
+              {
+                "id": "signal",
+                "kind": "if",
+                "when": "{{ steps.do.taste }}",
+                "then": [
+                  {
+                    "id": "queue",
+                    "kind": "action",
+                    "action": "pref.set",
+                    "input": {
+                      "plugin": "news-ext",
+                      "key": "news:taste",
+                      "value": "{{ steps.do.taste }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "again",
+            "kind": "if",
+            "when": "{{ input.rescore }}",
+            "then": [
+              {
+                "id": "rs",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.rescore",
+                  "event": {}
+                }
+              },
+              {
+                "id": "rsw",
+                "kind": "foreach",
+                "items": "{{ steps.rs.batches }}",
+                "as": "b",
+                "nodes": [
+                  {
+                    "id": "rsx",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ b }}"
+                    }
+                  }
+                ],
+                "max": 200
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Fetch the news",
+      "icon": "📰",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "news.fetch-round",
+        "title": "Fetch the news — one round",
+        "description": "The feeds due are fetched (the ones fetched longest ago first), what is new is kept, everything recent is scored for you. Input all: every due feed, onlyIds: just those.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "soft4",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "find",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.auto-discover",
+                  "event": {}
+                }
+              },
+              {
+                "id": "found",
+                "kind": "foreach",
+                "items": "{{ steps.find.batches }}",
+                "as": "b",
+                "nodes": [
+                  {
+                    "id": "foundw",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ b }}"
+                    }
+                  }
+                ],
+                "max": 200
+              },
+              {
+                "id": "sets",
+                "kind": "foreach",
+                "items": "{{ steps.find.sets }}",
+                "as": "p",
+                "nodes": [
+                  {
+                    "id": "setp",
+                    "kind": "action",
+                    "action": "pref.set",
+                    "input": {
+                      "plugin": "news-ext",
+                      "key": "{{ p.key }}",
+                      "value": "{{ p.value }}"
+                    }
+                  }
+                ],
+                "max": 10
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "round",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.round",
+              "event": {
+                "all": "{{ input.all }}",
+                "onlyIds": "{{ input.onlyIds }}"
+              }
+            }
+          },
+          {
+            "id": "keep",
+            "kind": "foreach",
+            "items": "{{ steps.round.batches }}",
+            "as": "b",
+            "nodes": [
+              {
+                "id": "keepw",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ b }}"
+                }
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "scored",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.rescore",
+              "event": {}
+            }
+          },
+          {
+            "id": "scores",
+            "kind": "foreach",
+            "items": "{{ steps.scored.batches }}",
+            "as": "b",
+            "nodes": [
+              {
+                "id": "scoresw",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ b }}"
+                }
+              }
+            ],
+            "max": 200
+          },
+          {
+            "id": "soft3",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "gate",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.funnel",
+                  "event": {
+                    "rounds": 3
+                  }
+                }
+              },
+              {
+                "id": "gated",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.gate.statements }}"
+                }
+              },
+              {
+                "id": "keepstats",
+                "kind": "if",
+                "when": "{{ steps.gate.stats }}",
+                "then": [
+                  {
+                    "id": "stats",
+                    "kind": "action",
+                    "action": "pref.set",
+                    "input": {
+                      "plugin": "news-ext",
+                      "key": "news:funnel-stats",
+                      "value": "{{ steps.gate.stats }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "tidy",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "news.act",
+              "event": {
+                "op": "clean"
+              }
+            }
+          },
+          {
+            "id": "tidied",
+            "kind": "action",
+            "action": "sql.exec",
+            "input": {
+              "statements": "{{ steps.tidy.statements }}"
+            }
+          },
+          {
+            "id": "soft2",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "ahead",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.read-ahead",
+                  "event": {
+                    "limit": 30
+                  }
+                }
+              },
+              {
+                "id": "aheadw",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.ahead.statements }}"
+                }
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "soft1",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "tag",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.tags",
+                  "event": {
+                    "batches": 2
+                  }
+                }
+              },
+              {
+                "id": "tags",
+                "kind": "foreach",
+                "items": "{{ steps.tag.batches }}",
+                "as": "b",
+                "nodes": [
+                  {
+                    "id": "tagsw",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ b }}"
+                    }
+                  }
+                ],
+                "max": 200
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "soft0",
+            "kind": "try",
+            "nodes": [
+              {
+                "id": "brief",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "news.digest",
+                  "event": {
+                    "auto": true
+                  }
+                }
+              },
+              {
+                "id": "briefed",
+                "kind": "if",
+                "when": "{{ steps.brief.digest }}",
+                "then": [
+                  {
+                    "id": "keepbrief",
+                    "kind": "action",
+                    "action": "pref.set",
+                    "input": {
+                      "plugin": "news-ext",
+                      "key": "news:digest",
+                      "value": "{{ steps.brief.digest }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "catch": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.round.ok }}",
+              "message": "{{ steps.round.message }}",
+              "added": "{{ steps.round.added }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true,
+          "store": [
+            "news-ext.sources",
+            "news-ext.items",
+            "news-ext.gone",
+            "news-ext.terms",
+            "news-ext.similar"
+          ],
+          "web": [
+            "*"
+          ]
+        },
+        "sync": {
+          "label": "News",
+          "what": "Your news fetched, scored for you and filtered — the feeds due, what is new, the agent, the clearing away, reading ahead, the tags, the overview",
+          "replaces": "news"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          },
+          {
+            "kind": "schedule",
+            "everyMinutes": 60
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "knowledge-ext",
+  "name": "Knowledge",
+  "version": "0.1.0",
+  "description": "Ask the knowledge — Confluence's pages compiled into a knowledge graph by Zeff's knowledge server — in a chat with sources, have it read, keep something in it, and have its pages matched to your open todos.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "knowledge.package.json"
+    ],
+    "settings": [
+      {
+        "key": "serviceUrl",
+        "label": "Knowledge server address",
+        "kind": "text",
+        "help": "Leave empty for this account's own knowledge server (the launcher starts it). Only an address on this machine or your network."
+      },
+      {
+        "key": "serviceToken",
+        "label": "Knowledge server token",
+        "kind": "secret",
+        "help": "Only when the server asks for one; empty keeps the token Zeff already has for this account."
+      }
+    ],
+    "aiTasks": [
+      {
+        "id": "relations",
+        "label": "Knowledge matching",
+        "what": "Picks from the knowledge base's hits what really fits each todo."
+      }
+    ]
+  }
+}

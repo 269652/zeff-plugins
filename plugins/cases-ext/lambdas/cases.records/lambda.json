@@ -5,9 +5,12 @@
   "kind": "function",
   "zeff": [
     "store.query",
-    "people.names",
+    "read.people.names",
     "money.allocations"
   ],
   "timeoutMs": 120000,
-  "memoryMb": 512
+  "memoryMb": 512,
+  "sql": [
+    "people"
+  ]
 }

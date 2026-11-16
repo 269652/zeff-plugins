@@ -1,0 +1,14 @@
+{
+  "name": "news.tags",
+  "label": "News: tags and stories",
+  "what": "The corpus tagger's names, topics and stories, and the AI's tags for a batch of the best unseen headlines.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

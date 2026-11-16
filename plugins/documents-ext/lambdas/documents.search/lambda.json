@@ -1,0 +1,11 @@
+{
+  "name": "documents.search",
+  "label": "Documents: search",
+  "what": "The documents holding every word you typed — in their whole text, not only the name.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

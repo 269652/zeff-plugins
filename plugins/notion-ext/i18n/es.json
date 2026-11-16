@@ -1,6 +1,5 @@
 {
   "Notion": "Notion",
-  "Your Notion workspace in the Workspace, both ways and close to live: the pages, databases and rows you share with your Notion integration come in under the page My Notion, and what you change on either side reaches the other within seconds — text with its blocks, titles, icons, covers, a row's fields. Use Zeff in place of Notion, or beside it. What only one side can show stays there.": "Tu espacio de Notion en el Workspace, en ambos sentidos y casi en directo: las páginas, bases de datos y filas que compartes con tu integración de Notion llegan bajo la página «My Notion», y lo que cambias en un lado llega al otro en segundos: el texto con sus bloques, títulos, iconos, portadas, los campos de una fila. Usa Zeff en lugar de Notion, o junto a él. Lo que solo un lado puede mostrar se queda allí.",
   "Notion token": "Token de Notion",
   "Your integration's secret: in Notion, Settings → Connections → Develop or manage integrations → New integration (internal) → copy the secret. Then share the pages you want in Zeff with it (a page's ••• → Connections).": "El secreto de tu integración: en Notion, Configuración → Conexiones → Desarrollar o gestionar integraciones → Nueva integración (interna) → copia el secreto. Luego comparte con ella las páginas que quieras en Zeff (••• de una página → Conexiones).",
   "New pages from Zeff go to": "Las páginas nuevas de Zeff van a",
@@ -14,5 +13,6 @@
   "Notion: what changed": "Notion: qué cambió",
   "Notion: anything new?": "Notion: ¿algo nuevo?",
   "Notion: merge a page": "Notion: combinar una página",
-  "Notion: write a page": "Notion: escribir una página"
+  "Notion: write a page": "Notion: escribir una página",
+  "Notion in the Workspace, both ways and close to live: the pages, databases and rows you share with your integration come in under My Notion; what you change on either side reaches the other within seconds. Use Zeff in place of Notion, or beside it.": "Notion en el Workspace, en ambos sentidos y casi en directo: las páginas, bases de datos y filas que compartes con tu integración llegan bajo «My Notion»; lo que cambias en un lado llega al otro en segundos. Usa Zeff en lugar de Notion, o junto a él."
 }

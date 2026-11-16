@@ -43,7 +43,7 @@ const graph = skills.map((k) => {
 const kids = (key) => nodes.filter((n) => n.kind === "step" && n.parent === key);
 const out = graph.map((g) => {
   const k = byKey.get(g.key);
-  return { key: k.key, title: k.title, status: k.status, path: k.path, group: g.phase, after: g.after, foundation: !!g.foundation, summary: k.summary || "", steps: kids(k.key).map((x) => ({ key: x.key, title: x.title, status: x.status, minutes: x.minutes })) };
+  return { key: k.key, title: k.title, status: k.status, path: k.path, group: g.phase, after: g.after, foundation: !!g.foundation, summary: k.summary || "", steps: kids(k.key).map((x) => ({ key: x.title, title: x.title, status: x.status, minutes: x.minutes })) };
 });
 // The red thread.
 const order = new Map(nodes.map((n, i) => [n.key, i]));

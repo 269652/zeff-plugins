@@ -1,0 +1,13 @@
+{
+  "name": "people.names",
+  "label": "People: one identity per person",
+  "what": "Which names in your todos, chats and mails are one person: aliases, profiles for contacts, duplicates to merge, who is who for whom.",
+  "kind": "function",
+  "zeff": [
+    "people.normalize-input",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

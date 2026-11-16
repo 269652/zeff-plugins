@@ -1,0 +1,14 @@
+{
+  "name": "knowledge.match",
+  "label": "Knowledge: match to todos",
+  "what": "For each new or changed open todo the knowledge's candidate pages and terms — the AI keeps only those that really fit, each page with a line on why.",
+  "kind": "function",
+  "zeff": [
+    "todos.attached",
+    "service.read",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 1800000,
+  "memoryMb": 128
+}

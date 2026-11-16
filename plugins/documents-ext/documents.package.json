@@ -1,0 +1,739 @@
+{
+  "format": 1,
+  "id": "documents-ext",
+  "version": "1.0.0",
+  "name": "Documents",
+  "description": "Your documents: the text read out of them, the AI's todos from them and which documents belong to which todo, your local folders read in by themselves.",
+  "icon": "📄",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Documents",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Go through the documents for todos",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.review",
+        "title": "Go through the documents for todos",
+        "description": "The AI goes through the documents that are new or changed since it last did and makes todos of what they ask of you — a deadline, a bill, a form, an open question — the document as the source. Run with the briefing; input runId: the briefing's run.",
+        "inputs": [
+          {
+            "name": "runId",
+            "type": "number"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.review-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "seen",
+            "kind": "foreach",
+            "items": "{{ steps.plan.marks }}",
+            "as": "m",
+            "max": 1000,
+            "nodes": [
+              {
+                "id": "mark",
+                "kind": "action",
+                "action": "ai.memo-set",
+                "input": {
+                  "scope": "doc-reviewed",
+                  "ref": "{{ m.ref }}",
+                  "hash": "{{ m.hash }}",
+                  "value": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "each",
+            "kind": "foreach",
+            "items": "{{ steps.plan.batches }}",
+            "as": "b",
+            "max": 200,
+            "nodes": [
+              {
+                "id": "batch",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "documents.review-batch",
+                  "event": {
+                    "docs": "{{ b }}"
+                  }
+                }
+              },
+              {
+                "id": "made",
+                "kind": "action",
+                "action": "todos.propose",
+                "input": {
+                  "items": "{{ steps.batch.items }}",
+                  "source": "Dokument-Durchsicht",
+                  "prefix": "doc:",
+                  "runId": "{{ input.runId }}"
+                }
+              },
+              {
+                "id": "keep",
+                "kind": "if",
+                "when": "{{ steps.batch.failed }}",
+                "then": [],
+                "else": [
+                  {
+                    "id": "marks",
+                    "kind": "foreach",
+                    "items": "{{ steps.batch.marks }}",
+                    "as": "m",
+                    "max": 200,
+                    "nodes": [
+                      {
+                        "id": "mark2",
+                        "kind": "action",
+                        "action": "ai.memo-set",
+                        "input": {
+                          "scope": "doc-reviewed",
+                          "ref": "{{ m.ref }}",
+                          "hash": "{{ m.hash }}",
+                          "value": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "round",
+                "kind": "script",
+                "code": "return { failed: !!steps.batch.failed, docs: (item || []).length, added: steps.made.added | 0, merged: steps.made.merged | 0 };"
+              }
+            ]
+          },
+          {
+            "id": "rep",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.report",
+              "event": {
+                "kind": "review",
+                "plan": "{{ steps.plan }}",
+                "rounds": "{{ steps.each }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.rep.ok }}",
+              "message": "{{ steps.rep.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "ai": true,
+          "todos": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files"
+          ]
+        },
+        "sync": {
+          "label": "Document review",
+          "what": "Todos from your documents — what they ask of you: deadlines, bills, forms, open questions — new and changed ones, by the AI (after each briefing)",
+          "replaces": "doctodos"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Match the documents to the todos",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.relate",
+        "title": "Match the documents to the todos",
+        "description": "The AI attaches to each open todo the documents it is about — by content. They then show on the todo, in its context and in the agents'. Run with the briefing.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "r",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.relate",
+              "event": {}
+            }
+          },
+          {
+            "id": "set",
+            "kind": "action",
+            "action": "todos.set-doc-related",
+            "input": {
+              "prefix": "doc:",
+              "picks": "{{ steps.r.picks }}"
+            }
+          },
+          {
+            "id": "rep",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.report",
+              "event": {
+                "kind": "relate",
+                "todos": "{{ steps.r.todos }}",
+                "batches": "{{ steps.r.batches }}",
+                "failed": "{{ steps.r.failed }}",
+                "changed": "{{ steps.set.changed }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.rep.ok }}",
+              "message": "{{ steps.rep.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "ai": true,
+          "todos": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files"
+          ]
+        },
+        "sync": {
+          "label": "Document matching",
+          "what": "Which documents each open todo is about — the AI reads them by content (after each briefing)",
+          "replaces": "docrelations"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read in your local folders",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.folders",
+        "title": "Read in your local folders",
+        "description": "The folders you chose on this computer (Settings → Documents) looked at: new and changed files read in as documents, files gone marked. What was read in is then read (documents.read); a folder set to confirm waits for you before the AI touches it.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.folders-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "marks",
+            "kind": "foreach",
+            "items": "{{ steps.plan.marks }}",
+            "as": "b",
+            "max": 200,
+            "nodes": [
+              {
+                "id": "mark",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ b }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "work",
+            "kind": "foreach",
+            "items": "{{ steps.plan.work }}",
+            "as": "w",
+            "max": 200,
+            "nodes": [
+              {
+                "id": "hash",
+                "kind": "action",
+                "action": "files.hash",
+                "input": {
+                  "path": "{{ w.path }}"
+                },
+                "onError": "continue"
+              },
+              {
+                "id": "p",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "documents.keep-plan",
+                  "event": {
+                    "item": "{{ w }}",
+                    "sha256": "{{ steps.hash.sha256 }}",
+                    "size": "{{ steps.hash.size }}",
+                    "error": "{{ steps.hash.error }}",
+                    "now": "{{ steps.plan.now }}"
+                  }
+                }
+              },
+              {
+                "id": "kept",
+                "kind": "if",
+                "when": "{{ steps.p.keep }}",
+                "then": [
+                  {
+                    "id": "keep",
+                    "kind": "action",
+                    "action": "files.keep",
+                    "input": {
+                      "path": "{{ w.path }}",
+                      "dir": "documents",
+                      "name": "{{ w.clean }}"
+                    },
+                    "onError": "continue"
+                  }
+                ],
+                "else": []
+              },
+              {
+                "id": "wrote",
+                "kind": "if",
+                "when": "{{ steps.p.statements and not steps.keep.error }}",
+                "then": [
+                  {
+                    "id": "write",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ steps.p.statements }}"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "id": "dropped",
+                "kind": "if",
+                "when": "{{ steps.p.drop and not steps.keep.error }}",
+                "then": [
+                  {
+                    "id": "old",
+                    "kind": "action",
+                    "action": "files.drop",
+                    "input": {
+                      "dir": "documents",
+                      "file": "{{ steps.p.drop }}"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "id": "one",
+                "kind": "script",
+                "code": "return { rel: item.rel, error: steps.p.error || steps.keep.error || '', added: steps.keep.error ? 0 : steps.p.added | 0, updated: steps.keep.error ? 0 : steps.p.updated | 0 };"
+              }
+            ]
+          },
+          {
+            "id": "prefs",
+            "kind": "if",
+            "when": "{{ steps.plan.prefValue }}",
+            "then": [
+              {
+                "id": "pref",
+                "kind": "action",
+                "action": "pref.set",
+                "input": {
+                  "plugin": "documents-ext",
+                  "key": "documents:folders",
+                  "value": "{{ steps.plan.prefValue }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "refresh",
+            "kind": "if",
+            "when": "{{ steps.work }}",
+            "then": [
+              {
+                "id": "inbox",
+                "kind": "action",
+                "action": "workspace.refresh-databases",
+                "input": {
+                  "dataType": "documents"
+                }
+              },
+              {
+                "id": "reading",
+                "kind": "call",
+                "flow": "documents.read",
+                "input": {}
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "rep",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.report",
+              "event": {
+                "kind": "folders",
+                "done": "{{ steps.work }}",
+                "gone": "{{ steps.plan.gone }}",
+                "errors": "{{ steps.plan.errors }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.rep.ok }}",
+              "message": "{{ steps.rep.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true,
+          "ai": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files"
+          ],
+          "maxSteps": 6000
+        },
+        "sync": {
+          "label": "Local folders",
+          "what": "The documents in the folders you chose on this computer — new and changed ones read in",
+          "replaces": "localdocs"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read the documents waiting",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.read",
+        "title": "Read the documents waiting",
+        "description": "The text is read out of the documents that wait: text, Office files and PDFs with text right here; pictures, scans and recordings by the AI (the Claude CLI) or the transcriber you set — one after the other, a hang ends that one only. Those from a folder that waits for you wait for your confirmation.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.read-plan",
+              "event": {
+                "max": 150
+              }
+            }
+          },
+          {
+            "id": "back",
+            "kind": "if",
+            "when": "{{ steps.plan.recover }}",
+            "then": [
+              {
+                "id": "recover",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.plan.recover }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "fast",
+            "kind": "foreach",
+            "items": "{{ steps.plan.docs }}",
+            "as": "d",
+            "max": 150,
+            "nodes": [
+              {
+                "id": "claimF",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": [
+                    {
+                      "sql": "update documents set status = 'extracting', error = '', updated_at = ? where id = ? and status = 'queued'",
+                      "params": [
+                        "{{ steps.plan.now }}",
+                        "{{ d.id }}"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "goF",
+                "kind": "if",
+                "when": "{{ steps.claimF.changes[0] }}",
+                "then": [
+                  {
+                    "id": "textF",
+                    "kind": "action",
+                    "action": "files.text",
+                    "input": {
+                      "dir": "documents",
+                      "file": "{{ d.file }}",
+                      "name": "{{ d.name }}",
+                      "kind": "{{ d.kind }}",
+                      "lane": "fast"
+                    },
+                    "onError": "continue"
+                  },
+                  {
+                    "id": "resF",
+                    "kind": "action",
+                    "action": "lambda.invoke",
+                    "input": {
+                      "name": "documents.read-result",
+                      "event": {
+                        "id": "{{ d.id }}",
+                        "lane": "fast",
+                        "read": "{{ steps.textF }}",
+                        "now": "{{ steps.plan.now }}"
+                      }
+                    }
+                  },
+                  {
+                    "id": "wrF",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ steps.resF.statements }}"
+                    }
+                  },
+                  {
+                    "id": "outF",
+                    "kind": "script",
+                    "code": "return { id: item.id, slow: !!steps.resF.slow };"
+                  }
+                ],
+                "else": []
+              }
+            ]
+          },
+          {
+            "id": "slowly",
+            "kind": "foreach",
+            "items": "{{ steps.fast }}",
+            "as": "r",
+            "max": 150,
+            "nodes": [
+              {
+                "id": "isslow",
+                "kind": "if",
+                "when": "{{ r and r.slow }}",
+                "then": [
+                  {
+                    "id": "get",
+                    "kind": "action",
+                    "action": "sql.query",
+                    "input": {
+                      "sql": "select id, name, kind, file from documents where id = ?",
+                      "params": [
+                        "{{ r.id }}"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "claimS",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": [
+                        {
+                          "sql": "update documents set status = 'extracting', error = '', updated_at = ? where id = ? and status = 'queued'",
+                          "params": [
+                            "{{ steps.plan.now }}",
+                            "{{ steps.get.rows[0].id }}"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "goS",
+                    "kind": "if",
+                    "when": "{{ steps.claimS.changes[0] }}",
+                    "then": [
+                      {
+                        "id": "textS",
+                        "kind": "action",
+                        "action": "files.text",
+                        "input": {
+                          "dir": "documents",
+                          "file": "{{ steps.get.rows[0].file }}",
+                          "name": "{{ steps.get.rows[0].name }}",
+                          "kind": "{{ steps.get.rows[0].kind }}",
+                          "lane": "slow"
+                        },
+                        "onError": "continue"
+                      },
+                      {
+                        "id": "resS",
+                        "kind": "action",
+                        "action": "lambda.invoke",
+                        "input": {
+                          "name": "documents.read-result",
+                          "event": {
+                            "id": "{{ steps.get.rows[0].id }}",
+                            "lane": "slow",
+                            "read": "{{ steps.textS }}",
+                            "now": "{{ steps.plan.now }}"
+                          }
+                        }
+                      },
+                      {
+                        "id": "wrS",
+                        "kind": "action",
+                        "action": "sql.exec",
+                        "input": {
+                          "statements": "{{ steps.resS.statements }}"
+                        }
+                      },
+                      {
+                        "id": "outS",
+                        "kind": "script",
+                        "code": "return { id: item.id, slow: !!steps.resS.slow };"
+                      }
+                    ],
+                    "else": []
+                  }
+                ],
+                "else": []
+              }
+            ]
+          },
+          {
+            "id": "rep",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.report",
+              "event": {
+                "kind": "read",
+                "done": "{{ steps.fast }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.rep.ok }}",
+              "message": "{{ steps.rep.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "ai": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files"
+          ],
+          "maxSteps": 6000
+        },
+        "triggers": [
+          {
+            "kind": "schedule",
+            "everyMinutes": 10
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -15,10 +15,10 @@ export async function handler(_event, context) {
   const zeff = context.zeff;
   const optional = (p, empty) => p.catch(() => empty);
   const [{ messages }, { docs }, { todos }, people, cases, sources] = await Promise.all([
-    zeff.call("mail.messages", { contains: "/" }),
-    optional(zeff.call("documents.texts", {}), { docs: [] }),
-    zeff.call("todos.texts", {}),
-    optional(zeff.call("people.emails", {}).then((r) => r.people), null),
+    zeff.call("read.mail.messages", { contains: "/" }),
+    optional(zeff.call("read.documents.texts", {}), { docs: [] }),
+    zeff.call("read.todos.texts", {}),
+    optional(zeff.call("read.people.emails", {}).then((r) => r.people), null),
     all(zeff, "cases-ext.cases"),
     all(zeff, "cases-ext.sources"),
   ]);

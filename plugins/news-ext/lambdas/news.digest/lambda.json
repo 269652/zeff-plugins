@@ -1,0 +1,14 @@
+{
+  "name": "news.digest",
+  "label": "News: the overview",
+  "what": "The AI's briefing of the day: what matters, the themes with their items, the few to read first.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

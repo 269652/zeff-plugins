@@ -1,0 +1,12 @@
+{
+  "name": "know.upcoming",
+  "label": "Know: the meetings to prepare",
+  "what": "The meetings of the next three hours to make a summary for beforehand — none while the summaries are off.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "meetings.upcoming"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 128
+}

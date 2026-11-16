@@ -1,0 +1,15 @@
+{
+  "name": "calendar.relations",
+  "label": "Calendar: matching todos to appointments",
+  "what": "For each open todo the appointments (of the last two weeks and the next month) it is about — likeliest few by shared words, then the AI picks by content.",
+  "kind": "function",
+  "zeff": [
+    "appointments.window",
+    "todos.open",
+    "todos.tickets",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

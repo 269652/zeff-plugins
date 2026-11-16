@@ -17,7 +17,7 @@ export async function handler(_event, context) {
   const counts = {};
   for (const x of await all(zeff, "cases-ext.sources")) counts[x.case_id] = (counts[x.case_id] ?? 0) + 1;
   const people = [...new Set(cases.map((c) => c.personId).filter(Boolean))];
-  const { names } = people.length ? await zeff.call("people.names", { ids: people }).catch(() => ({ names: {} })) : { names: {} };
+  const { names } = people.length ? await zeff.call("read.people.names", { ids: people }).catch(() => ({ names: {} })) : { names: {} };
   const withOpen = cases.filter((c) => c.compiled?.open != null);
   const { allocations } = withOpen.length ? await zeff.call("money.allocations", { refs: withOpen.map((c) => "case:" + c.id) }) : { allocations: {} };
   return cases.map((c) => {

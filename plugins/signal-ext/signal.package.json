@@ -88,7 +88,7 @@
           {
             "id": "cnt",
             "kind": "action",
-            "action": "messages.count",
+            "action": "read.messages.count",
             "input": {
               "folder": "Signal"
             }
@@ -178,6 +178,11 @@
           "label": "Signal",
           "what": "Your Signal chats' latest messages (from Signal Desktop — no chat opened, nothing marked read).",
           "replaces": "signal"
+        },
+        "permissions": {
+          "sql": [
+            "emails"
+          ]
         }
       }
     }

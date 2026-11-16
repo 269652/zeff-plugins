@@ -1,0 +1,187 @@
+<state name="dir" value="owe"/>
+<state name="fixed" value="true"/>
+<state name="edit" value=""/>
+<state name="paying" value=""/>
+<state name="addopen" value=""/>
+<state name="sideedit" value=""/>
+<state name="incomeedit" value=""/>
+<data name="app" lambda="finances.debts-app" with="dir={{ state.dir }}, withFixed={{ state.fixed }}"/>
+<on event="debt-changed" action="reload"/>
+
+<row gap=4 align=end>
+  <tabs bind="dir" options="owe:Creditors overview, owed:Debtors overview"/>
+  <printonly>
+    <heading level=2>{{ data.app.owe ? 'Creditors overview' : 'Debtors overview' }}</heading>
+    <muted>As of {{ data.app.asOf }}</muted>
+  </printonly>
+  <grow/>
+  <button action="print" label="Print / save as PDF"/>
+</row>
+
+{{#if not data.app}}
+  {{#if data.app_error}}<box tone=bad title="Something went wrong"><text>{{ data.app_error }}</text></box>{{#else}}<text tone=muted>…</text>{{/if}}
+{{#else}}
+
+<grid cols=4 min=190>
+  <tile label="{{ data.app.owe ? 'Open in all' : 'Owed to you in all' }}" value="{{ data.app.open | euro(0) }}" sub="of {{ data.app.total | euro(0) }} in all"/>
+  {{#if data.app.fixedOn}}
+    <tile label="Running costs a month" value="{{ data.app.running | euro(0) }}" sub="instalments {{ data.app.rates | euro(0) }} · fixed costs {{ data.app.fixed | euro(0) }}"/>
+  {{#else}}
+    <tile label="{{ data.app.owe ? 'Instalments a month' : 'Coming back a month' }}" value="{{ data.app.rates | euro(0) }}" sub="{{ data.app.ratesNote }}"/>
+  {{/if}}
+  <tile label="{{ data.app.owe ? 'Debt-free' : 'All back' }}" value="{{ data.app.debtFree | default('—') }}" sub="{{ data.app.debtFreeNote }}"/>
+  {{#if data.app.owe}}
+    <tile label="{{ data.app.fixedOn ? 'Left after instalments and fixed costs' : 'Left after the instalments' }}" value="{{ data.app.left | euro(0) | default('—') }}" tone="{{ data.app.leftTone }}">
+      <button action="state" state="incomeedit" value="1" label="{{ data.app.income | euro(0) | default('Set your income') }}" variant=link/>{{#if data.app.fixedOn}} · fixed costs {{ data.app.fixed | euro(0) }}{{/if}}
+    </tile>
+  {{#else}}
+    <tile label="Next payment" value="{{ data.app.nextAmount | euro | default('—') }}" sub="{{ data.app.nextDate }}" tone="{{ data.app.nextOverdue ? 'bad' : 'plain' }}"/>
+  {{/if}}
+</grid>
+
+<row gap=2 justify=end><button action="state" state="addopen" value="1" label="+ Debt" variant=primary/></row>
+
+<datatable source="data.app.debts" empty="{{ data.app.owe ? 'No debts — or not written down yet (+ Debt).' : 'Nobody owes you anything — or it isn\'t written down yet (+ Debt).' }}">
+  <column label="{{ data.app.owe ? 'Creditor' : 'Debtor' }}" foot="Total">
+    <row gap=2 wrap=false><dot color="{{ color }}"/><button action="open" row="{{ id }}" label="{{ creditor }}" variant=link/>{{#if creditorId}}<button action="state" state="sideedit" value="{{ id }}" label="✎" variant=quiet/>{{/if}}</row>
+    <small><muted>{{ what }}</muted></small>
+    {{#if contact}}<small><muted>{{ contact | truncate(70) }}</muted></small>{{/if}}
+  </column>
+  <column label="Total" align=right foot="{{ data.app.total | euro }}">
+    <text tone=muted>{{#if manual}}<button action="state" state="edit" value="{{ id }}" label="{{ total | euro }}" variant=link/>{{#else}}{{ total | euro }}{{/if}}</text>
+  </column>
+  <column label="Open" align=right foot="{{ data.app.open | euro }}">
+    <b>{{#if manual}}<button action="state" state="edit" value="{{ id }}" label="{{ open | euro }}" variant=link/>{{#else}}{{ open | euro }}{{/if}}</b>
+    {{#if paid}}<bar value="{{ paid }}" max=1 fill="{{ color }}"/>{{/if}}
+  </column>
+  <column label="Instalment" align=right foot="{{ data.app.ratesAll | euro }}">
+    {{#if manual}}<button action="state" state="edit" value="{{ id }}" label="{{ installment | euro | default('—') }}" variant=link/>{{#else}}{{ installment | euro | default('—') }}{{/if}}
+  </column>
+  <column label="Next due">
+    {{#if overdue}}<text tone=bad>{{#if manual}}<button action="state" state="edit" value="{{ id }}" label="{{ dueText | default('—') }}" variant=link/>{{#else}}{{ dueText | default('—') }}{{/if}}</text>{{#else}}{{#if manual}}<button action="state" state="edit" value="{{ id }}" label="{{ dueText | default('—') }}" variant=link/>{{#else}}{{ dueText | default('—') }}{{/if}}{{/if}}
+    {{#if nextWhat}}<small><muted>{{ nextWhat | truncate(28) }}</muted></small>{{/if}}
+  </column>
+  <column label="Plan" nowrap=true>
+    {{#if noPlan}}<text tone=warn>{{ plan }}</text>{{#else}}{{ plan }}{{/if}}
+    {{#if planUntil}}<small><muted>{{ planUntil }}</muted></small>{{/if}}
+  </column>
+  <column label="Last payment" nowrap=true>
+    {{#if lastDate}}{{ lastDate }} <small><muted>{{ lastAmount | euro }}</muted></small>{{#else}}<muted>—</muted>{{/if}}
+  </column>
+  <column label="" align=right>
+    <row gap=1 justify=end wrap=false>
+      {{#if canPay}}<button action="state" state="paying" value="{{ id }}" label="Pay" variant=plain/>{{/if}}
+      {{#if manual}}<button do="db.archive" with="row={{ id }}" confirm="Remove this debt?" emit="debt-changed" label="✕" variant=quiet/>{{/if}}
+    </row>
+  </column>
+</datatable>
+{{#if data.app.estimated}}<small><muted>* No due day known: the plan is taken to start next month — set the due day for the exact date.</muted></small>{{/if}}
+
+{{#if data.app.hasMonths}}
+<grid cols="{{ data.app.chartCols }}" gap=4 min=260>
+  <section title="{{ data.app.owe ? 'Open until debt-free' : 'Owed to you until all is back' }}">
+    <box><chart kind=line source="data.app.balance" group="label" value="value"/></box>
+  </section>
+  <section title="{{ data.app.owe ? 'Open by creditor' : 'Owed by debtor' }}">
+    <box><chart kind=bar source="data.app.creditors" group="name" value="amount"/></box>
+  </section>
+  {{#if data.app.chartCols == 3}}
+  <section title="Fixed costs · {{ data.app.fixed | euro(0) }}">
+    <box>
+      <chart kind=bar source="data.app.fixedItems | sort('amount', 'desc')" group="name" value="amount"/>
+      <small><muted>From: {{ data.app.fixedSources }}</muted></small>
+    </box>
+  </section>
+  {{/if}}
+</grid>
+
+<section title="{{ data.app.owe ? 'Monthly payments until debt-free' : 'Coming back a month until all is back' }}">
+  {{#if data.app.owe}}
+    {{#if data.app.hasFixed}}
+      <toggle bind="fixed" label="Count in fixed costs ({{ data.app.fixedTotal | euro(0) }})"/>
+    {{#else}}
+      <small><muted>Fixed costs: publish a sum as “Fixkosten” under a column of a database of yours</muted></small>
+    {{/if}}
+  {{/if}}
+  <box><chart kind=column source="data.app.monthlyRows" group="month" value="amount" series="name"/></box>
+</section>
+{{/if}}
+
+
+<dialog bind="edit" title="Change this debt">
+  {{#each data.app.debts | where('id', state.edit)}}
+  <col gap=2>
+    <heading level=3>{{ creditor }}</heading>
+    <grid cols=2 gap=2 min=150>
+      <input bind="e_total" type=number label="Total" value="{{ total }}"/>
+      <input bind="e_open" type=number label="Open" value="{{ open }}"/>
+      <input bind="e_installment" type=number label="Instalment" value="{{ installment }}"/>
+      <input bind="e_due" type=date label="Next due" value="{{ due }}"/>
+      <input bind="e_day" type=number label="Plan's day of the month" value="{{ day }}"/>
+    </grid>
+    <row gap=2>
+      <button do="db.set-cells" with="row={{ id }}, cells.debttotal={{ state.e_total }}, cells.debtopen={{ state.e_open }}, cells.debtrate={{ state.e_installment }}, cells.debtdue={{ state.e_due }}, cells.debtday={{ state.e_day }}" done="Saved." then="edit=" emit="debt-changed" label="Save" variant=primary/>
+    </row>
+  </col>
+  {{/each}}
+</dialog>
+
+<dialog bind="paying" title="Pay">
+  {{#each data.app.debts | where('id', state.paying)}}{{#if payment}}
+  <col gap=2>
+    <heading level=3>{{ payment.name }}</heading>
+    <girocode name="{{ payment.name }}" iban="{{ payment.iban }}" bic="{{ payment.bic }}" amount="{{ payment.amount }}" purpose="{{ payment.purpose }}"/>
+    <small><muted>{{ payment.iban }} · {{ payment.amount | euro }} · {{ payment.purpose }}</muted></small>
+  </col>
+  {{/if}}{{/each}}
+</dialog>
+
+<dialog bind="incomeedit" title="Your income a month">
+  <col gap=2>
+    <input bind="incomeval" type=number label="Net income a month" value="{{ data.app.income }}"/>
+    <row gap=2>
+      <button do="pref.set" with="plugin=finances-ext, key=cases.income, value={{ state.incomeval }}" then="incomeedit=" emit="debt-changed" label="Save" variant=primary/>
+      <button do="pref.set" with="plugin=finances-ext, key=cases.income, value=null" then="incomeedit=" emit="debt-changed" label="Use what the statements say"/>
+    </row>
+  </col>
+</dialog>
+
+<dialog bind="sideedit" title="Who is on the other side?">
+  {{#each data.app.debts | where('id', state.sideedit)}}
+  <col gap=2>
+    <input bind="s_who" label="A contact's name — a new one is made" value="{{ creditor }}"/>
+    <row gap=2>
+      <button run="finances.set-side" with="row={{ id }}, who={{ state.s_who }}" done="Saved." then="sideedit=" emit="debt-changed" label="Save" variant=primary/>
+    </row>
+  </col>
+  {{/each}}
+</dialog>
+
+<dialog bind="addopen" title="New debt or claim">
+  <col gap=2>
+    {{#if data.app.suggestions}}
+    <box>
+      <small><muted>Your promises with an amount — write them down as debts?</muted></small>
+      {{#each data.app.suggestions}}
+      <row gap=2 justify=between>
+        <col><b>{{ name }} · {{ amount | euro }}{{#if dueText}} · {{ dueText }}{{/if}}</b><small><muted>{{ text }}</muted></small></col>
+        <button run="finances.debt-from-claim" with="who={{ name }}, dir={{ dir }}, amount={{ amount }}, due={{ due }}, claim={{ claimId }}" done="Added." emit="debt-changed" label="+ As a debt"/>
+      </row>
+      {{/each}}
+    </box>
+    {{/if}}
+    <row gap=2><button action="state" state="n_dir" value="owe" label="I owe" variant="{{ state.n_dir == 'owed' ? 'plain' : 'primary' }}"/><button action="state" state="n_dir" value="owed" label="Owed to me" variant="{{ state.n_dir == 'owed' ? 'primary' : 'plain' }}"/></row>
+    <input bind="n_who" label="Other side (a contact's name — a new one is made)"/>
+    <input bind="n_what" label="What for"/>
+    <grid cols=2 gap=2 min=150>
+      <input bind="n_amount" type=number label="Amount"/>
+      <input bind="n_installment" type=number label="Instalment a month"/>
+      <input bind="n_due" type=date label="Next due"/>
+    </grid>
+    <row gap=2>
+      <button run="finances.add-debt" with="dir={{ state.n_dir }}, who={{ state.n_who }}, what={{ state.n_what }}, amount={{ state.n_amount }}, installment={{ state.n_installment }}, due={{ state.n_due }}" done="Added." then="addopen=" emit="debt-changed" label="Add" variant=primary/>
+    </row>
+  </col>
+</dialog>
+
+{{/if}}

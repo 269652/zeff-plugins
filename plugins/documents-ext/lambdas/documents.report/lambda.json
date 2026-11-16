@@ -1,0 +1,9 @@
+{
+  "name": "documents.report",
+  "label": "Documents: what a step says",
+  "what": "How a step went, in a sentence, in your language.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 20000,
+  "memoryMb": 128
+}

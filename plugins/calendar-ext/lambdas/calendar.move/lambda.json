@@ -1,0 +1,11 @@
+{
+  "name": "calendar.move",
+  "label": "Calendar: an appointment dragged",
+  "what": "What to write when an appointment is dragged or resized: the appointment with its new times (an occurrence of a series alone), or the new time of an action of a todo.",
+  "kind": "function",
+  "zeff": [
+    "appointments.event"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 256
+}

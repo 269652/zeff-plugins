@@ -3,7 +3,7 @@
   "id": "notion-ext",
   "name": "Notion",
   "version": "1.0.0",
-  "description": "Your Notion workspace in the Workspace, both ways and close to live: the pages, databases and rows you share with your Notion integration come in under the page My Notion, and what you change on either side reaches the other within seconds — text with its blocks, titles, icons, covers, a row's fields. Use Zeff in place of Notion, or beside it. What only one side can show stays there.",
+  "description": "Notion in the Workspace, both ways and close to live: the pages, databases and rows you share with your integration come in under My Notion; what you change on either side reaches the other within seconds. Use Zeff in place of Notion, or beside it.",
   "author": "Zeff",
   "apiVersion": 1,
   "permissions": [],

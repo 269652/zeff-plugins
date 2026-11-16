@@ -1,0 +1,25 @@
+{
+  "name": "auto-actions.review",
+  "label": "Auto actions: the review",
+  "what": "Goes through the open todos without actions and has the AI propose ready-made ones (a message, a comment, a mail, a meeting, a hand-over) — handed back for the flow to put on the todos.",
+  "kind": "function",
+  "zeff": [
+    "jira.my-name",
+    "todos.ops-rules",
+    "prompts.fill",
+    "pref.get",
+    "todos.open",
+    "todos.sources",
+    "todos.tickets",
+    "people.named-in",
+    "mail.conversation",
+    "facts.list",
+    "actions.offer-context",
+    "calendar.busy",
+    "mail.senders",
+    "todos.clean-ops",
+    "ai.json"
+  ],
+  "timeoutMs": 1800000,
+  "memoryMb": 256
+}

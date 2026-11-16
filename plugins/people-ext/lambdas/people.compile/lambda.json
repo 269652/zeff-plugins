@@ -1,0 +1,13 @@
+{
+  "name": "people.compile",
+  "label": "People: a person's overview",
+  "what": "A short overview of a person from everything Zeff has on them: what connects you, the key facts, the fun facts — and their circle.",
+  "kind": "function",
+  "zeff": [
+    "people.compile-input",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

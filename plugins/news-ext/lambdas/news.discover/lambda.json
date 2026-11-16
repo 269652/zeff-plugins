@@ -1,0 +1,20 @@
+{
+  "name": "news.discover",
+  "label": "News: Discover",
+  "what": "The AI plans searches from your taste, the web is searched, new sources are found — handed back as statements.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "prompts.fill",
+    "ai.json",
+    "facts.list",
+    "people.known-in",
+    "todos.open"
+  ],
+  "web": [
+    "*"
+  ],
+  "timeoutMs": 900000,
+  "memoryMb": 256
+}

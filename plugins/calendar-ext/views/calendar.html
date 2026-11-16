@@ -1,0 +1,120 @@
+<state name="view" value="week"/>
+<state name="day" value=""/>
+<state name="proposed" value="true"/>
+<data name="cal" lambda="calendar.screen" with="view={{ state.view }}, day={{ state.day }}, proposed={{ state.proposed }}"/>
+<on event="cal-changed" action="reload"/>
+<on event="cal-changed" action="state" state="e_title" value=""/>
+<on event="newevent" action="state" state="e_start" value="{{ data.cal.newStart }}"/>
+<on event="newevent" action="state" state="e_end" value="{{ data.cal.newEnd }}"/>
+<on event="newevent" action="state" state="e_all" value=""/>
+<on event="opened" action="state" state="detail" value="{{ state.picked }}"/>
+<on event="made" action="state" state="e_start" value="{{ state.picked_start }}"/>
+<on event="made" action="state" state="e_end" value="{{ state.picked_end }}"/>
+<on event="made" action="state" state="e_all" value="{{ state.picked_allday }}"/>
+<on event="made" action="state" state="edit" value="new"/>
+<on event="moved" run="calendar.move" with="item={{ state.picked }}, start={{ state.picked_start }}, end={{ state.picked_end }}" emit="cal-changed"/>
+
+<row gap=2>
+  <button action="state" state="day" value="{{ data.cal.today }}" label="Today"/>
+  <row gap=0 wrap=false>
+    <button action="state" state="day" value="{{ data.cal.prev }}" label="‹" tip="Previous"/>
+    <button action="state" state="day" value="{{ data.cal.next }}" label="›" tip="Next"/>
+  </row>
+  <heading level=2 phone="hide">{{ data.cal.title }}</heading>
+  <heading level=3 phone="only">{{ data.cal.title }}</heading>
+  <grow/>
+  {{#if state.saving}}<muted>Saving…</muted>{{/if}}
+  <tabs bind="view" options="day:Day, week:Week, month:Month, agenda:Agenda"/>
+  {{#if data.cal.canSync}}<button run="google-calendar.sync" with="from={{ data.cal.syncFrom }}, to={{ data.cal.syncTo }}" done="Synced." emit="cal-changed" label="⟳ Sync" phone="hide"/>{{/if}}
+</row>
+
+<row gap=6 align=start>
+  <col gap=4>
+    <button action="state" state="edit" value="new" emit="newevent" label="+ New event" variant=primary phone="hide"/>
+    <section title="Calendars & date" collapsible=true open=wide>
+      <input bind="day" type=date label="Go to a day"/>
+      {{#each data.cal.groups}}
+        <col gap=1>
+          <muted><b>{{ label | upper }}</b></muted>
+          {{#each calendars}}
+            <row gap=2 wrap=false><button run="calendar.calendar" with="op=update, id={{ id }}, visible={{ visible ? 'false' : 'true' }}" emit="cal-changed" label="{{ mark }} {{ name }}" variant=quiet/>{{#if free}}<muted>free</muted>{{/if}}</row>
+          {{/each}}
+        </col>
+      {{/each}}
+      <col gap=1>
+        <muted><b>TODOS</b></muted>
+        <row gap=2 wrap=false><toggle bind="proposed" label="Proposed by todos"/><muted>{{ data.cal.proposedCount }}</muted></row>
+      </col>
+      <muted><button action="url" href="/settings/calendar" label="Manage calendars …" variant=link/></muted>
+      <section title="Keyboard shortcuts" collapsible=true open=false>
+        <row gap=3 wrap=false><code>T</code><muted>Today</muted></row>
+        <row gap=3 wrap=false><code>← / →</code><muted>Previous / next</muted></row>
+        <row gap=3 wrap=false><code>D W M A</code><muted>Day, week, month, agenda</muted></row>
+        <row gap=3 wrap=false><code>N</code><muted>New event</muted></row>
+        <row gap=3 wrap=false><code>Alt + ↑ ↓ ← →</code><muted>Move the focused event by 15 minutes / a day</muted></row>
+        <row gap=3 wrap=false><code>Shift + Alt + ↑ ↓</code><muted>Change the focused event's end</muted></row>
+        <row gap=3 wrap=false><code>Esc</code><muted>Close</muted></row>
+      </section>
+    </section>
+  </col>
+  <col fill=true>
+<schedule source="data.cal.items" start="start" end="end" title="title" id="id" color="color" allday="allDay" editable="editable" view="{{ state.view }}" day="{{ state.day }}" bind="picked" emit="opened" move="moved" create="made" daybind="day" empty="Nothing in this time."/>
+</col>
+</row>
+
+<dialog bind="detail" title="Appointment">
+{{#each data.cal.items | where('id', state.detail)}}
+<col gap=3>
+  <heading level=3>{{ title }}</heading>
+  <muted>{{ when }} · {{ calendar }}</muted>
+  {{#if location}}<text>📍 {{ location }}</text>{{/if}}
+  {{#if organizer}}<small><muted>Organiser: {{ organizer }}</muted></small>{{/if}}
+  {{#if attendees}}<small><muted>With: {{#each attendees}}{{ a }}; {{/each}}</muted></small>{{/if}}
+  {{#if response}}<small><muted>Your answer: {{ response }}</muted></small>{{/if}}
+  {{#if online}}<small><muted>Online meeting</muted></small>{{/if}}
+  {{#if description}}<text tone=muted>{{ description }}</text>{{/if}}
+  {{#if todoRef}}<small><muted>A todo proposes it: {{ todoRef }}</muted></small>{{/if}}
+  {{#if url}}<a href="{{ url }}">Open in source ↗</a>{{/if}}
+  <row gap=2 wrap=true>
+    {{#if canDecide}}
+    <button run="calendar.decide" with="id={{ eventId }}, verdict=accepted" done="Accepted." then="detail=" emit="cal-changed" label="Accept" variant=primary/>
+    <button run="calendar.decide" with="id={{ eventId }}, verdict=dismissed" done="Dismissed." then="detail=" emit="cal-changed" label="Dismiss"/>
+    {{/if}}
+    {{#if todoId}}{{#if todoTitle}}
+    <button run="calendar.accept-todo-proposal" with="todo={{ todoId }}, index={{ index }}, title={{ todoTitle }}" done="Entered." then="detail=" emit="cal-changed" label="Accept" variant=primary/>
+    {{/if}}{{/if}}
+    {{#if canRespond}}
+    <button run="calendar.respond" with="id={{ eventId }}, response=accepted" done="Accepted." then="detail=" emit="cal-changed" label="Accept" variant=primary/>
+    <button run="calendar.respond" with="id={{ eventId }}, response=tentative" done="Answered." then="detail=" emit="cal-changed" label="Maybe"/>
+    <button run="calendar.respond" with="id={{ eventId }}, response=declined" done="Declined." then="detail=" emit="cal-changed" label="Decline"/>
+    {{/if}}
+    {{#if canDelete}}
+      {{#if series}}
+      <button run="calendar.delete" with="id={{ eventId }}, occurrence={{ occurrence }}, scope=one" confirm="Delete this event?" done="Deleted." then="detail=" emit="cal-changed" label="Delete this event" variant=danger/>
+      <button run="calendar.delete" with="id={{ eventId }}, occurrence={{ occurrence }}, scope=following" confirm="Delete this and the following events?" done="Deleted." then="detail=" emit="cal-changed" label="This and following" variant=danger/>
+      <button run="calendar.delete" with="id={{ eventId }}, scope=all" confirm="Delete the whole series?" done="Deleted." then="detail=" emit="cal-changed" label="All events" variant=danger/>
+      {{#else}}
+      <button run="calendar.delete" with="id={{ eventId }}" confirm="Delete this event?" done="Deleted." then="detail=" emit="cal-changed" label="Delete" variant=danger/>
+      {{/if}}
+    {{/if}}
+  </row>
+</col>
+{{/each}}
+</dialog>
+
+<dialog bind="edit" title="New event">
+<col gap=2>
+  <input bind="e_title" label="Add title"/>
+  <input bind="e_start" label="From (2026-11-16T09:30, or just the day for an all-day event)" value="{{ data.cal.newStart }}"/>
+  <input bind="e_end" label="To" value="{{ data.cal.newEnd }}"/>
+  <toggle bind="e_all" label="All day"/>
+  {{#if data.cal.calendarOptions}}<select bind="e_cal" options="{{ data.cal.calendarOptions }}" label="Calendar"/>{{/if}}
+  <input bind="e_loc" label="Location"/>
+  <input bind="e_desc" type=textarea rows=3 label="Description"/>
+  <row gap=2>
+    <button run="calendar.save" with="title={{ state.e_title }}, start={{ state.e_start }}, end={{ state.e_end }}, allDay={{ state.e_all }}, calendarId={{ state.e_cal }}, location={{ state.e_loc }}, description={{ state.e_desc }}" done="Saved." then="edit=" emit="cal-changed" label="Save" variant=primary disabled="{{ not state.e_title }}"/>
+    <button run="calendar.propose" with="title={{ state.e_title }}, start={{ state.e_start }}, end={{ state.e_end }}, allDay={{ state.e_all }}, calendarId={{ state.e_cal }}, location={{ state.e_loc }}, description={{ state.e_desc }}" done="Proposed." then="edit=" emit="cal-changed" label="As a proposal" disabled="{{ not state.e_title }}"/>
+    <button action="state" state="edit" value="" label="Cancel" variant=quiet/>
+  </row>
+</col>
+</dialog>

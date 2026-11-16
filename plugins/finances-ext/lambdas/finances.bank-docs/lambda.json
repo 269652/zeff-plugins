@@ -1,0 +1,11 @@
+{
+  "name": "finances.bank-docs",
+  "label": "Finances: the bank statements for the knowledge server",
+  "what": "A page per account and month — what came in by sender, the largest payments out by recipient — the knowledge server keeps your income from them.",
+  "kind": "function",
+  "zeff": [
+    "bank.bookings"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

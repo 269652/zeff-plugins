@@ -1,0 +1,20 @@
+{
+  "name": "finances.debts-app",
+  "label": "Finances: the debts view's data",
+  "what": "What the debts overview reads as app.*: the open, the instalments, debt-free, what is left, each debt as a line with its plan in words, the creditors and the fixed costs for the charts — the built-in's own figures.",
+  "kind": "function",
+  "zeff": [
+    "zeff.places",
+    "db.cells",
+    "store.query",
+    "money.allocations",
+    "people.details",
+    "people.accounts",
+    "people.list",
+    "people.commitments",
+    "pref.get",
+    "workspace.value"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

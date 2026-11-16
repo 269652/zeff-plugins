@@ -1,0 +1,852 @@
+{
+  "format": 1,
+  "id": "google-drive-ext",
+  "version": "1.0.0",
+  "name": "Google Drive",
+  "description": "Google Drive's page: your OAuth client, signing in, what syncs, the folders you read — and its syncs, as flows.",
+  "icon": "☁️",
+  "localize": true,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Google Drive",
+      "icon": "☁️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "zeffBlock",
+            "attrs": {
+              "block": "google-drive.page",
+              "params": "{}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Documents ↔ Google Drive",
+      "icon": "☁️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "google-drive.sync-documents",
+        "title": "Documents ↔ Google Drive",
+        "description": "Every document goes up to Zeff's Documents folder in Drive; files you add there (when set) and to the folders you chose come in. Nothing is ever removed on one side because it went on the other.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "fo",
+            "kind": "call",
+            "flow": "google-drive.folder",
+            "input": {
+              "kind": "documents"
+            }
+          },
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "drive.docs-plan",
+              "event": {
+                "folderId": "{{ steps.fo.folderId }}"
+              }
+            }
+          },
+          {
+            "id": "seed",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "google-drive-ext.pullfolders",
+              "rows": "{{ steps.plan.seedFolders }}"
+            }
+          },
+          {
+            "id": "skips",
+            "kind": "foreach",
+            "items": "{{ steps.plan.tooLarge }}",
+            "as": "s",
+            "max": 100,
+            "nodes": [
+              {
+                "id": "skip",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "google-drive-ext.files",
+                  "rows": [
+                    {
+                      "kind": "document",
+                      "key": "skipped",
+                      "drive_id": "{{ s.driveId }}",
+                      "version": "{{ s.version }}",
+                      "size": "{{ s.size }}",
+                      "origin": "pull",
+                      "synced_at": "{{ steps.plan.at }}"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "ups",
+            "kind": "foreach",
+            "items": "{{ steps.plan.uploads }}",
+            "as": "d",
+            "max": 5000,
+            "nodes": [
+              {
+                "id": "up",
+                "kind": "action",
+                "action": "oauth.upload",
+                "input": {
+                  "connection": "google-drive-ext.drive",
+                  "start": {
+                    "url": "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,mimeType,size,md5Checksum,modifiedTime",
+                    "json": {
+                      "name": "{{ d.name }}",
+                      "parents": [
+                        "{{ steps.fo.folderId }}"
+                      ]
+                    }
+                  },
+                  "source": {
+                    "kind": "document",
+                    "id": "{{ d.id }}"
+                  },
+                  "mime": "{{ d.mime }}"
+                },
+                "onError": "continue"
+              },
+              {
+                "id": "rec",
+                "kind": "if",
+                "when": "{{ steps.up.json }}",
+                "then": [
+                  {
+                    "id": "put",
+                    "kind": "action",
+                    "action": "store.put",
+                    "input": {
+                      "store": "google-drive-ext.files",
+                      "rows": [
+                        {
+                          "kind": "document",
+                          "key": "{{ d.key }}",
+                          "drive_id": "{{ steps.up.json.id }}",
+                          "version": "{{ steps.up.json.md5Checksum | default(steps.up.json.modifiedTime) | default('') }}",
+                          "size": "{{ d.size }}",
+                          "origin": "push",
+                          "synced_at": "{{ steps.plan.at }}"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "id": "mark",
+                "kind": "set",
+                "vars": {
+                  "error": "{{ steps.up.error }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "pulls",
+            "kind": "foreach",
+            "items": "{{ steps.plan.pulls }}",
+            "as": "p",
+            "max": 100,
+            "nodes": [
+              {
+                "id": "dl",
+                "kind": "action",
+                "action": "oauth.download",
+                "input": {
+                  "connection": "google-drive-ext.drive",
+                  "url": "{{ p.url }}",
+                  "name": "{{ p.name }}",
+                  "mime": "{{ p.mime }}"
+                },
+                "onError": "continue"
+              },
+              {
+                "id": "rec",
+                "kind": "if",
+                "when": "{{ steps.dl.id }}",
+                "then": [
+                  {
+                    "id": "put",
+                    "kind": "action",
+                    "action": "store.put",
+                    "input": {
+                      "store": "google-drive-ext.files",
+                      "rows": [
+                        {
+                          "kind": "document",
+                          "key": "doc:{{ steps.dl.id }}",
+                          "drive_id": "{{ p.driveId }}",
+                          "version": "{{ p.version }}",
+                          "size": "{{ steps.dl.size }}",
+                          "origin": "pull",
+                          "synced_at": "{{ steps.plan.at }}"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "else": [
+                  {
+                    "id": "miss",
+                    "kind": "action",
+                    "action": "store.put",
+                    "input": {
+                      "store": "google-drive-ext.files",
+                      "rows": [
+                        {
+                          "kind": "document",
+                          "key": "skipped",
+                          "drive_id": "{{ p.driveId }}",
+                          "version": "{{ p.version }}",
+                          "size": 0,
+                          "origin": "pull",
+                          "synced_at": "{{ steps.plan.at }}"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "mark",
+                "kind": "set",
+                "vars": {
+                  "error": "{{ steps.dl.error }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "report",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "drive.report",
+              "event": {
+                "kind": "documents",
+                "plan": "{{ steps.plan }}",
+                "ups": "{{ steps.ups }}",
+                "pulls": "{{ steps.pulls }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.report.ok }}",
+              "message": "{{ steps.report.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "web": [
+            "www.googleapis.com"
+          ],
+          "oauth": [
+            "google-drive-ext.drive"
+          ],
+          "store": [
+            "google-drive-ext.files",
+            "google-drive-ext.state",
+            "google-drive-ext.pullfolders"
+          ]
+        },
+        "sync": {
+          "label": "Documents ↔ Google Drive",
+          "what": "Your documents copied to Google Drive (and, if you set so, what you add there brought in).",
+          "replaces": "drivedocs"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          },
+          {
+            "kind": "schedule",
+            "everyMinutes": 15
+          }
+        ]
+      }
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Backups → Google Drive",
+      "icon": "☁️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "google-drive.sync-backups",
+        "title": "Backups → Google Drive",
+        "description": "Copies each backup to Drive (encrypted ones only, unless you allow others there); what the retention removes here goes from Drive too, if set. Only files Zeff recorded as its own are ever removed.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "drive.backup-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "folder",
+            "kind": "if",
+            "when": "{{ steps.plan.needsFolder }}",
+            "then": [
+              {
+                "id": "fo",
+                "kind": "call",
+                "flow": "google-drive.folder",
+                "input": {
+                  "kind": "backups"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "ups",
+            "kind": "foreach",
+            "items": "{{ steps.plan.uploads }}",
+            "as": "f",
+            "max": 5000,
+            "nodes": [
+              {
+                "id": "go",
+                "kind": "if",
+                "when": "{{ not vars.stop }}",
+                "then": [
+                  {
+                    "id": "up",
+                    "kind": "action",
+                    "action": "oauth.upload",
+                    "input": {
+                      "connection": "google-drive-ext.drive",
+                      "start": {
+                        "url": "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,mimeType,size,md5Checksum,modifiedTime",
+                        "json": {
+                          "name": "{{ f.name }}",
+                          "parents": [
+                            "{{ steps.fo.folderId }}"
+                          ]
+                        }
+                      },
+                      "source": {
+                        "kind": "backup",
+                        "name": "{{ f.name }}"
+                      },
+                      "mime": "application/zip"
+                    },
+                    "onError": "continue"
+                  },
+                  {
+                    "id": "rec",
+                    "kind": "if",
+                    "when": "{{ steps.up.json }}",
+                    "then": [
+                      {
+                        "id": "put",
+                        "kind": "action",
+                        "action": "store.put",
+                        "input": {
+                          "store": "google-drive-ext.files",
+                          "rows": [
+                            {
+                              "kind": "backup",
+                              "key": "{{ f.name }}",
+                              "drive_id": "{{ steps.up.json.id }}",
+                              "version": "{{ steps.up.json.md5Checksum | default(steps.up.json.modifiedTime) | default('') }}",
+                              "size": "{{ f.size }}",
+                              "origin": "push",
+                              "synced_at": "{{ steps.plan.at }}"
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "else": []
+                  },
+                  {
+                    "id": "mark",
+                    "kind": "set",
+                    "vars": {
+                      "stop": "{{ steps.up.error }}",
+                      "error": "{{ steps.up.error }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ]
+          },
+          {
+            "id": "rm",
+            "kind": "foreach",
+            "items": "{{ steps.plan.removes }}",
+            "as": "r",
+            "max": 5000,
+            "nodes": [
+              {
+                "id": "del",
+                "kind": "action",
+                "action": "oauth.fetch",
+                "input": {
+                  "connection": "google-drive-ext.drive",
+                  "url": "https://www.googleapis.com/drive/v3/files/{{ r.driveId }}",
+                  "method": "DELETE",
+                  "okStatus": [
+                    404
+                  ]
+                }
+              },
+              {
+                "id": "forget",
+                "kind": "action",
+                "action": "store.delete",
+                "input": {
+                  "store": "google-drive-ext.files",
+                  "where": {
+                    "drive_id": "{{ r.driveId }}"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "report",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "drive.report",
+              "event": {
+                "kind": "backups",
+                "plan": "{{ steps.plan }}",
+                "ups": "{{ steps.ups }}",
+                "removed": "{{ steps.rm }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.report.ok }}",
+              "message": "{{ steps.report.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "web": [
+            "www.googleapis.com"
+          ],
+          "oauth": [
+            "google-drive-ext.drive"
+          ],
+          "store": [
+            "google-drive-ext.files",
+            "google-drive-ext.state",
+            "google-drive-ext.pullfolders"
+          ]
+        },
+        "sync": {
+          "label": "Backups → Google Drive",
+          "what": "Your backups copied to Google Drive — each one at once when it is made; this catches up what was missed.",
+          "replaces": "drivebackup"
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Zeff's folder in Drive",
+      "icon": "☁️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "google-drive.folder",
+        "title": "Zeff's folder in Drive",
+        "description": "Zeff's folder in your Drive and its Backups or Documents folder inside: the ones that are there are kept, the ones that aren't (or were deleted) are made. Another Google account or another folder name: what was recorded for the old one is forgotten.",
+        "inputs": [
+          {
+            "name": "kind",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "drive.plan-folders",
+              "event": {
+                "kind": "{{ input.kind }}"
+              }
+            }
+          },
+          {
+            "id": "reset",
+            "kind": "if",
+            "when": "{{ steps.plan.reset }}",
+            "then": [
+              {
+                "id": "rb",
+                "kind": "action",
+                "action": "store.delete",
+                "input": {
+                  "store": "google-drive-ext.files",
+                  "where": {
+                    "kind": "backup"
+                  }
+                }
+              },
+              {
+                "id": "rd",
+                "kind": "action",
+                "action": "store.delete",
+                "input": {
+                  "store": "google-drive-ext.files",
+                  "where": {
+                    "kind": "document"
+                  }
+                }
+              },
+              {
+                "id": "rs",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "google-drive-ext.state",
+                  "rows": [
+                    {
+                      "id": "main",
+                      "root_id": "",
+                      "backups_id": "",
+                      "documents_id": ""
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "ids",
+            "kind": "set",
+            "vars": {
+              "rootId": "{{ steps.plan.rootId }}",
+              "kindId": "{{ steps.plan.kindId }}"
+            }
+          },
+          {
+            "id": "mkroot",
+            "kind": "if",
+            "when": "{{ not vars.rootId }}",
+            "then": [
+              {
+                "id": "makeroot",
+                "kind": "action",
+                "action": "oauth.fetch",
+                "input": {
+                  "connection": "google-drive-ext.drive",
+                  "url": "https://www.googleapis.com/drive/v3/files?fields=id",
+                  "method": "POST",
+                  "json": {
+                    "name": "{{ steps.plan.rootName }}",
+                    "mimeType": "application/vnd.google-apps.folder"
+                  }
+                }
+              },
+              {
+                "id": "setroot",
+                "kind": "set",
+                "vars": {
+                  "rootId": "{{ steps.makeroot.json.id }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "mkkind",
+            "kind": "if",
+            "when": "{{ not vars.kindId }}",
+            "then": [
+              {
+                "id": "makekind",
+                "kind": "action",
+                "action": "oauth.fetch",
+                "input": {
+                  "connection": "google-drive-ext.drive",
+                  "url": "https://www.googleapis.com/drive/v3/files?fields=id",
+                  "method": "POST",
+                  "json": {
+                    "name": "{{ steps.plan.kindName }}",
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [
+                      "{{ vars.rootId }}"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "setkind",
+                "kind": "set",
+                "vars": {
+                  "kindId": "{{ steps.makekind.json.id }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "keep",
+            "kind": "if",
+            "when": "{{ input.kind == 'backups' }}",
+            "then": [
+              {
+                "id": "putb",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "google-drive-ext.state",
+                  "rows": [
+                    {
+                      "id": "main",
+                      "root_id": "{{ vars.rootId }}",
+                      "backups_id": "{{ vars.kindId }}",
+                      "folder_name": "{{ steps.plan.folderName }}",
+                      "email": "{{ steps.plan.email }}"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": [
+              {
+                "id": "putd",
+                "kind": "action",
+                "action": "store.put",
+                "input": {
+                  "store": "google-drive-ext.state",
+                  "rows": [
+                    {
+                      "id": "main",
+                      "root_id": "{{ vars.rootId }}",
+                      "documents_id": "{{ vars.kindId }}",
+                      "folder_name": "{{ steps.plan.folderName }}",
+                      "email": "{{ steps.plan.email }}"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "folderId": "{{ vars.kindId }}"
+            }
+          }
+        ],
+        "requested": {
+          "web": [
+            "www.googleapis.com"
+          ],
+          "oauth": [
+            "google-drive-ext.drive"
+          ],
+          "store": [
+            "google-drive-ext.files",
+            "google-drive-ext.state",
+            "google-drive-ext.pullfolders"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read a folder of your Drive",
+      "icon": "☁️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "google-drive.add-folder",
+        "title": "Read a folder of your Drive",
+        "description": "A folder of your Drive chosen: what you put there comes into the documents with the next sync (read only — Zeff never writes or deletes there).",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "path",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "put",
+            "kind": "action",
+            "action": "store.put",
+            "input": {
+              "store": "google-drive-ext.pullfolders",
+              "rows": [
+                {
+                  "id": "{{ input.id }}",
+                  "path": "{{ input.path }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "google-drive-ext.pullfolders"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Stop reading a folder of your Drive",
+      "icon": "☁️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "google-drive.remove-folder",
+        "title": "Stop reading a folder of your Drive",
+        "description": "A folder of your Drive no longer read — what came in from it stays in the documents.",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "del",
+            "kind": "action",
+            "action": "store.delete",
+            "input": {
+              "store": "google-drive-ext.pullfolders",
+              "where": {
+                "id": "{{ input.id }}"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "google-drive-ext.pullfolders"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "def": {
+        "name": "google-drive.page",
+        "title": "Google Drive",
+        "description": "Google Drive's page: your OAuth client, signing in, what syncs and the folders of your Drive that come into the documents.",
+        "icon": "☁️",
+        "params": [],
+        "template": "<data name=\"o\" do=\"oauth.status\" with='{\"connection\": \"google-drive-ext.drive\"}'/>\n<data name=\"d\" lambda=\"drive.status\"/>\n<state name=\"browse\" value=\"\"/>\n<state name=\"cur\" value=\"root\"/>\n<data name=\"f\" lambda=\"drive.folders\" with='{\"parent\": {{ state.cur | tojson }}}' when=\"{{ state.browse }}\"/>\n\n<text tone=muted>Keeps a copy of your documents in your Google Drive — and, if you turn it on, of your backups. Files you add to Zeff's Documents folder in Drive can come into Zeff too (off until you switch it on). By default Zeff only sees the files it puts in Drive itself.</text>\n\n<section title=\"1 · Your OAuth client\">\n  <text tone=muted>Zeff signs in with a client of your own, so nothing runs through anyone else's account. Once, in Google Cloud Console:</text>\n  <text>1. Make a project and switch on the “Google Drive API” in it — <a href=\"https://console.cloud.google.com/apis/library/drive.googleapis.com\">open</a></text>\n  <text>2. OAuth consent screen: type “External”, add your Google address as a test user — and publish the app (“In production”): while it is in “Testing”, Google ends the sign-in after 7 days — <a href=\"https://console.cloud.google.com/apis/credentials/consent\">open</a></text>\n  <text>3. Credentials → Create credentials → OAuth client ID → “Web application”, with this authorized redirect URI — <a href=\"https://console.cloud.google.com/apis/credentials\">open</a></text>\n  <mono>{{ data.o.redirectUri }}</mono>\n  <text>4. Paste its client ID and secret under Plugins → Google Drive → ⚙️ Settings.</text>\n  {{#if data.o.hasClient}}\n    <text tone=good>Your client is set.</text>\n  {{#else}}\n    <text tone=warn>No client set yet.</text>\n  {{/if}}\n</section>\n\n<section title=\"2 · Sign in\">\n  {{#if data.o.connected}}\n    <row gap=2 align=center>\n      <text tone=good>Connected{{#if data.o.email}} as {{ data.o.email }}{{/if}}.</text>\n      <button do=\"oauth.disconnect\" with='{\"connection\": \"google-drive-ext.drive\"}' label=\"Disconnect\" variant=plain confirm=\"Sign out of Google Drive? What Zeff put there stays there.\" done=\"Disconnected. What is in Drive stays there.\"/>\n    </row>\n    {{#if data.d.needsReconnect}}\n      <callout tone=warn title=\"Connect again\">To read the files you add in Drive, connect again — Google then asks for access to all of Drive.</callout>\n      <button do=\"oauth.connect-url\" with='{\"connection\": \"google-drive-ext.drive\", \"with\": \"full\"}' variant=primary label=\"Connect again\"/>\n    {{/if}}\n  {{#else}}\n    <button do=\"oauth.connect-url\" with='{\"connection\": \"google-drive-ext.drive\", \"with\": {{ data.d.connectWith | tojson }}}' variant=primary label=\"Connect to Google Drive\" disabled=\"{{ data.o.hasClient ? 'false' : 'true' }}\"/>\n    <muted>Google opens in a new tab; you come back here.</muted>\n  {{/if}}\n</section>\n\n<section title=\"3 · What syncs\">\n  <kv min=220>\n    <pair label=\"Folder in Drive\">{{ data.d.folder }}</pair>\n    <pair label=\"Backups: what the retention removes goes from Drive too\">{{ data.d.mirrorBackupRetention ? 'yes' : 'no' }}</pair>\n    <pair label=\"Backups without a password also go up\">{{ data.d.uploadUnencrypted ? 'yes' : 'no' }}</pair>\n    <pair label=\"Files you add in Zeff's Drive folder come in\">{{ data.d.pullDocuments ? 'yes' : 'no' }}</pair>\n    <pair label=\"In Drive\">{{ data.d.documentsInDrive }} documents · {{ data.d.backupsInDrive }} backups</pair>\n  </kv>\n  <muted>Change these under Plugins → Google Drive → ⚙️ Settings.</muted>\n  <row gap=2>\n    <button run=\"google-drive.sync-documents\" label=\"Sync documents now\" variant=plain done=\"Documents synced.\" disabled=\"{{ data.o.connected ? 'false' : 'true' }}\"/>\n    <button run=\"google-drive.sync-backups\" label=\"Sync backups now\" variant=plain done=\"Backups synced.\" disabled=\"{{ data.o.connected ? 'false' : 'true' }}\"/>\n  </row>\n</section>\n\n<section title=\"Folders of your Drive that come into the documents\">\n  <muted>Besides Zeff's own folder, any folder you choose — My Drive → Kontoauszug — is an inbox: what you put there comes in with the next sync, each file once (an edited one again). Read only: Zeff never writes or deletes there. Files you put there yourself need access to all of Drive.</muted>\n  {{#each data.d.pullFolders}}\n    <row gap=2 align=center>\n      <text>{{ path }}</text>\n      <button run=\"google-drive.remove-folder\" with='{\"id\": {{ id | tojson }}}' label=\"Remove\" variant=quiet done=\"Removed — what came in from it stays in the documents.\"/>\n    </row>\n  {{/each}}\n  {{#if state.browse}}\n    <box tone=muted>\n      <text><b>{{ data.f.path }}</b></text>\n      <row gap=2>\n        {{#if data.f.id != 'root'}}<button action=\"state\" state=\"cur\" value=\"{{ data.f.up }}\" label=\"↑ Up\" variant=plain/>{{/if}}\n        <button run=\"google-drive.add-folder\" with='{\"id\": {{ data.f.id | tojson }}, \"path\": {{ data.f.path | tojson }}}' label=\"Read this folder\" variant=primary disabled=\"{{ data.f.id == 'root' ? 'true' : 'false' }}\" done=\"Added — its files come in with the next sync.\"/>\n        <button action=\"state\" state=\"browse\" value=\"\" label=\"Close\" variant=quiet/>\n      </row>\n      {{#each data.f.folders}}\n        <button action=\"state\" state=\"cur\" value=\"{{ id }}\" label=\"📁 {{ name }}\" variant=plain/>\n      {{/each}}\n    </box>\n  {{#else}}\n    <button action=\"state\" state=\"browse\" value=\"1\" label=\"Add a folder\" variant=plain disabled=\"{{ data.o.connected ? 'false' : 'true' }}\"/>\n  {{/if}}\n</section>\n"
+      }
+    }
+  ]
+}

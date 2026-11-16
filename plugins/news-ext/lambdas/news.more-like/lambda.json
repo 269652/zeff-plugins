@@ -1,0 +1,20 @@
+{
+  "name": "news.more-like",
+  "label": "News: more like this",
+  "what": "An article read, the AI says why it matters to you and what to search; the web is searched and the answers ranked; new sources found.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "prompts.fill",
+    "ai.json",
+    "facts.list",
+    "people.known-in",
+    "todos.open"
+  ],
+  "web": [
+    "*"
+  ],
+  "timeoutMs": 900000,
+  "memoryMb": 256
+}

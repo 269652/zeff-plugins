@@ -72,7 +72,7 @@
           {
             "id": "cnt",
             "kind": "action",
-            "action": "messages.count",
+            "action": "read.messages.count",
             "input": {
               "folder": "WhatsApp"
             }
@@ -162,6 +162,11 @@
           "label": "WhatsApp",
           "what": "Your chats' latest messages (WhatsApp Web's chat list — no chat opened, nothing marked read).",
           "replaces": "whatsapp"
+        },
+        "permissions": {
+          "sql": [
+            "emails"
+          ]
         }
       }
     }

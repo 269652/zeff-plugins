@@ -42,12 +42,12 @@ function schedule(p, today) {
   const [ty, tm] = today.split("-").map(Number);
   const first = p.nextDue ?? iso(ty, tm, 1);
   const [fy, fm, fd] = first.split("-").map(Number);
-  const day = p.day && p.day >= 1 && p.day <= 31 ? p.day : fd;
+  const day2 = p.day && p.day >= 1 && p.day <= 31 ? p.day : fd;
   const payments = [];
   let left = open;
   for (let i = 0; left > 4e-3 && i < MAX; i++) {
     const amount = cents(Math.min(p.installment, left));
-    payments.push({ date: i === 0 ? first : iso(fy, fm - 1 + i, day), amount });
+    payments.push({ date: i === 0 ? first : iso(fy, fm - 1 + i, day2), amount });
     left = cents(left - amount);
   }
   return { kind: "plan", open, payments, end: payments.at(-1)?.date ?? null, estimatedStart };
@@ -168,8 +168,8 @@ function detectRecurring(bookings, today, opts = {}) {
 // src/lib/dates.ts
 var two = (n) => String(n).padStart(2, "0");
 var localDay = (d = /* @__PURE__ */ new Date()) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
-function addDays(day, n) {
-  const [y, m, d] = day.slice(0, 10).split("-").map(Number);
+function addDays(day2, n) {
+  const [y, m, d] = day2.slice(0, 10).split("-").map(Number);
   return localDay(new Date(y, m - 1, d + n));
 }
 
@@ -347,6 +347,144 @@ function classifyNoise(r, ctx = {}) {
   return { kind: null, why: "" };
 }
 
+// src/plugins/cases/shared.ts
+var caseTitle = (c) => c.compiled?.title || c.label;
+
+// src/plugins/cases/core.ts
+function standingOf(c, payments) {
+  const since = c?.compiled?.at?.slice(0, 10) ?? "";
+  const paidSince = payments.filter((p) => p.date >= since).reduce((s, p) => s + p.amount, 0);
+  const open = c?.compiled?.open != null ? Math.max(0, Math.round((c.compiled.open - paidSince) * 100) / 100) : null;
+  const last = payments.at(-1);
+  return { paidSince, open, last: last ? { date: last.date, amount: last.amount } : null };
+}
+function paymentOf(c, account) {
+  const s = c.compiled;
+  const amount = s?.installment ?? s?.open ?? null;
+  if (s?.iban) return { name: s.payee || s.party || c.label, iban: s.iban, bic: s.bic, purpose: s.purpose || c.label, amount };
+  return account ? { name: account.name, iban: account.iban, bic: account.bic ?? "", purpose: s?.purpose || c.label, amount } : null;
+}
+function caseFromRow(r) {
+  let compiled = null;
+  try {
+    compiled = r.compiled ? { ...JSON.parse(r.compiled), ...r.overrides ? JSON.parse(r.overrides) : {} } : null;
+  } catch {
+    compiled = null;
+  }
+  return { id: r.id, key: r.key, label: r.label, status: r.status === "closed" || r.status === "ignored" ? r.status : "open", personId: r.person_id, note: r.note, compiled, createdAt: r.created_at, updatedAt: r.updated_at, lastAt: r.last_at };
+}
+
+// src/plugins/finances/ui/colors.ts
+var PALETTE = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#0ea5e9", "#a855f7", "#ec4899", "#84cc16", "#92400e", "#0e7490", "#64748b", "#1e3a8a"];
+function creditorColors(keys) {
+  const out = {};
+  [...new Set(keys)].forEach((k, i) => out[k] = PALETTE[i % PALETTE.length]);
+  return out;
+}
+
+// src/plugins/finances/view-data.ts
+var euro = (v, digits = 0, locale) => v.toLocaleString(locale, { style: "currency", currency: "EUR", minimumFractionDigits: digits, maximumFractionDigits: digits }).replace(/ /g, " ");
+var day = (iso2, locale) => (/* @__PURE__ */ new Date(`${iso2.slice(0, 10)}T12:00:00`)).toLocaleDateString(locale);
+var monthYear = (iso2, long, locale) => (/* @__PURE__ */ new Date(`${iso2.slice(0, 7)}-15T12:00:00`)).toLocaleDateString(locale, { month: long ? "long" : "short", year: "numeric" });
+function debtsAppData(o, v) {
+  const { t, locale, today } = v;
+  const owe = o.dir === "owe";
+  const s = o.summary;
+  const income = o.income.amount;
+  const fixed = owe && v.withFixed ? o.fixed.amount : null;
+  const fixedOn = fixed != null;
+  const open = o.debts.reduce((a, d) => a + d.open, 0);
+  const total = o.debts.reduce((a, d) => a + (d.total ?? d.open), 0);
+  const ratesAll = o.debts.reduce((a, d) => a + (d.plan.kind === "plan" ? d.installment ?? 0 : 0), 0);
+  const later = Math.round((ratesAll - s.monthlyRates) * 100) / 100;
+  const left = income != null ? income - s.monthlyRates - (fixed ?? 0) : null;
+  const months = s.debtFree ? (Number(s.debtFree.slice(0, 4)) - Number(today.slice(0, 4))) * 12 + Number(s.debtFree.slice(5, 7)) - Number(today.slice(5, 7)) : null;
+  const byWhom = /* @__PURE__ */ new Map();
+  for (const d of o.debts) {
+    const k = d.creditorId ?? -d.id;
+    const x = byWhom.get(k) ?? { key: k, name: d.creditor, amount: 0 };
+    byWhom.set(k, { ...x, amount: x.amount + d.open });
+  }
+  const ranked = [...byWhom.values()].sort((a, b) => b.amount - a.amount);
+  const colors = creditorColors(ranked.map((x) => x.key));
+  const what = (d) => [d.label ? `Az. ${d.label}` : t("own"), d.collector ? t("via {name}", { name: d.collector }) : "", d.title && d.title !== d.creditor ? d.title : ""].filter(Boolean).join(" \xB7 ");
+  const contact = (d) => [d.contact.startsWith(d.creditor) ? d.contact.slice(d.creditor.length).replace(/^\s*·\s*/, "") : d.contact, d.iban].filter(Boolean).join(" \xB7 ");
+  const debtFreeNote = s.debtFree ? [months ? t("in {n} months", { n: months }) : "", s.unplanned > 0 ? t("{amount} without a plan not in it", { amount: euro(s.unplanned, 0, locale) }) : ""].filter(Boolean).join(" \xB7 ") : t("no plan yet");
+  return {
+    loading: false,
+    owe,
+    dir: o.dir,
+    asOf: (/* @__PURE__ */ new Date(`${today}T12:00:00`)).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }),
+    open,
+    total,
+    rates: s.monthlyRates,
+    ratesAll,
+    ratesNote: later > 0 ? t("running now \u2014 {amount} more starting later", { amount: euro(later, 0, locale) }) : t("running now"),
+    ratesRunningNote: later > 0 ? t("running now {amount}", { amount: euro(s.monthlyRates, 2, locale) }) : "",
+    fixed,
+    fixedOn,
+    hasFixed: o.fixed.amount != null,
+    fixedTotal: o.fixed.amount,
+    running: s.monthlyRates + (fixed ?? 0),
+    income,
+    left,
+    leftTone: left == null ? "plain" : left < 0 ? "bad" : "good",
+    debtFree: s.debtFree ? monthYear(s.debtFree, true, locale) : null,
+    debtFreeNote,
+    nextAmount: s.next?.amount ?? null,
+    nextDate: s.next ? day(s.next.date, locale) : "",
+    nextOverdue: !!s.next && s.next.date < today,
+    estimated: o.debts.some((d) => d.plan.estimatedStart),
+    hasMonths: s.months.some((m) => m.amount > 0),
+    chartCols: owe && fixedOn && o.fixed.items.length ? 3 : 2,
+    debts: o.debts.map((d) => {
+      const color = colors[d.creditorId ?? -d.id];
+      const kind = d.plan.kind;
+      const n = d.plan.payments.length;
+      return {
+        id: d.id,
+        creditor: d.creditor,
+        color,
+        what: what(d),
+        contact: contact(d),
+        total: d.total,
+        open: d.open,
+        installment: d.installment,
+        nextWhat: d.nextWhat,
+        overdue: d.plan.payments.some((p) => p.date < today),
+        noPlan: kind === "none",
+        plan: kind === "none" ? t("no plan") : kind === "once" ? t("once") : n === 1 ? t("1 instalment left") : t("{n} instalments left", { n }),
+        planUntil: kind === "plan" && d.plan.end ? `${t("until {month}", { month: monthYear(d.plan.end, false, locale) })}${d.plan.estimatedStart ? " *" : ""}` : "",
+        lastDate: d.last ? day(d.last.date, locale) : "",
+        lastAmount: d.last?.amount ?? null,
+        manual: d.manual,
+        canPay: owe && !!d.payment,
+        paid: d.total != null && d.total > 0 ? Math.max(0, Math.min(1, 1 - d.open / d.total)) : null
+      };
+    }),
+    creditors: ranked.map((x) => ({ name: x.name, amount: x.amount, color: colors[x.key] })),
+    fixedItems: o.fixed.items.map((x) => ({ name: x.title, amount: x.amount, color: x.color, source: x.source })),
+    fixedSources: [...new Set(o.fixed.items.map((x) => x.source))].join(", "),
+    overview: o
+  };
+}
+
+// src/lib/girocode.ts
+var NUMBER = String.raw`(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)`;
+var AMOUNT_AFTER = new RegExp(String.raw`(?<![\d.,])${NUMBER}\s*(?:€|EUR\b|Euro\b)`, "g");
+var AMOUNT_BEFORE = new RegExp(String.raw`(?:€|\bEUR)\s*${NUMBER}(?![\d.,]\d)`, "g");
+function parseAmount(s) {
+  if (s.includes(",")) return Number(s.replace(/\./g, "").replace(",", "."));
+  if (/^\d{1,3}(?:\.\d{3})+$/.test(s)) return Number(s.replace(/\./g, ""));
+  return Number(s);
+}
+function amountIn(text) {
+  const found = [...text.matchAll(AMOUNT_AFTER), ...text.matchAll(AMOUNT_BEFORE)].sort((a, b) => a.index - b.index)[0];
+  if (!found) return null;
+  const n = parseAmount(found[1]);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 // src/plugins/workspace/contract-fields.ts
 var CONTRACT = {
   monthly: "ctrmonthly",
@@ -357,22 +495,28 @@ var CONTRACT = {
 };
 
 // finances-port.ts
-var STRINGS = { "de": { "From {incomes} incomes, {subscriptions} subscriptions, {contracts} other contracts and {payments} debts": "Aus {incomes} Einkommen, {subscriptions} Abos, {contracts} weiteren Vertr\xE4gen und {payments} Schulden", "in {in} \xB7 out {out}": "rein {in} \xB7 raus {out}", "Nothing known ahead yet \u2014 no bank bookings, contracts or debts.": "Noch nichts Kommendes bekannt \u2014 keine Kontobuchungen, Vertr\xE4ge oder Schulden.", "Net a month": "Netto im Monat", "Write your balance today in the widget's settings for the weeks ahead and the day it runs low.": "Trag deinen heutigen Kontostand in den Einstellungen des Widgets ein, dann siehst du die n\xE4chsten Wochen und den Tag, an dem es knapp wird.", "Below zero on {date}": "Unter null am {date}", "Below {buffer} on {date}": "Unter {buffer} am {date}", "{amount} then \xB7 in {n} days": "dann {amount} \xB7 in {n} Tagen", "Stays above {amount}": "Bleibt \xFCber {amount}", "lowest {amount} on {date}": "tiefster Stand {amount} am {date}", "Income": "Einkommen", "Monthly": "Monatlich", "Quarterly": "Viertelj\xE4hrlich", "Yearly": "J\xE4hrlich", "{n} d overdue": "{n} T. \xFCberf\xE4llig", "today": "heute", "tomorrow": "morgen", "in {n} d": "in {n} T.", "No payments due.": "Keine Zahlungen f\xE4llig.", "Nothing comes back in these days.": "In diesen Tagen kommt nichts zur\xFCck.", "Creditors overview": "Gl\xE4ubiger\xFCbersicht", "Debtors overview": "Schuldner\xFCbersicht" }, "es": { "From {incomes} incomes, {subscriptions} subscriptions, {contracts} other contracts and {payments} debts": "A partir de {incomes} ingresos, {subscriptions} suscripciones, {contracts} contratos m\xE1s y {payments} deudas", "in {in} \xB7 out {out}": "entra {in} \xB7 sale {out}", "Nothing known ahead yet \u2014 no bank bookings, contracts or debts.": "A\xFAn no se sabe nada de lo que viene: ni movimientos bancarios, ni contratos, ni deudas.", "Net a month": "Neto al mes", "Write your balance today in the widget's settings for the weeks ahead and the day it runs low.": "Escribe tu saldo de hoy en los ajustes del widget para ver las pr\xF3ximas semanas y el d\xEDa en que se queda corto.", "Below zero on {date}": "Por debajo de cero el {date}", "Below {buffer} on {date}": "Por debajo de {buffer} el {date}", "{amount} then \xB7 in {n} days": "{amount} entonces \xB7 en {n} d\xEDas", "Stays above {amount}": "Se mantiene por encima de {amount}", "lowest {amount} on {date}": "m\xEDnimo {amount} el {date}", "Income": "Ingresos", "Monthly": "Mensual", "Quarterly": "Trimestral", "Yearly": "Anual", "{n} d overdue": "{n} d de retraso", "today": "hoy", "tomorrow": "ma\xF1ana", "in {n} d": "en {n} d", "No payments due.": "Ning\xFAn pago pendiente.", "Nothing comes back in these days.": "Nada vuelve en estos d\xEDas.", "Creditors overview": "Resumen de acreedores", "Debtors overview": "Resumen de deudores" } };
+var STRINGS = { "de": { "From {incomes} incomes, {subscriptions} subscriptions, {contracts} other contracts and {payments} debts": "Aus {incomes} Einkommen, {subscriptions} Abos, {contracts} weiteren Vertr\xE4gen und {payments} Schulden", "in {in} \xB7 out {out}": "rein {in} \xB7 raus {out}", "Nothing known ahead yet \u2014 no bank bookings, contracts or debts.": "Noch nichts Kommendes bekannt \u2014 keine Kontobuchungen, Vertr\xE4ge oder Schulden.", "Net a month": "Netto im Monat", "Write your balance today in the widget's settings for the weeks ahead and the day it runs low.": "Trag deinen heutigen Kontostand in den Einstellungen des Widgets ein, dann siehst du die n\xE4chsten Wochen und den Tag, an dem es knapp wird.", "Below zero on {date}": "Unter null am {date}", "Below {buffer} on {date}": "Unter {buffer} am {date}", "{amount} then \xB7 in {n} days": "dann {amount} \xB7 in {n} Tagen", "Stays above {amount}": "Bleibt \xFCber {amount}", "lowest {amount} on {date}": "tiefster Stand {amount} am {date}", "Income": "Einkommen", "I owe": "Ich schulde", "No metrics yet \u2014 Workspace \u2192 Metrics.": "Noch keine Kennzahlen \u2014 Workspace \u2192 Kennzahlen.", "{n} of {running} running, {amount} a month": "{n} von {running} laufenden, {amount} im Monat", "Every subscription is in your contracts.": "Jedes Abo steht in deinen Vertr\xE4gen.", "No recurring payments in your bank bookings.": "Keine wiederkehrenden Zahlungen in deinen Kontobuchungen.", "Add to {db}": "Zu {db} hinzuf\xFCgen", "next {date}": "n\xE4chste {date}", "last {date}": "zuletzt {date}", "{amount} a month": "{amount} im Monat", "Contracts": "Vertr\xE4ge", "There is no contracts database yet (Workspace \u2192 templates \u2192 Contracts).": "Es gibt noch keine Vertragsdatenbank (Workspace \u2192 Vorlagen \u2192 Vertr\xE4ge).", "This payment isn't recurring any more.": "Diese Zahlung wiederholt sich nicht mehr.", "Monthly": "Monatlich", "Quarterly": "Viertelj\xE4hrlich", "Yearly": "J\xE4hrlich", "{n} d overdue": "{n} T. \xFCberf\xE4llig", "today": "heute", "tomorrow": "morgen", "in {n} d": "in {n} T.", "No payments due.": "Keine Zahlungen f\xE4llig.", "Nothing comes back in these days.": "In diesen Tagen kommt nichts zur\xFCck.", "Creditors overview": "Gl\xE4ubiger\xFCbersicht", "Debtors overview": "Schuldner\xFCbersicht", "own": "eigene", "via {name}": "\xFCber {name}", "in {n} months": "in {n} Monaten", "{amount} without a plan not in it": "{amount} ohne Plan nicht eingerechnet", "no plan yet": "noch kein Plan", "running now \u2014 {amount} more starting later": "laufend \u2014 {amount} kommen sp\xE4ter dazu", "running now": "l\xE4uft gerade", "running now {amount}": "laufend {amount}", "no plan": "kein Plan", "once": "einmalig", "1 instalment left": "noch 1 Rate", "{n} instalments left": "noch {n} Raten", "until {month}": "bis {month}" }, "es": { "From {incomes} incomes, {subscriptions} subscriptions, {contracts} other contracts and {payments} debts": "A partir de {incomes} ingresos, {subscriptions} suscripciones, {contracts} contratos m\xE1s y {payments} deudas", "in {in} \xB7 out {out}": "entra {in} \xB7 sale {out}", "Nothing known ahead yet \u2014 no bank bookings, contracts or debts.": "A\xFAn no se sabe nada de lo que viene: ni movimientos bancarios, ni contratos, ni deudas.", "Net a month": "Neto al mes", "Write your balance today in the widget's settings for the weeks ahead and the day it runs low.": "Escribe tu saldo de hoy en los ajustes del widget para ver las pr\xF3ximas semanas y el d\xEDa en que se queda corto.", "Below zero on {date}": "Por debajo de cero el {date}", "Below {buffer} on {date}": "Por debajo de {buffer} el {date}", "{amount} then \xB7 in {n} days": "{amount} entonces \xB7 en {n} d\xEDas", "Stays above {amount}": "Se mantiene por encima de {amount}", "lowest {amount} on {date}": "m\xEDnimo {amount} el {date}", "Income": "Ingresos", "I owe": "Yo debo", "No metrics yet \u2014 Workspace \u2192 Metrics.": "A\xFAn no hay indicadores \u2014 Workspace \u2192 Indicadores.", "{n} of {running} running, {amount} a month": "{n} de {running} activos, {amount} al mes", "Every subscription is in your contracts.": "Todas las suscripciones est\xE1n en tus contratos.", "No recurring payments in your bank bookings.": "No hay pagos recurrentes en tus movimientos bancarios.", "Add to {db}": "A\xF1adir a {db}", "next {date}": "pr\xF3ximo {date}", "last {date}": "\xFAltimo {date}", "{amount} a month": "{amount} al mes", "Contracts": "Contratos", "There is no contracts database yet (Workspace \u2192 templates \u2192 Contracts).": "Todav\xEDa no hay base de datos de contratos (Workspace \u2192 plantillas \u2192 Contratos).", "This payment isn't recurring any more.": "Este pago ya no se repite.", "Monthly": "Mensual", "Quarterly": "Trimestral", "Yearly": "Anual", "{n} d overdue": "{n} d de retraso", "today": "hoy", "tomorrow": "ma\xF1ana", "in {n} d": "en {n} d", "No payments due.": "Ning\xFAn pago pendiente.", "Nothing comes back in these days.": "Nada vuelve en estos d\xEDas.", "Creditors overview": "Resumen de acreedores", "Debtors overview": "Resumen de deudores", "own": "propia", "via {name}": "a trav\xE9s de {name}", "in {n} months": "en {n} meses", "{amount} without a plan not in it": "{amount} sin plan no incluidos", "no plan yet": "a\xFAn sin plan", "running now \u2014 {amount} more starting later": "en curso \u2014 {amount} m\xE1s empiezan despu\xE9s", "running now": "en curso ahora", "running now {amount}": "en curso {amount}", "no plan": "sin plan", "once": "\xFAnica vez", "1 instalment left": "queda 1 cuota", "{n} instalments left": "quedan {n} cuotas", "until {month}": "hasta {month}" } };
 setPluginStrings((lang) => STRINGS[lang] ?? {});
 var tFor = (lang) => translator(isLang(lang) ? lang : "en");
 export {
   CONTRACT,
   DEBT,
   STRICT,
+  amountIn,
+  caseFromRow,
+  caseTitle,
   cashflowFlows,
   classifyNoise,
+  debtsAppData,
   detectRecurring,
   forecast,
   matchContracts,
   movedOnly,
+  paymentOf,
   recipientKey,
   recurringFlows,
   schedule,
+  standingOf,
   summarize,
   tFor
 };

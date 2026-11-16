@@ -1,0 +1,16 @@
+{
+  "name": "finances.debts",
+  "label": "Finances: the cases' debts",
+  "what": "The cases with money open as debts — creditor, who collects it, total, open, instalment, due day — as records of the debts database.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "money.allocations",
+    "read.people.names"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256,
+  "sql": [
+    "people"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "documents.folders-plan",
+  "label": "Documents: your local folders",
+  "what": "Your local folders looked at: which files are new or changed (to read in), which came back, which are gone.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "files.scan",
+    "sql.query"
+  ],
+  "timeoutMs": 300000,
+  "memoryMb": 256
+}

@@ -1,0 +1,20 @@
+{
+  "name": "news.auto-discover",
+  "label": "News: finding feeds by itself",
+  "what": "Once a day, and when fresh news run low: feeds for the things you care about — from the catalog and the internet — handed back as statements.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query",
+    "prompts.fill",
+    "ai.json",
+    "facts.list",
+    "todos.open",
+    "jira.tickets-open"
+  ],
+  "web": [
+    "*"
+  ],
+  "timeoutMs": 900000,
+  "memoryMb": 256
+}

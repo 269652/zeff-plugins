@@ -1,0 +1,11 @@
+{
+  "name": "documents.keep-plan",
+  "label": "Documents: a file read in",
+  "what": "What reading one file of a local folder in means: a new document, or a changed one put in its place — as statements for the flow.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

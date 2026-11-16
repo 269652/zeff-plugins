@@ -1,0 +1,18 @@
+{
+  "name": "loops.ai-close",
+  "label": "Open loops: the AI's closings",
+  "what": "The AI's look at the promises still open: a proposal for each one a message shows kept, with a quote.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "people.claims",
+    "messages.of-ref",
+    "messages.recent",
+    "people.resolve",
+    "timeline.events-for",
+    "prompts.fill",
+    "ai.json"
+  ],
+  "timeoutMs": 600000,
+  "memoryMb": 256
+}

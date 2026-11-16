@@ -1,0 +1,15 @@
+{
+  "name": "loops.decision",
+  "label": "Open loops: your word on a loop",
+  "what": "Close, dismiss, confirm, reopen, accept or reject a closing, put off — worked out: what the flow writes.",
+  "kind": "function",
+  "zeff": [
+    "store.query",
+    "people.claims",
+    "messages.of-ref",
+    "messages.recent",
+    "people.resolve"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

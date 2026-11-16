@@ -46,7 +46,7 @@ export async function handler(event, context) {
   const { debts: db } = await zeff.call("zeff.places", {});
   const rows = db ? (await zeff.call("db.cells", { db })).rows : [];
   const ids = [...new Set(rows.flatMap((r) => (Array.isArray(r.cells[DEBT.creditor]) && typeof r.cells[DEBT.creditor][0] === "number" ? [r.cells[DEBT.creditor][0]] : [])))];
-  const names = ids.length ? (await zeff.call("people.names", { ids })).names : {};
+  const names = ids.length ? (await zeff.call("read.people.names", { ids })).names : {};
   const payments = rows.flatMap((r) => {
     const open = num(r.cells[DEBT.open]);
     if (open == null || open <= 0) return [];

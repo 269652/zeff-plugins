@@ -1,0 +1,20 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "questions-ext",
+  "name": "Questions",
+  "version": "0.1.0",
+  "description": "Questions about numbers and dates answered from Zeff's own data: the AI plans queries over the named views, Zeff runs them, the AI phrases the answer from the numbers and cites the rows. The planning and phrasing are lambdas you or the AI can change.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "aiTasks": [
+      {
+        "id": "structured",
+        "label": "Structured questions",
+        "what": "Decides whether a question is about your data, plans the query over it and phrases the answer from the numbers."
+      }
+    ]
+  }
+}

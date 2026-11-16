@@ -1,0 +1,19 @@
+{
+  "name": "drive.plan-folders",
+  "label": "Google Drive: Zeff's folder in Drive and its Backups or Documents folder",
+  "what": "Zeff's folder in Drive and its Backups or Documents folder: which are there and which the flow has to make.",
+  "kind": "function",
+  "zeff": [
+    "oauth.token",
+    "oauth.status",
+    "store.query"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256,
+  "web": [
+    "www.googleapis.com"
+  ],
+  "secrets": [
+    "folderName"
+  ]
+}
