@@ -1,0 +1,11 @@
+{
+  "name": "todos.day",
+  "label": "Todos: the recap of a day",
+  "what": "What you did on a day: the AI's summary, per ticket what was done, and the evidence it was written from.",
+  "kind": "function",
+  "zeff": [
+    "todos.recap"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

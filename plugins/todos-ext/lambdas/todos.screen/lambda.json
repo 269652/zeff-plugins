@@ -1,0 +1,11 @@
+{
+  "name": "todos.screen",
+  "label": "Todos: what the screen shows",
+  "what": "The todos of a scope (yours in groups by urgency and the ones you wait on, done, the workers') ready to draw: words, ticket, kind, due day, repeat, flags, what a worker or agent says.",
+  "kind": "function",
+  "zeff": [
+    "todos.rows"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

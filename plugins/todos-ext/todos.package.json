@@ -1,0 +1,1889 @@
+{
+  "format": 1,
+  "id": "todos-ext",
+  "version": "1.5.0",
+  "name": "Todos",
+  "description": "Your todos on a screen made of Zeff's own kit: grouped by urgency, with the ones you wait on, done and the workers' — tick, flag, set aside, dismiss, a due day, add.",
+  "icon": "✅",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Todos",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Your todos",
+      "icon": "✅",
+      "schema": {
+        "titleName": "Todos",
+        "properties": [],
+        "views": [
+          {
+            "id": "vtodos1",
+            "name": "Todos",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"part\" value=\"todos\" keep=true/><state name=\"scope\" value=\"open\" keep=true/><state name=\"filter\" value=\"\"/><state name=\"chips\" value=\"[]\"/><state name=\"omniq\" value=\"\"/><state name=\"feedfilter\" value=\"all\"/><state name=\"att\" value=\"\"/><state name=\"recapday\" value=\"\"/><state name=\"dueedit\" value=\"\"/><state name=\"dueval\" value=\"\"/><state name=\"newtext\" value=\"\" keep=true/><state name=\"newdue\" value=\"\"/><state name=\"newticket\" value=\"\"/><state name=\"panel\" value=\"\"/><state name=\"askq\" value=\"\" keep=true/><state name=\"jql\" value=\"\"/><state name=\"aq\" value=\"\"/><state name=\"busy\" value=\"\"/><state name=\"instr\" value=\"\" keep=true/><state name=\"opedit\" value=\"\"/><state name=\"optext\" value=\"\"/><state name=\"noteedit\" value=\"\"/><state name=\"notetext\" value=\"\"/><state name=\"tf_name\" value=\"\"/><state name=\"tf_iban\" value=\"\"/><state name=\"tf_bic\" value=\"\"/><state name=\"tf_amount\" value=\"\"/><state name=\"tf_purpose\" value=\"\"/><state name=\"textedit\" value=\"\"/><state name=\"edittext\" value=\"\"/><state name=\"newnote\" value=\"\" keep=true/><state name=\"mins\" value=\"\"/><state name=\"timenote\" value=\"\"/>\n<data name=\"x\" lambda=\"todos.screen\" with=\"scope={{ state.scope }}, filter={{ state.filter }}, chips={{ state.chips }}\" debounce=\"300\" when=\"{{ state.part == 'todos' and state.scope != 'activity' }}\"/>\n<data name=\"hits\" lambda=\"todos.hits\" with=\"q={{ state.omniq }}\" debounce=\"150\" when=\"{{ state.omniq }}\"/>\n<data name=\"feed\" lambda=\"todos.feed\" with=\"filter={{ state.feedfilter }}\" when=\"{{ state.part == 'todos' and state.scope == 'activity' }}\"/>\n<data name=\"seen\" flow=\"todos-ext.seen\" with=\"id={{ data.feed.max }}\" when=\"{{ state.scope == 'activity' and data.feed.max }}\"/>\n<data name=\"lage\" lambda=\"todos.lage\" with=\"att={{ state.att }}\" every=\"5\" when=\"{{ state.part == 'todos' or state.part == 'tickets' }}\"/>\n<data name=\"day\" lambda=\"todos.day\" with=\"day={{ state.recapday }}\" every=\"5\" when=\"{{ state.part == 'recap' }}\"/>\n<data name=\"today\" lambda=\"todos.heute\" when=\"{{ state.part == 'today' }}\"/>\n<data name=\"pick\" lambda=\"documents.attach-list\" with=\"q={{ state.aq }}\" debounce=250 when=\"{{ state.panel }}\"/>\n<data name=\"men\" lambda=\"todos.mention\" with=\"text={{ state.newnote }}\" debounce=250 when=\"{{ state.panel and state.newnote }}\"/>\n<data name=\"p\" lambda=\"todos.panel\" with=\"id={{ state.panel }}\" when=\"{{ state.panel }}\"/>\n<state name=\"aq\" value=\"\"/><state name=\"abusy\" value=\"\"/>\n<data name=\"pick\" lambda=\"documents.attach-list\" with=\"q={{ state.aq }}\" when=\"{{ state.panel }}\" debounce=\"250\"/>\n<on event=\"attached\" action=\"reload\"/>\n<data name=\"listseen\" flow=\"todos-ext.list-seen\" when=\"{{ state.part == 'todos' and state.scope == 'open' and data.x }}\"/>\n<on event=\"todos-changed\" action=\"reload\"/>\n{{#if state.part == 'todos' and state.scope != 'activity' and not data.x}}<muted>Loading …</muted>{{#else}}\n<col gap=3>\n<row gap=1 wrap=true align=center>\n<button action=\"state\" state=\"part\" value=\"todos\" label=\"Briefing\" variant=\"{{ state.part == 'todos' ? 'primary' : 'quiet' }}\"/>\n<button action=\"state\" state=\"part\" value=\"tickets\" label=\"Tickets\" variant=\"{{ state.part == 'tickets' ? 'primary' : 'quiet' }}\"/>\n<button action=\"state\" state=\"part\" value=\"recap\" label=\"Recap\" variant=\"{{ state.part == 'recap' ? 'primary' : 'quiet' }}\"/>\n<button action=\"state\" state=\"part\" value=\"today\" label=\"Today\" variant=\"{{ state.part == 'today' ? 'primary' : 'quiet' }}\"/>\n</row>\n{{#if state.part == 'todos'}}\n<row gap=2 wrap=true align=center>\r\n{{#if data.lage.running}}\r\n<small><muted>● {{ data.lage.runningText }}</muted></small>\r\n<button run=\"todos-ext.board-run\" with=\"stop=true\" into=\"ran\" emit=\"todos-changed\" label=\"Cancel\"/>\r\n{{#else}}\r\n<button run=\"todos-ext.board-run\" with=\"stop=false\" into=\"ran\" emit=\"todos-changed\" label=\"Run now\" variant=primary tip=\"Reads your tickets, syncs first and has the AI write the briefing\"/>\r\n{{/if}}\r\n{{#if data.lage.nSteps}}\r\n<menu label=\"Steps\" tip=\"What Run now does, in order\">\r\n{{#each data.lage.steps}}\r\n<row gap=2 wrap=false align=center>\r\n<col fill=true><a href=\"{{ href }}\" tip=\"{{ what }}\">{{ label }}</a><small><muted>{{#if failed}}✗ {{else}}{{#if ok}}✓ {{/if}}{{/if}}{{ text }}</muted></small>{{#if health}}<small><text tone=warn>{{ health }}</text></small>{{/if}}</col>\r\n{{#if running}}<button run=\"todos-ext.sync\" with=\"key={{ key }}, stop=true\" emit=\"todos-changed\" label=\"■\" variant=quiet tip=\"Cancel — what it started ends with it\"/>{{#else}}<button run=\"todos-ext.sync\" with=\"key={{ key }}, stop=false\" into=\"synced\" emit=\"todos-changed\" label=\"⟳\" variant=quiet tip=\"{{ label }} now — {{ what }}\"/>{{/if}}\r\n</row>\r\n{{/each}}\r\n</menu>\r\n{{/if}}\r\n{{#if data.lage.asOf}}<small><muted>{{ data.lage.asOf }}</muted></small>{{/if}}\r\n{{#each data.lage.facts}}<chip>{{ text }}</chip>{{/each}}\r\n</row>\r\n{{#if data.synced.error}}<small><text tone=bad>{{ data.synced.error }}</text></small>{{/if}}\r\n{{#if data.ran.message}}<small><text tone=\"{{ data.ran.ok ? 'good' : 'bad' }}\">{{ data.ran.message }}</text></small>{{/if}}\r\n{{#if data.lage.failed}}<callout tone=bad><text>{{ data.lage.failed }}</text></callout>{{/if}}\r\n\n<row gap=1 wrap=true align=center>\n<button action=\"state\" state=\"scope\" value=\"open\" label=\"Your todos · {{ data.x.counts.open }}\" variant=\"{{ state.scope == 'open' ? 'primary' : 'quiet' }}\"/>\n<button action=\"state\" state=\"scope\" value=\"done\" label=\"Done · {{ data.x.counts.done }}\" variant=\"{{ state.scope == 'done' ? 'primary' : 'quiet' }}\"/>\n<button action=\"state\" state=\"scope\" value=\"worker\" label=\"Worker · {{ data.x.counts.worker }}\" variant=\"{{ state.scope == 'worker' ? 'primary' : 'quiet' }}\"/>\n<button action=\"state\" state=\"scope\" value=\"activity\" label=\"Activity\" variant=\"{{ state.scope == 'activity' ? 'primary' : 'quiet' }}\"/>\n</row>\n{{#if state.scope == 'activity'}}\n<col gap=3>\r\n<row gap=1 wrap=true align=center>\r\n<button action=\"state\" state=\"feedfilter\" value=\"all\" label=\"{{ data.feed.labels.all }}\" variant=\"{{ state.feedfilter == 'all' ? 'primary' : 'quiet' }}\"/>\r\n<button action=\"state\" state=\"feedfilter\" value=\"closed\" label=\"{{ data.feed.labels.closed }}\" variant=\"{{ state.feedfilter == 'closed' ? 'primary' : 'quiet' }}\"/>\r\n<button action=\"state\" state=\"feedfilter\" value=\"created\" label=\"{{ data.feed.labels.created }}\" variant=\"{{ state.feedfilter == 'created' ? 'primary' : 'quiet' }}\"/>\r\n{{#if data.feed.unseenText}}<small><text tone=warn>{{ data.feed.unseenText }}</text></small>{{/if}}\r\n</row>\r\n{{#if not data.feed.days}}<muted>{{ data.feed.empty }}</muted>{{/if}}\r\n{{#each data.feed.days}}\r\n<col gap=1>\r\n<small><b>{{ label }}</b></small>\r\n{{#each items}}\r\n<box tone=\"{{ isNew ? 'warn' : 'plain' }}\">\r\n<row gap=2 wrap=false align=start>\r\n<small><muted>{{ time }}</muted></small>\r\n<b>{{ icon }} {{ label }}</b>\r\n<col fill=true gap=1>\r\n<text>{{ text }}</text>\r\n<small><button action=\"state\" state=\"panel\" value=\"{{ todoId }}\" label=\"{{ ref }}\" variant=link/><muted> · {{ ticket }} · {{#if byHref}}<a href=\"{{ byHref }}\" tip=\"{{ byTitle }}\">{{ by }}</a>{{#else}}{{ by }}{{/if}}{{#if reopened}} · reopened{{/if}}</muted>\r\n{{#if run}} <button run=\"todos-ext.undo-run\" with=\"run={{ run }}\" into=\"undone\" confirm=\"Dismiss the todos this run made that you haven't touched — those you worked on stay\" emit=\"todos-changed\" label=\"take back the run\" variant=link/>{{/if}}</small>\r\n{{#if note}}<small><muted>{{ note }}</muted></small>{{/if}}\r\n</col>\r\n</row>\r\n</box>\r\n{{/each}}\r\n</col>\r\n{{/each}}\r\n{{#if data.undone.message}}<small><text tone=good>{{ data.undone.message }}</text></small>{{/if}}\r\n</col>\r\n\n{{#else}}\n<col gap=1>\r\n<row gap=1 wrap=true align=center>\r\n{{#each data.x.chips}}<button action=\"pick\" state=\"chips\" value=\"{{ pick }}\" label=\"{{ title }} ×\" variant=plain tip=\"Remove this filter\"/>{{/each}}\r\n<col fill=true><input bind=\"omniq\" enter=\"omni-first\" back=\"omni-back\" placeholder=\"Search todos, tickets, mails, comments, notes, people …\"/><on event=\"omni-first\" action=\"pick\" state=\"chips\" value=\"{{ data.hits.first }}\"/><on event=\"omni-back\" action=\"pop\" state=\"chips\"/></col>\r\n{{#if state.filter}}<button action=\"state\" state=\"filter\" value=\"\" label=\"Clear the filter\" variant=link/>{{/if}}\r\n{{#if data.x.chips}}<button action=\"state\" state=\"chips\" value=\"[]\" label=\"Clear the filter\" variant=link/>{{/if}}\r\n</row>\r\n{{#if state.omniq}}\r\n<box>\r\n<col gap=1>\r\n{{#if data.hits.none}}<small><muted>{{ data.hits.none }}</muted></small>{{/if}}\r\n{{#each data.hits.hits}}\r\n{{#if first}}<small><b>{{ label }}</b></small>{{/if}}\r\n<row gap=2 wrap=false align=baseline><button action=\"pick\" state=\"chips\" value=\"{{ pick }}\" label=\"{{ icon }} {{ title }}\" variant=quiet/><col fill=true>{{#if sub}}<small><muted>{{ sub }}</muted></small>{{/if}}</col><small><muted>{{ n }}</muted></small></row>\r\n{{/each}}\r\n</col>\r\n</box>\r\n{{/if}}\r\n</col>\r\n\n<box>\n<row gap=2 wrap=true align=end>\n<col fill=true><input bind=\"newtext\" placeholder=\"What's to be done?\" enter=\"todo-add\"/></col>\n<input bind=\"newticket\" placeholder=\"Ticket (optional)\"/>\n<input bind=\"newdue\" type=date label=\"Due date\"/>\n<button run=\"todos-ext.add\" with=\"text={{ state.newtext }}, ticket={{ state.newticket }}, due={{ state.newdue }}\" into=\"added\" then=\"newtext=\" emit=\"todos-changed\" label=\"Add\" variant=primary disabled=\"{{ not state.newtext }}\"/>\n</row>\n<on event=\"todo-add\" run=\"todos-ext.add\" with=\"text={{ state.newtext }}, ticket={{ state.newticket }}, due={{ state.newdue }}\" into=\"added\" then=\"newtext=\"/>\n{{#if data.added.id}}<small><text tone=\"{{ data.added.merged ? 'warn' : 'good' }}\">{{ data.added.message }}</text></small>{{/if}}\n</box>\n{{#if data.st.confirm}}\n<callout tone=warn>\n<text>{{ data.st.confirm }}</text>\n<button run=\"todos-ext.status\" with=\"id={{ data.st.id }}, status=done, early=true\" into=\"st\" emit=\"todos-changed\" label=\"Mark it done\" variant=primary/>\n</callout>\n{{/if}}\n{{#if data.st.error}}{{#if not data.st.confirm}}<text tone=bad>{{ data.st.error }}</text>{{/if}}{{/if}}\n{{#if state.scope == 'open'}}\n{{#if data.x.groups}}\n<col gap=4>\n{{#each data.x.groups}}\n<col gap=1>\n<row gap=2 align=center><dot color=\"{{ color }}\"/><b>{{ label }}</b><small><muted>{{ count }}</muted></small></row>\n<col gap=1>\n{{#each items}}\n<row gap=2 wrap=false align=start>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status={{ closed ? 'open' : 'done' }}\" into=\"st\" emit=\"todos-changed\" label=\"{{ closed ? '●' : '○' }}\" variant=quiet tip=\"{{ doneTip }}\"/>\n<col fill=true gap=1>\n<row gap=1 wrap=true align=baseline>\n{{#if isNew}}<dot color=\"#f59e0b\"/>{{/if}}\n{{#if flagged}}<text tone=bad tip=\"important\">⚑</text>{{/if}}\n{{#if asking}}<text tone=warn tip=\"{{ askingTip }}\">❗</text>{{/if}}\n{{#if waiting}}{{#if not closed}}<text tip=\"Waiting for others\">⏳</text>{{/if}}{{/if}}\n{{#if closed}}<strike><text tone=muted>{{ text }}</text></strike>{{#else}}{{#if waiting}}<text tone=muted>{{ text }}</text>{{#else}}<b>{{ text }}</b>{{/if}}{{/if}}\n{{#if state}}<chip>{{ state }}</chip>{{/if}}\n</row>\n<row gap=1 wrap=true align=center>\n<copy text=\"{{ ref }}\" label=\"{{ ref }}\"/>\n{{#if workRun}}<small><muted>·</muted> <a href=\"{{ workRun }}\" tip=\"Open the run working on it on the Code tab\">{{ workRef }}</a></small>{{/if}}\n{{#if origin}}<small><muted>· {{ origin }}</muted></small>{{/if}}\n{{#if ticket}}<small><muted>·</muted> {{#if ticketUrl}}<hover><a href=\"{{ ticketUrl }}\">{{ ticket }} ↗</a><hovercard><b>{{ ticket }}</b> {{ ticketTitle }}<small><muted>{{ ticketStatus }}</muted></small></hovercard></hover>{{#else}}<mono>{{ ticket }}</mono>{{/if}}</small>{{/if}}\n{{#each also}}<small><muted>+</muted> {{#if url}}<a href=\"{{ url }}\" tip=\"Linked ticket — it's about the same thing\">{{ key }} ↗</a>{{#else}}<mono>{{ key }}</mono>{{/if}}</small>{{/each}}\n{{#each mrs}}<small><muted>·</muted> <a href=\"{{ url }}\" tip=\"{{ tip }}\">{{ label }}</a>{{#if tag}} <muted>({{ tag }})</muted>{{/if}}</small>{{/each}}\n<small><muted>· {{ kind }}</muted></small>\n{{#if due}}<box tone=\"{{ dueTone }}\" action=\"state\" state=\"dueedit\" value=\"{{ id }}\"><small>{{ dueLabel }}</small></box>{{#else}}{{#if not closed}}<button action=\"state\" state=\"dueedit\" value=\"{{ id }}\" label=\"+ {{ dueLabel }}\" variant=quiet/>{{/if}}{{/if}}\n{{#if repeat}}\n<menu label=\"↻ {{ repeat }}\" tip=\"Comes back — change\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=\" emit=\"todos-changed\" label=\"does not repeat\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n{{#if not closed}}<button run=\"todos-ext.regenerate\" with=\"id={{ id }}\" into=\"regen\" emit=\"todos-changed\" label=\"make again\" variant=quiet tip=\"Make the calendar appointments and the actions again\"/>{{/if}}\n</menu>\n{{#if due}}<a href=\"/api/todos/{{ id }}/calendar\" tip=\"Show it in the calendar\">📅</a>{{/if}}\n{{#else}}{{#if not closed}}\n<menu label=\"repeat\" tip=\"Make it come back\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n</menu>\n{{/if}}{{/if}}\n{{#if opsLabel}}<hover width=420><button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⚡ {{ opsLabel }}\" variant=quiet/><hovercard>{{#each opsList}}<small>⚡ {{ text }}</small>{{/each}}{{#if opsWhy}}<small><muted>{{ opsWhy }}</muted></small>{{/if}}<small><muted>{{ opsHint }}</muted></small></hovercard></hover>{{/if}}\n{{#if merged}}<small><text tone=warn tip=\"{{ mergedTip }}\">· {{ merged }}</text></small>{{/if}}\n{{#if time}}<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"{{ time }}\" variant=quiet/>{{/if}}\n{{#if reported}}<small><text tone=good tip=\"{{ reportedTip }}\">· ✓ {{ reported }}</text></small>{{/if}}\n{{#if suggested}}<small><muted tip=\"{{ suggestedTip }}\">· ✓ {{ suggested }}</muted></small>{{/if}}\n{{#if deferred}}<small><muted>· deferred</muted></small>{{/if}}\n{{#if backUp}}<small><text tone=warn tip=\"You had moved it down — it's back on top\">· {{ backUp }}</text></small>{{/if}}\n{{#each away}}<small><text tone=warn tip=\"Read from their messages — a question to them waits until they are back\">· 🏖 {{ text }}</text></small>{{/each}}\n</row>\n{{#if note}}<small><muted>{{ note }}</muted></small>{{#else}}{{#if source}}<small><muted>{{ source }}</muted></small>{{/if}}{{/if}}\n{{#if asking}}<small><text tone=warn><b>Waiting for you:</b> {{ asking }}</text></small>{{/if}}\n{{#if lastError}}<small><text tone=bad>{{ lastError }}</text></small>{{/if}}\n</col>\n<row gap=1 wrap=false align=center>\n<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⋯\" variant=quiet tip=\"Open the todo\"/>\n{{#if not closed}}\n<button run=\"todos-ext.flag\" with=\"id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}\" emit=\"todos-changed\" label=\"⚑\" variant=\"{{ flagged ? 'danger' : 'quiet' }}\" tip=\"{{ flagged ? 'Not important' : 'Important' }}\"/>\n{{#if deferred}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=false\" emit=\"todos-changed\" label=\"↑\" variant=quiet tip=\"Bring back to the top\"/>{{#else}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=true\" emit=\"todos-changed\" label=\"↓\" variant=quiet tip=\"Move down — set aside for now (comes back up when something happens, in 3 days at the latest)\"/>{{/if}}\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=dismissed\" into=\"st\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"{{ dismissTip }}\"/>\n{{/if}}\n</row>\n</row>\n{{/each}}\n</col>\n</col>\n{{/each}}\n</col>\n{{#else}}\n<muted>{{ data.x.empty }}</muted>\n{{/if}}\n{{#if data.x.nWaiting}}\n<section title=\"Waiting on others\" aside=\"{{ data.x.nWaiting }}\" collapsible=true>\n<col gap=1>\n{{#each data.x.waiting}}\n<row gap=2 wrap=false align=start>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status={{ closed ? 'open' : 'done' }}\" into=\"st\" emit=\"todos-changed\" label=\"{{ closed ? '●' : '○' }}\" variant=quiet tip=\"{{ doneTip }}\"/>\n<col fill=true gap=1>\n<row gap=1 wrap=true align=baseline>\n{{#if isNew}}<dot color=\"#f59e0b\"/>{{/if}}\n{{#if flagged}}<text tone=bad tip=\"important\">⚑</text>{{/if}}\n{{#if asking}}<text tone=warn tip=\"{{ askingTip }}\">❗</text>{{/if}}\n{{#if waiting}}{{#if not closed}}<text tip=\"Waiting for others\">⏳</text>{{/if}}{{/if}}\n{{#if closed}}<strike><text tone=muted>{{ text }}</text></strike>{{#else}}{{#if waiting}}<text tone=muted>{{ text }}</text>{{#else}}<b>{{ text }}</b>{{/if}}{{/if}}\n{{#if state}}<chip>{{ state }}</chip>{{/if}}\n</row>\n<row gap=1 wrap=true align=center>\n<copy text=\"{{ ref }}\" label=\"{{ ref }}\"/>\n{{#if workRun}}<small><muted>·</muted> <a href=\"{{ workRun }}\" tip=\"Open the run working on it on the Code tab\">{{ workRef }}</a></small>{{/if}}\n{{#if origin}}<small><muted>· {{ origin }}</muted></small>{{/if}}\n{{#if ticket}}<small><muted>·</muted> {{#if ticketUrl}}<hover><a href=\"{{ ticketUrl }}\">{{ ticket }} ↗</a><hovercard><b>{{ ticket }}</b> {{ ticketTitle }}<small><muted>{{ ticketStatus }}</muted></small></hovercard></hover>{{#else}}<mono>{{ ticket }}</mono>{{/if}}</small>{{/if}}\n{{#each also}}<small><muted>+</muted> {{#if url}}<a href=\"{{ url }}\" tip=\"Linked ticket — it's about the same thing\">{{ key }} ↗</a>{{#else}}<mono>{{ key }}</mono>{{/if}}</small>{{/each}}\n{{#each mrs}}<small><muted>·</muted> <a href=\"{{ url }}\" tip=\"{{ tip }}\">{{ label }}</a>{{#if tag}} <muted>({{ tag }})</muted>{{/if}}</small>{{/each}}\n<small><muted>· {{ kind }}</muted></small>\n{{#if due}}<box tone=\"{{ dueTone }}\" action=\"state\" state=\"dueedit\" value=\"{{ id }}\"><small>{{ dueLabel }}</small></box>{{#else}}{{#if not closed}}<button action=\"state\" state=\"dueedit\" value=\"{{ id }}\" label=\"+ {{ dueLabel }}\" variant=quiet/>{{/if}}{{/if}}\n{{#if repeat}}\n<menu label=\"↻ {{ repeat }}\" tip=\"Comes back — change\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=\" emit=\"todos-changed\" label=\"does not repeat\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n{{#if not closed}}<button run=\"todos-ext.regenerate\" with=\"id={{ id }}\" into=\"regen\" emit=\"todos-changed\" label=\"make again\" variant=quiet tip=\"Make the calendar appointments and the actions again\"/>{{/if}}\n</menu>\n{{#if due}}<a href=\"/api/todos/{{ id }}/calendar\" tip=\"Show it in the calendar\">📅</a>{{/if}}\n{{#else}}{{#if not closed}}\n<menu label=\"repeat\" tip=\"Make it come back\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n</menu>\n{{/if}}{{/if}}\n{{#if opsLabel}}<hover width=420><button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⚡ {{ opsLabel }}\" variant=quiet/><hovercard>{{#each opsList}}<small>⚡ {{ text }}</small>{{/each}}{{#if opsWhy}}<small><muted>{{ opsWhy }}</muted></small>{{/if}}<small><muted>{{ opsHint }}</muted></small></hovercard></hover>{{/if}}\n{{#if merged}}<small><text tone=warn tip=\"{{ mergedTip }}\">· {{ merged }}</text></small>{{/if}}\n{{#if time}}<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"{{ time }}\" variant=quiet/>{{/if}}\n{{#if reported}}<small><text tone=good tip=\"{{ reportedTip }}\">· ✓ {{ reported }}</text></small>{{/if}}\n{{#if suggested}}<small><muted tip=\"{{ suggestedTip }}\">· ✓ {{ suggested }}</muted></small>{{/if}}\n{{#if deferred}}<small><muted>· deferred</muted></small>{{/if}}\n{{#if backUp}}<small><text tone=warn tip=\"You had moved it down — it's back on top\">· {{ backUp }}</text></small>{{/if}}\n{{#each away}}<small><text tone=warn tip=\"Read from their messages — a question to them waits until they are back\">· 🏖 {{ text }}</text></small>{{/each}}\n</row>\n{{#if note}}<small><muted>{{ note }}</muted></small>{{#else}}{{#if source}}<small><muted>{{ source }}</muted></small>{{/if}}{{/if}}\n{{#if asking}}<small><text tone=warn><b>Waiting for you:</b> {{ asking }}</text></small>{{/if}}\n{{#if lastError}}<small><text tone=bad>{{ lastError }}</text></small>{{/if}}\n</col>\n<row gap=1 wrap=false align=center>\n<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⋯\" variant=quiet tip=\"Open the todo\"/>\n{{#if not closed}}\n<button run=\"todos-ext.flag\" with=\"id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}\" emit=\"todos-changed\" label=\"⚑\" variant=\"{{ flagged ? 'danger' : 'quiet' }}\" tip=\"{{ flagged ? 'Not important' : 'Important' }}\"/>\n{{#if deferred}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=false\" emit=\"todos-changed\" label=\"↑\" variant=quiet tip=\"Bring back to the top\"/>{{#else}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=true\" emit=\"todos-changed\" label=\"↓\" variant=quiet tip=\"Move down — set aside for now (comes back up when something happens, in 3 days at the latest)\"/>{{/if}}\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=dismissed\" into=\"st\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"{{ dismissTip }}\"/>\n{{/if}}\n</row>\n</row>\n{{/each}}\n</col>\n</section>\n{{/if}}\n{{#else}}\n{{#if state.scope == 'worker'}}<small><muted>Todos the workers make themselves — they close them themselves too. They aren't in your list.</muted></small>{{/if}}\n{{#if data.x.rows}}\n<col gap=1>\n{{#each data.x.rows}}\n<row gap=2 wrap=false align=start>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status={{ closed ? 'open' : 'done' }}\" into=\"st\" emit=\"todos-changed\" label=\"{{ closed ? '●' : '○' }}\" variant=quiet tip=\"{{ doneTip }}\"/>\n<col fill=true gap=1>\n<row gap=1 wrap=true align=baseline>\n{{#if isNew}}<dot color=\"#f59e0b\"/>{{/if}}\n{{#if flagged}}<text tone=bad tip=\"important\">⚑</text>{{/if}}\n{{#if asking}}<text tone=warn tip=\"{{ askingTip }}\">❗</text>{{/if}}\n{{#if waiting}}{{#if not closed}}<text tip=\"Waiting for others\">⏳</text>{{/if}}{{/if}}\n{{#if closed}}<strike><text tone=muted>{{ text }}</text></strike>{{#else}}{{#if waiting}}<text tone=muted>{{ text }}</text>{{#else}}<b>{{ text }}</b>{{/if}}{{/if}}\n{{#if state}}<chip>{{ state }}</chip>{{/if}}\n</row>\n<row gap=1 wrap=true align=center>\n<copy text=\"{{ ref }}\" label=\"{{ ref }}\"/>\n{{#if workRun}}<small><muted>·</muted> <a href=\"{{ workRun }}\" tip=\"Open the run working on it on the Code tab\">{{ workRef }}</a></small>{{/if}}\n{{#if origin}}<small><muted>· {{ origin }}</muted></small>{{/if}}\n{{#if ticket}}<small><muted>·</muted> {{#if ticketUrl}}<hover><a href=\"{{ ticketUrl }}\">{{ ticket }} ↗</a><hovercard><b>{{ ticket }}</b> {{ ticketTitle }}<small><muted>{{ ticketStatus }}</muted></small></hovercard></hover>{{#else}}<mono>{{ ticket }}</mono>{{/if}}</small>{{/if}}\n{{#each also}}<small><muted>+</muted> {{#if url}}<a href=\"{{ url }}\" tip=\"Linked ticket — it's about the same thing\">{{ key }} ↗</a>{{#else}}<mono>{{ key }}</mono>{{/if}}</small>{{/each}}\n{{#each mrs}}<small><muted>·</muted> <a href=\"{{ url }}\" tip=\"{{ tip }}\">{{ label }}</a>{{#if tag}} <muted>({{ tag }})</muted>{{/if}}</small>{{/each}}\n<small><muted>· {{ kind }}</muted></small>\n{{#if due}}<box tone=\"{{ dueTone }}\" action=\"state\" state=\"dueedit\" value=\"{{ id }}\"><small>{{ dueLabel }}</small></box>{{#else}}{{#if not closed}}<button action=\"state\" state=\"dueedit\" value=\"{{ id }}\" label=\"+ {{ dueLabel }}\" variant=quiet/>{{/if}}{{/if}}\n{{#if repeat}}\n<menu label=\"↻ {{ repeat }}\" tip=\"Comes back — change\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=\" emit=\"todos-changed\" label=\"does not repeat\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n{{#if not closed}}<button run=\"todos-ext.regenerate\" with=\"id={{ id }}\" into=\"regen\" emit=\"todos-changed\" label=\"make again\" variant=quiet tip=\"Make the calendar appointments and the actions again\"/>{{/if}}\n</menu>\n{{#if due}}<a href=\"/api/todos/{{ id }}/calendar\" tip=\"Show it in the calendar\">📅</a>{{/if}}\n{{#else}}{{#if not closed}}\n<menu label=\"repeat\" tip=\"Make it come back\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n</menu>\n{{/if}}{{/if}}\n{{#if opsLabel}}<hover width=420><button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⚡ {{ opsLabel }}\" variant=quiet/><hovercard>{{#each opsList}}<small>⚡ {{ text }}</small>{{/each}}{{#if opsWhy}}<small><muted>{{ opsWhy }}</muted></small>{{/if}}<small><muted>{{ opsHint }}</muted></small></hovercard></hover>{{/if}}\n{{#if merged}}<small><text tone=warn tip=\"{{ mergedTip }}\">· {{ merged }}</text></small>{{/if}}\n{{#if time}}<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"{{ time }}\" variant=quiet/>{{/if}}\n{{#if reported}}<small><text tone=good tip=\"{{ reportedTip }}\">· ✓ {{ reported }}</text></small>{{/if}}\n{{#if suggested}}<small><muted tip=\"{{ suggestedTip }}\">· ✓ {{ suggested }}</muted></small>{{/if}}\n{{#if deferred}}<small><muted>· deferred</muted></small>{{/if}}\n{{#if backUp}}<small><text tone=warn tip=\"You had moved it down — it's back on top\">· {{ backUp }}</text></small>{{/if}}\n{{#each away}}<small><text tone=warn tip=\"Read from their messages — a question to them waits until they are back\">· 🏖 {{ text }}</text></small>{{/each}}\n</row>\n{{#if note}}<small><muted>{{ note }}</muted></small>{{#else}}{{#if source}}<small><muted>{{ source }}</muted></small>{{/if}}{{/if}}\n{{#if asking}}<small><text tone=warn><b>Waiting for you:</b> {{ asking }}</text></small>{{/if}}\n{{#if lastError}}<small><text tone=bad>{{ lastError }}</text></small>{{/if}}\n</col>\n<row gap=1 wrap=false align=center>\n<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⋯\" variant=quiet tip=\"Open the todo\"/>\n{{#if not closed}}\n<button run=\"todos-ext.flag\" with=\"id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}\" emit=\"todos-changed\" label=\"⚑\" variant=\"{{ flagged ? 'danger' : 'quiet' }}\" tip=\"{{ flagged ? 'Not important' : 'Important' }}\"/>\n{{#if deferred}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=false\" emit=\"todos-changed\" label=\"↑\" variant=quiet tip=\"Bring back to the top\"/>{{#else}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=true\" emit=\"todos-changed\" label=\"↓\" variant=quiet tip=\"Move down — set aside for now (comes back up when something happens, in 3 days at the latest)\"/>{{/if}}\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=dismissed\" into=\"st\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"{{ dismissTip }}\"/>\n{{/if}}\n</row>\n</row>\n{{/each}}\n</col>\n{{#else}}\n<muted>{{ data.x.empty }}</muted>\n{{/if}}\n{{/if}}\n{{/if}}\n{{/if}}\n{{#if state.part == 'tickets'}}\n<row gap=2 wrap=true align=center>\r\n{{#if data.lage.running}}\r\n<small><muted>● {{ data.lage.runningText }}</muted></small>\r\n<button run=\"todos-ext.board-run\" with=\"stop=true\" into=\"ran\" emit=\"todos-changed\" label=\"Cancel\"/>\r\n{{#else}}\r\n<button run=\"todos-ext.board-run\" with=\"stop=false\" into=\"ran\" emit=\"todos-changed\" label=\"Run now\" variant=primary tip=\"Reads your tickets, syncs first and has the AI write the briefing\"/>\r\n{{/if}}\r\n{{#if data.lage.nSteps}}\r\n<menu label=\"Steps\" tip=\"What Run now does, in order\">\r\n{{#each data.lage.steps}}\r\n<row gap=2 wrap=false align=center>\r\n<col fill=true><a href=\"{{ href }}\" tip=\"{{ what }}\">{{ label }}</a><small><muted>{{#if failed}}✗ {{else}}{{#if ok}}✓ {{/if}}{{/if}}{{ text }}</muted></small>{{#if health}}<small><text tone=warn>{{ health }}</text></small>{{/if}}</col>\r\n{{#if running}}<button run=\"todos-ext.sync\" with=\"key={{ key }}, stop=true\" emit=\"todos-changed\" label=\"■\" variant=quiet tip=\"Cancel — what it started ends with it\"/>{{#else}}<button run=\"todos-ext.sync\" with=\"key={{ key }}, stop=false\" into=\"synced\" emit=\"todos-changed\" label=\"⟳\" variant=quiet tip=\"{{ label }} now — {{ what }}\"/>{{/if}}\r\n</row>\r\n{{/each}}\r\n</menu>\r\n{{/if}}\r\n{{#if data.lage.asOf}}<small><muted>{{ data.lage.asOf }}</muted></small>{{/if}}\r\n{{#each data.lage.facts}}<chip>{{ text }}</chip>{{/each}}\r\n</row>\r\n{{#if data.synced.error}}<small><text tone=bad>{{ data.synced.error }}</text></small>{{/if}}\r\n{{#if data.ran.message}}<small><text tone=\"{{ data.ran.ok ? 'good' : 'bad' }}\">{{ data.ran.message }}</text></small>{{/if}}\r\n{{#if data.lage.failed}}<callout tone=bad><text>{{ data.lage.failed }}</text></callout>{{/if}}\r\n\n<col gap=3>\r\n{{#if data.lage.none}}<muted>{{ data.lage.none }}</muted>{{/if}}\r\n<section title=\"Which tickets\" collapsible=true>\r\n<col gap=1>\r\n<input bind=\"jql\" value=\"{{ data.lage.jql }}\" placeholder=\"A JQL filter, e.g.: assignee = currentUser() AND resolution = Unresolved\"/>\r\n<row gap=2><button run=\"todos-ext.board-settings\" with=\"jql={{ state.jql }}\" into=\"saved\" emit=\"todos-changed\" label=\"Save\" variant=primary disabled=\"{{ not state.jql }}\"/>{{#if data.saved.message}}<small><text tone=good>{{ data.saved.message }}</text></small>{{/if}}{{#if data.saved.error}}<small><text tone=bad>{{ data.saved.error }}</text></small>{{/if}}</row>\r\n</col>\r\n</section>\r\n{{#if data.lage.lede}}\r\n<box>\r\n<col gap=1>\r\n<small><b>Briefing</b></small>\r\n<text>{{ data.lage.lede }}</text>\r\n{{#if data.lage.gaps}}<small><text tone=warn>⚠ {{ data.lage.gaps }} {{#each data.lage.gapList}}<a href=\"{{ href }}\">{{ label }}</a> ({{ state }}) {{/each}}</text></small>{{/if}}\r\n</col>\r\n</box>\r\n{{/if}}\r\n{{#if data.lage.chips}}\r\n<row gap=1 wrap=true align=center>\r\n<button action=\"state\" state=\"att\" value=\"\" label=\"All · {{ data.lage.nAll }}\" variant=\"{{ state.att == '' ? 'primary' : 'quiet' }}\"/>\r\n{{#each data.lage.chips}}<button action=\"state\" state=\"att\" value=\"{{ on ? '' : attention }}\" label=\"{{ label }} · {{ n }}\" variant=\"{{ on ? 'primary' : 'quiet' }}\"/>{{/each}}\r\n</row>\r\n{{/if}}\r\n{{#each data.lage.tickets}}\r\n<box>\r\n<col gap=2>\r\n<row gap=2 wrap=true align=baseline>\r\n<dot color=\"{{ attColor }}\"/>\r\n{{#if url}}<a href=\"{{ url }}\"><b>{{ key }}</b> ↗</a>{{#else}}<mono>{{ key }}</mono>{{/if}}\r\n<b>{{ summary }}</b>\r\n<chip>{{ status }}</chip>\r\n{{#if followed}}<small><muted>{{ followLabel }}: {{ followed }}</muted></small><button run=\"todos-ext.follow\" with=\"key={{ key }}, value=-1\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"No longer followed\"/>{{/if}}\r\n{{#if analyzed}}<chip>{{ attLabel }}</chip>{{/if}}\r\n</row>\r\n{{#if analyzed}}<text><b>{{ lead }}</b> {{ text }}</text>{{#else}}<muted>Not analyzed in this run.</muted>{{/if}}\r\n{{#each questions}}<section title=\"{{ q }}\" collapsible=true><text>{{ a }}</text>{{#each sourceList}}<small><muted>{{ text }}</muted></small>{{/each}}</section>{{/each}}\r\n{{#each flags}}<small><text tone=warn>{{ text }}</text></small>{{/each}}\r\n{{#if happened}}\r\n<section title=\"What happened\" collapsible=true>\r\n<col gap=1>{{#each happened}}<small><muted>{{ when }}{{#if who}} · {{ who }}{{/if}}</muted> {{ what }}</small>{{/each}}</col>\r\n</section>\r\n{{/if}}\r\n{{#each actions}}\r\n{{#if ok}}<box tone=good><b>✓ {{ label }}</b><small><muted>{{ detail }} · {{ doneAt }}</muted></small></box>\r\n{{#else}}<col gap=1>\r\n<button run=\"todos-ext.ticket-action\" with=\"run={{ data.lage.runId }}, ticket={{ ticket }}, idx={{ idx }}\" into=\"tact\" confirm=\"{{ label }}?\" emit=\"todos-changed\" label=\"{{ icon }} {{ label }}\" tip=\"{{ why }}\"/>\r\n{{#if why}}<small><muted>{{ why }}</muted></small>{{/if}}\r\n{{#if failed}}<small><text tone=bad>{{ detail }}</text></small>{{/if}}\r\n</col>{{/if}}\r\n{{/each}}\r\n{{#if nComments}}\r\n<section title=\"Comments\" aside=\"{{ commentsTitle }}\" collapsible=true>\r\n<col gap=1>\r\n{{#each recent}}<row gap=2 wrap=false align=start><button run=\"todos-ext.resolve\" with=\"kind=jira, key={{ id }}, ticket={{ ticket }}, resolved={{ done ? 'false' : 'true' }}\" emit=\"todos-changed\" label=\"{{ done ? '✓' : '○' }}\" variant=quiet tip=\"Done ones don't feed new todos\"/><small>{{ when }} <b>{{ author }}</b>: {{ text }}</small></row>{{/each}}\r\n{{#each gitlab}}<row gap=2 wrap=false align=start>{{#if resolvable}}<button run=\"todos-ext.resolve\" with=\"kind=gitlab, key={{ key }}, resolved={{ done ? 'false' : 'true' }}\" emit=\"todos-changed\" label=\"{{ done ? '✓' : '○' }}\" variant=quiet tip=\"Done ones don't feed new todos\"/>{{/if}}<small>{{ when }} <a href=\"{{ url }}\" tip=\"{{ tip }}\">{{ ref }}</a> <b>{{ author }}</b>: {{ body }}</small></row>{{/each}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n{{#if nMails}}\r\n<section title=\"Mails\" aside=\"{{ mailsTitle }}\" collapsible=true>\r\n<col gap=1>{{#each mails}}<small>{{#if unread}}<b>● </b>{{/if}}{{ when }} <b>{{ from }}</b> — {{ subject }} <muted>{{ preview }}</muted></small>{{/each}}</col>\r\n</section>\r\n{{/if}}\r\n<section title=\"Ask about this ticket\" collapsible=true>\r\n<col gap=1>\r\n{{#each chat}}<box><col gap=1><small><b>{{ q }}</b></small><text>{{ a }}</text>{{#each sourceList}}<small><muted>{{ text }}</muted></small>{{/each}}<button run=\"todos-ext.chat-dismiss\" with=\"id={{ id }}\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"Take this answer out of the context\"/></col></box>{{/each}}\r\n<row gap=2 wrap=false align=end><col fill=true><input bind=\"askq\" placeholder=\"Ask about this ticket …\"/></col><button run=\"todos-ext.ask\" with=\"ticket={{ key }}, question={{ state.askq }}\" into=\"asked\" then=\"askq=\" emit=\"todos-changed\" label=\"Ask\" disabled=\"{{ not state.askq }}\"/></row>\r\n{{#if data.asked.error}}<small><text tone=bad>{{ data.asked.error }}</text></small>{{/if}}\r\n</col>\r\n</section>\r\n<row gap=3 wrap=true>{{#each factsLine}}<small><muted>{{ text }}</muted></small>{{/each}}{{#if url}}<a href=\"{{ url }}\">Open in Jira ↗</a>{{/if}}</row>\r\n{{#if todos}}\r\n<col gap=1>\r\n{{#each todos}}\r\n<row gap=2 wrap=false align=start>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status={{ closed ? 'open' : 'done' }}\" into=\"st\" emit=\"todos-changed\" label=\"{{ closed ? '●' : '○' }}\" variant=quiet tip=\"{{ doneTip }}\"/>\n<col fill=true gap=1>\n<row gap=1 wrap=true align=baseline>\n{{#if isNew}}<dot color=\"#f59e0b\"/>{{/if}}\n{{#if flagged}}<text tone=bad tip=\"important\">⚑</text>{{/if}}\n{{#if asking}}<text tone=warn tip=\"{{ askingTip }}\">❗</text>{{/if}}\n{{#if waiting}}{{#if not closed}}<text tip=\"Waiting for others\">⏳</text>{{/if}}{{/if}}\n{{#if closed}}<strike><text tone=muted>{{ text }}</text></strike>{{#else}}{{#if waiting}}<text tone=muted>{{ text }}</text>{{#else}}<b>{{ text }}</b>{{/if}}{{/if}}\n{{#if state}}<chip>{{ state }}</chip>{{/if}}\n</row>\n<row gap=1 wrap=true align=center>\n<copy text=\"{{ ref }}\" label=\"{{ ref }}\"/>\n{{#if workRun}}<small><muted>·</muted> <a href=\"{{ workRun }}\" tip=\"Open the run working on it on the Code tab\">{{ workRef }}</a></small>{{/if}}\n{{#if origin}}<small><muted>· {{ origin }}</muted></small>{{/if}}\n{{#if ticket}}<small><muted>·</muted> {{#if ticketUrl}}<hover><a href=\"{{ ticketUrl }}\">{{ ticket }} ↗</a><hovercard><b>{{ ticket }}</b> {{ ticketTitle }}<small><muted>{{ ticketStatus }}</muted></small></hovercard></hover>{{#else}}<mono>{{ ticket }}</mono>{{/if}}</small>{{/if}}\n{{#each also}}<small><muted>+</muted> {{#if url}}<a href=\"{{ url }}\" tip=\"Linked ticket — it's about the same thing\">{{ key }} ↗</a>{{#else}}<mono>{{ key }}</mono>{{/if}}</small>{{/each}}\n{{#each mrs}}<small><muted>·</muted> <a href=\"{{ url }}\" tip=\"{{ tip }}\">{{ label }}</a>{{#if tag}} <muted>({{ tag }})</muted>{{/if}}</small>{{/each}}\n<small><muted>· {{ kind }}</muted></small>\n{{#if due}}<box tone=\"{{ dueTone }}\" action=\"state\" state=\"dueedit\" value=\"{{ id }}\"><small>{{ dueLabel }}</small></box>{{#else}}{{#if not closed}}<button action=\"state\" state=\"dueedit\" value=\"{{ id }}\" label=\"+ {{ dueLabel }}\" variant=quiet/>{{/if}}{{/if}}\n{{#if repeat}}\n<menu label=\"↻ {{ repeat }}\" tip=\"Comes back — change\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=\" emit=\"todos-changed\" label=\"does not repeat\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n{{#if not closed}}<button run=\"todos-ext.regenerate\" with=\"id={{ id }}\" into=\"regen\" emit=\"todos-changed\" label=\"make again\" variant=quiet tip=\"Make the calendar appointments and the actions again\"/>{{/if}}\n</menu>\n{{#if due}}<a href=\"/api/todos/{{ id }}/calendar\" tip=\"Show it in the calendar\">📅</a>{{/if}}\n{{#else}}{{#if not closed}}\n<menu label=\"repeat\" tip=\"Make it come back\">\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=daily\" emit=\"todos-changed\" label=\"every day\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=weekly\" emit=\"todos-changed\" label=\"every week\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=monthly\" emit=\"todos-changed\" label=\"every month\" variant=quiet/>\n<button run=\"todos-ext.recurrence\" with=\"id={{ id }}, freq=yearly\" emit=\"todos-changed\" label=\"every year\" variant=quiet/>\n</menu>\n{{/if}}{{/if}}\n{{#if opsLabel}}<hover width=420><button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⚡ {{ opsLabel }}\" variant=quiet/><hovercard>{{#each opsList}}<small>⚡ {{ text }}</small>{{/each}}{{#if opsWhy}}<small><muted>{{ opsWhy }}</muted></small>{{/if}}<small><muted>{{ opsHint }}</muted></small></hovercard></hover>{{/if}}\n{{#if merged}}<small><text tone=warn tip=\"{{ mergedTip }}\">· {{ merged }}</text></small>{{/if}}\n{{#if time}}<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"{{ time }}\" variant=quiet/>{{/if}}\n{{#if reported}}<small><text tone=good tip=\"{{ reportedTip }}\">· ✓ {{ reported }}</text></small>{{/if}}\n{{#if suggested}}<small><muted tip=\"{{ suggestedTip }}\">· ✓ {{ suggested }}</muted></small>{{/if}}\n{{#if deferred}}<small><muted>· deferred</muted></small>{{/if}}\n{{#if backUp}}<small><text tone=warn tip=\"You had moved it down — it's back on top\">· {{ backUp }}</text></small>{{/if}}\n{{#each away}}<small><text tone=warn tip=\"Read from their messages — a question to them waits until they are back\">· 🏖 {{ text }}</text></small>{{/each}}\n</row>\n{{#if note}}<small><muted>{{ note }}</muted></small>{{#else}}{{#if source}}<small><muted>{{ source }}</muted></small>{{/if}}{{/if}}\n{{#if asking}}<small><text tone=warn><b>Waiting for you:</b> {{ asking }}</text></small>{{/if}}\n{{#if lastError}}<small><text tone=bad>{{ lastError }}</text></small>{{/if}}\n</col>\n<row gap=1 wrap=false align=center>\n<button action=\"state\" state=\"panel\" value=\"{{ id }}\" label=\"⋯\" variant=quiet tip=\"Open the todo\"/>\n{{#if not closed}}\n<button run=\"todos-ext.flag\" with=\"id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}\" emit=\"todos-changed\" label=\"⚑\" variant=\"{{ flagged ? 'danger' : 'quiet' }}\" tip=\"{{ flagged ? 'Not important' : 'Important' }}\"/>\n{{#if deferred}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=false\" emit=\"todos-changed\" label=\"↑\" variant=quiet tip=\"Bring back to the top\"/>{{#else}}<button run=\"todos-ext.defer\" with=\"id={{ id }}, deferred=true\" emit=\"todos-changed\" label=\"↓\" variant=quiet tip=\"Move down — set aside for now (comes back up when something happens, in 3 days at the latest)\"/>{{/if}}\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=dismissed\" into=\"st\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"{{ dismissTip }}\"/>\n{{/if}}\n</row>\n</row>\r\n{{/each}}\r\n</col>\r\n{{/if}}\r\n</col>\r\n</box>\r\n{{/each}}\r\n{{#if data.lage.empty}}{{#if not data.lage.nTickets}}{{#if not data.lage.none}}<muted>{{ data.lage.empty }}</muted>{{/if}}{{/if}}{{/if}}\r\n{{#if data.tact.message}}<text tone=good>{{ data.tact.message }}</text>{{/if}}\r\n{{#if data.tact.error}}<text tone=bad>{{ data.tact.error }}</text>{{/if}}\r\n{{#if data.lage.left}}\r\n<section title=\"No longer on the list since the last run\" collapsible=true open=true>\r\n<col gap=1>\r\n{{#each data.lage.left}}<small><mono>{{ key }}</mono> <muted>({{ status }})</muted> {{ note }} <button run=\"todos-ext.follow\" with=\"key={{ key }}, value=1\" emit=\"todos-changed\" label=\"follow\" variant=link/></small>{{/each}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n{{#if data.lage.nListed}}\r\n<section title=\"Only listed\" aside=\"{{ data.lage.nListed }}\" collapsible=true>\r\n<datatable source=\"data.lage.listed\">\r\n<column label=\"Ticket\"><mono>{{ key }}</mono></column>\r\n<column label=\"Status\"><small>{{ status }}</small></column>\r\n<column label=\"Updated\"><small><muted>{{ day }}</muted></small></column>\r\n<column label=\"Summary\"><small>{{ summary }}</small></column>\r\n</datatable>\r\n</section>\r\n{{/if}}\r\n</col>\r\n\n{{/if}}\n{{#if state.part == 'recap'}}\n<col gap=3>\r\n<row gap=2 wrap=true align=center>\r\n<button action=\"state\" state=\"recapday\" value=\"{{ data.day.before }}\" label=\"←\" tip=\"Day before\"/>\r\n<heading level=3>{{ data.day.label }}</heading>\r\n{{#if data.day.after}}<button action=\"state\" state=\"recapday\" value=\"{{ data.day.after }}\" label=\"→\" tip=\"Day after\"/>{{/if}}\r\n<input bind=\"recapday\" type=date label=\"Day\"/>\r\n</row>\r\n<row gap=2 wrap=true align=center>\r\n{{#if data.day.running}}<small><muted>● {{ data.day.runningText }}</muted></small>{{/if}}\r\n<button run=\"todos-ext.recap-start\" with=\"day={{ data.day.day }}\" into=\"rran\" emit=\"todos-changed\" label=\"{{ data.day.again ? 'Summarize again' : 'Summarize' }}\" variant=primary disabled=\"{{ data.day.running }}\" tip=\"Gathers what you did that day (entries, todos, workers, Jira, commits, GitLab) and has the AI from the settings summarize it\"/>\r\n{{#each data.day.facts}}<chip>{{ text }}</chip>{{/each}}\r\n</row>\r\n{{#if data.rran.error}}<text tone=bad>{{ data.rran.message }}</text>{{/if}}\r\n{{#if data.day.failed}}<callout tone=bad><text>{{ data.day.failed }}</text></callout>{{/if}}\r\n{{#if data.day.empty}}<muted>{{ data.day.empty }}</muted>{{/if}}\r\n{{#if data.day.summary}}\r\n<box>\r\n<col gap=1>\r\n<small><b>Summary</b> <muted>{{#if data.day.booked}}· {{ data.day.booked }}{{/if}}</muted></small>\r\n<text>{{ data.day.summary }}</text>\r\n</col>\r\n</box>\r\n{{/if}}\r\n{{#each data.day.tickets}}\r\n<box>\r\n<col gap=2>\r\n<row gap=2 wrap=true align=baseline>\r\n{{#if url}}<a href=\"{{ url }}\"><b>{{ key }}</b> ↗</a>{{#else}}<mono>{{ key }}</mono>{{/if}}\r\n<b>{{ summary }}</b>\r\n{{#if status}}<chip>{{ status }}</chip>{{/if}}\r\n<grow/>\r\n{{#if hours}}<small><muted>{{ hours }}</muted></small>{{/if}}\r\n</row>\r\n{{#if lead}}<b>{{ lead }}</b>{{/if}}\r\n{{#each done}}<text>• {{ text }}</text>{{/each}}\r\n{{#if nFacts}}\r\n<section title=\"Evidence\" aside=\"{{ nFacts }}\" collapsible=true>\r\n<col gap=1>\r\n{{#if nBadges}}<row gap=1 wrap=true>{{#each badges}}<hover width=520><chip>{{ label }}{{#if headline}}: {{ headline }}{{/if}}</chip><hovercard><small><muted>{{ who }} {{ when }}</muted></small><b>{{ headline }}</b><text pre=true>{{ text }}</text></hovercard></hover>{{/each}}</row>{{/if}}\r\n{{#each facts}}<row gap=2 wrap=false align=baseline><small><muted>{{ time }}</muted></small><chip>{{ kind }}{{#if hours}} {{ hours }}{{/if}}</chip><small>{{ text }}</small></row>{{/each}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n</col>\r\n</box>\r\n{{/each}}\r\n{{#if data.day.hasOther}}\r\n<box>\r\n<col gap=2>\r\n<small><b>No ticket</b> {{#if data.day.otherHours}}<muted>· {{ data.day.otherHours }}</muted>{{/if}}</small>\r\n{{#each data.day.otherDone}}<text>• {{ text }}</text>{{/each}}\r\n{{#if data.day.nOtherFacts}}\r\n<section title=\"Evidence\" aside=\"{{ data.day.nOtherFacts }}\" collapsible=true>\r\n<col gap=1>\r\n{{#each data.day.otherFacts}}<row gap=2 wrap=false align=baseline><small><muted>{{ time }}</muted></small><chip>{{ kind }}{{#if hours}} {{ hours }}{{/if}}</chip><small>{{ text }}</small></row>{{/each}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n</col>\r\n</box>\r\n{{/if}}\r\n</col>\r\n\n{{/if}}\n{{#if state.part == 'today'}}\n<col gap=3>\n{{#if data.today.nothing}}<muted>{{ data.today.nothing }}</muted>{{/if}}\n{{#if data.today.due}}\n<section title=\"Due and overdue\" aside=\"{{ data.today.due | len }}\" open=true collapsible=true>\n<col gap=1>\n{{#each data.today.due}}\n<row gap=2 wrap=false align=baseline>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=done\" into=\"st\" emit=\"todos-changed\" label=\"○\" variant=quiet tip=\"done\"/>\n<col fill=true><text>{{ text }}</text></col>\n<small><text tone=\"{{ overdue ? 'bad' : 'warn' }}\">{{ when }}</text></small>\n<small><muted>{{ ref }}</muted></small>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=dismissed\" into=\"st\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"Dismiss — not to be done\"/>\n</row>\n{{/each}}\n</col>\n</section>\n{{/if}}\n{{#if data.today.waiting}}\n<section title=\"Waiting\" aside=\"{{ data.today.waiting | len }}\" open=true collapsible=true>\n<col gap=1>{{#each data.today.waiting}}<row gap=2 wrap=false align=baseline><col fill=true><text>{{ text }}</text></col><small><muted>⏳ {{ ago }}</muted></small><small><muted>{{ ref }}</muted></small></row>{{/each}}</col>\n</section>\n{{/if}}\n{{#if data.today.asking}}\n<section title=\"Agents ask you\" aside=\"{{ data.today.asking | len }}\" open=true collapsible=true>\n<col gap=1>{{#each data.today.asking}}<row gap=2 wrap=false align=baseline><text tone=warn>❗</text><col fill=true><text>{{ text }}</text><small><muted>{{ question }}</muted></small></col><small><muted>{{ ref }}</muted></small></row>{{/each}}</col>\n</section>\n{{/if}}\n{{#if data.today.reported}}\n<section title=\"Reported done by workers\" aside=\"{{ data.today.reported | len }}\" open=true collapsible=true>\n<col gap=1>\n{{#each data.today.reported}}\n<row gap=2 wrap=false align=baseline>\n<button run=\"todos-ext.status\" with=\"id={{ id }}, status=done\" into=\"st\" emit=\"todos-changed\" label=\"○\" variant=quiet tip=\"done\"/>\n<text tone=good>✓</text><col fill=true><text>{{ text }}</text><small><muted>{{ by }}{{#if note}}: {{ note }}{{/if}}</muted></small></col><small><muted>{{ ref }}</muted></small>\n</row>\n{{/each}}\n</col>\n</section>\n{{/if}}\n</col>\n\n{{/if}}\n</col>\n<dialog bind=\"dueedit\" title=\"Due date\">\n<col gap=2>\n<input bind=\"dueval\" type=date label=\"Due date\"/>\n<row gap=2>\n<button run=\"todos-ext.due\" with=\"id={{ state.dueedit }}, due={{ state.dueval }}\" then=\"dueedit=\" emit=\"todos-changed\" label=\"Save\" variant=primary disabled=\"{{ not state.dueval }}\"/>\n<button run=\"todos-ext.due\" with=\"id={{ state.dueedit }}, due=\" then=\"dueedit=\" emit=\"todos-changed\" label=\"no due date\"/>\n</row>\n</col>\n</dialog>\n<dialog bind=\"panel\" title=\"{{ data.p.ref }}\" side=right wide=true>\r\n{{#if data.p.found}}\r\n<col gap=3>\r\n{{#if state.textedit == data.p.id}}\r\n<col gap=2>\r\n<input bind=\"edittext\" rows=3 value=\"{{ data.p.text }}\"/>\r\n<row gap=2>\r\n<button run=\"todos-ext.text\" with=\"id={{ data.p.id }}, text={{ state.edittext }}\" then=\"textedit=\" done=\"Saved.\" emit=\"todos-changed\" label=\"Save\" variant=primary disabled=\"{{ not state.edittext }}\"/>\r\n<button action=\"state\" state=\"textedit\" value=\"\" label=\"Cancel\"/>\r\n</row>\r\n</col>\r\n{{#else}}\r\n<row gap=2 wrap=false align=start>\r\n<col fill=true><heading level=3>{{ data.p.text }}</heading></col>\r\n{{#if not data.p.closed}}<button action=\"state\" state=\"textedit\" value=\"{{ data.p.id }}\" then=\"edittext={{ data.p.text }}\" label=\"✎\" variant=quiet tip=\"Change the words\"/>{{/if}}\r\n</row>\r\n{{/if}}\r\n<row gap=2 wrap=true align=center>\r\n<small><muted>{{ data.p.kind }}</muted></small>\r\n{{#if data.p.ticket}}<small><mono>{{ data.p.ticket }}</mono></small>{{/if}}\r\n{{#if data.p.due}}<small><muted>{{ data.p.due }}</muted></small>{{/if}}\r\n{{#if data.p.waiting}}<small><muted>⏳ Waiting for others</muted></small>{{/if}}\r\n</row>\r\n{{#if data.p.note}}<small><muted>{{ data.p.note }}</muted></small>{{#else}}{{#if data.p.source}}<small><muted>{{ data.p.source }}</muted></small>{{/if}}{{/if}}\r\n<row gap=2 wrap=true>\r\n{{#if data.p.closed}}<button run=\"todos-ext.status\" with=\"id={{ data.p.id }}, status=open\" into=\"st\" emit=\"todos-changed\" label=\"Open again\"/>{{#else}}\r\n<button run=\"todos-ext.status\" with=\"id={{ data.p.id }}, status=done\" into=\"st\" then=\"panel=\" emit=\"todos-changed\" label=\"Done\" variant=primary/>\r\n<button run=\"todos-ext.status\" with=\"id={{ data.p.id }}, status=dismissed\" into=\"st\" then=\"panel=\" emit=\"todos-changed\" label=\"Dismiss — doesn't apply\"/>\r\n{{/if}}\r\n</row>\r\n{{#if not data.p.closed}}\r\n<row gap=2 wrap=true>\r\n<button run=\"todos-ext.draft\" with=\"id={{ data.p.id }}\" into=\"draft\" label=\"Draft a reply\" tip=\"Draft a reply — the AI writes it from the history, you send it\"/>\r\n<button run=\"todos-ext.suggest\" with=\"id={{ data.p.id }}\" into=\"sugg\" emit=\"todos-changed\" label=\"Suggest actions\" tip=\"The AI now makes ready-made actions for this todo (message, comment, mail, meeting…)\"/>\r\n<button run=\"todos-ext.worked-on\" with=\"id={{ data.p.id }}\" into=\"wk\" label=\"Worked on it\" tip=\"A booking suggestion for the todo (its ticket, its recorded time)\"/>\r\n</row>\r\n{{#if data.sugg.message}}<small><text tone=\"{{ data.sugg.ok ? 'good' : 'bad' }}\">{{ data.sugg.message }}{{ data.sugg.error }}</text></small>{{/if}}\r\n{{#if data.wk.message}}<small><text tone=good>{{ data.wk.message }}</text></small>{{/if}}\r\n{{#if data.draft.ok}}\r\n<box>\r\n<col gap=2>\r\n<small><muted>To {{ data.draft.to }} · {{ data.draft.channel }}</muted></small>\r\n<text pre=true>{{ data.draft.text }}</text>\r\n<small><muted>Nothing is sent — you copy it and send it.</muted></small>\r\n<row gap=2 wrap=true>\r\n<copy text=\"{{ data.draft.text }}\" label=\"Copy\"/>\r\n{{#if data.draft.openUrl}}<button run=\"todos-ext.open-reply\" with=\"url={{ data.draft.openUrl }}\" into=\"opened\" label=\"Open {{ data.draft.channel }}\" tip=\"Bring {{ data.draft.channel }} to the front in the automation Chrome\"/>{{/if}}\r\n<button run=\"todos-ext.draft\" with=\"id={{ data.p.id }}\" into=\"draft\" label=\"Draft again\" tip=\"Draft again (the current text is replaced)\"/>\r\n</row>\r\n{{#if data.opened.message}}<small><text tone=good>{{ data.opened.message }}</text></small>{{/if}}\r\n{{#if data.opened.error}}<small><text tone=bad>{{ data.opened.error }}</text></small>{{/if}}\r\n</col>\r\n</box>\r\n{{/if}}\r\n{{#if data.draft.error}}<small><text tone=bad>{{ data.draft.error }}</text></small>{{/if}}\r\n<section title=\"Instruction to Copilot\" collapsible=true>\r\n<col gap=2>\r\n<input bind=\"instr\" rows=3 placeholder=\"What should Copilot do on {{ data.p.ref }}? (e.g. “Check whether this is already done on the branch”)\"/>\r\n<row gap=2 wrap=true>\r\n<button run=\"todos-ext.instruct\" with=\"id={{ data.p.id }}, text={{ state.instr }}\" into=\"instd\" then=\"instr=\" emit=\"todos-changed\" label=\"To Copilot\" disabled=\"{{ not state.instr }}\" tip=\"Copilot CLI gets the todo with all its context; the result shows on the Code tab.\"/>\r\n<button action=\"state\" state=\"instr\" value=\"Instruction: look in the repo and the context and report\" label=\"Research\" variant=quiet/>\r\n<button action=\"state\" state=\"instr\" value=\"Instruction: where it stands and the next step\" label=\"Summarize\" variant=quiet/>\r\n<button action=\"state\" state=\"instr\" value=\"Instruction: draft the reply or message it is about\" label=\"Reply\" variant=quiet/>\r\n</row>\r\n{{#if data.instd.message}}<small><text tone=\"{{ data.instd.ok ? 'good' : 'bad' }}\">{{ data.instd.message }}{{ data.instd.error }}</text></small>{{/if}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n{{#if data.p.payment}}\r\n<section title=\"Pay with GiroCode\" collapsible=true>\r\n<col gap=2>\r\n<girocode name=\"{{ data.p.payment.name }}\" iban=\"{{ data.p.payment.iban }}\" bic=\"{{ data.p.payment.bic }}\" amount=\"{{ data.p.payment.amount }}\" purpose=\"{{ data.p.payment.purpose }}\"/>\r\n<small><muted>{{ data.p.payment.title }}</muted></small>\r\n<small><muted>{{ data.p.payment.line }}</muted></small>\r\n</col>\r\n</section>\r\n{{/if}}\r\n{{#if data.p.nAlternatives}}{{#if not data.p.closed}}\r\n<section title=\"Other ways\" aside=\"{{ data.p.nAlternatives }}\" collapsible=true open=true>\r\n<col gap=1>\r\n{{#each data.p.alternatives}}<button run=\"todos-ext.alternative\" with=\"id={{ data.p.id }}, label={{ label }}\" into=\"alt\" confirm=\"{{ title }}?\" emit=\"todos-changed\" label=\"{{ label }}\" tip=\"{{ title }}\"/>{{/each}}\r\n{{#if data.alt.message}}<small><text tone=good>{{ data.alt.message }}</text></small>{{/if}}\r\n{{#if data.alt.error}}<small><text tone=bad>{{ data.alt.error }}</text></small>{{/if}}\r\n</col>\r\n</section>\r\n{{/if}}{{/if}}\r\n{{#if data.p.nOps}}\r\n<section title=\"Actions\" aside=\"{{ data.p.nOps }}\" open=true collapsible=true>\r\n<col gap=2>\r\n{{#if data.p.opsWhy}}<small><text tone=muted>{{ data.p.opsWhy }}</text></small>{{/if}}\r\n{{#if data.p.blockedBy}}<small><text tone=warn>{{ data.p.blockedBy }}</text></small>{{/if}}\r\n{{#each data.p.ops}}\r\n<box>\r\n<row gap=2 wrap=false align=start>\r\n<col fill=true gap=1>\r\n<b>⚡ {{ heading }}</b>\r\n{{#if detail}}<small><muted>{{ detail }}</muted></small>{{/if}}\r\n{{#if editBody}}\r\n{{#if state.opedit == only}}\r\n<input bind=\"optext\" rows=5 value=\"{{ body }}\"/>\r\n<row gap=2><button run=\"todos-ext.op-text\" with=\"id={{ data.p.id }}, index={{ index }}, text={{ state.optext }}\" into=\"opsave\" then=\"opedit=\" emit=\"todos-changed\" label=\"Save\" variant=primary disabled=\"{{ not state.optext }}\"/><button action=\"state\" state=\"opedit\" value=\"\" label=\"Cancel\"/></row>\r\n{{#else}}\r\n<text pre=true>{{ body }}</text>\r\n<button action=\"state\" state=\"opedit\" value=\"{{ only }}\" then=\"optext={{ body }}\" label=\"✎\" variant=quiet tip=\"Change the text before it is sent\"/>\r\n{{/if}}\r\n{{#else}}{{#if body}}<text pre=true>{{ body }}</text>{{/if}}{{/if}}\r\n{{#if transfer}}{{#if not data.p.closed}}\r\n<section title=\"Transfer\" collapsible=true>\r\n<col gap=1>\r\n<input bind=\"tf_name\" label=\"Name\" value=\"{{ transfer.name }}\"/>\r\n<input bind=\"tf_iban\" label=\"IBAN\" value=\"{{ transfer.iban }}\"/>\r\n<grid cols=3 gap=2 min=120><input bind=\"tf_bic\" label=\"BIC\" value=\"{{ transfer.bic }}\"/><input bind=\"tf_amount\" label=\"Amount\" value=\"{{ transfer.amount }}\"/><input bind=\"tf_purpose\" label=\"Purpose\" value=\"{{ transfer.purpose }}\"/></grid>\r\n<button run=\"todos-ext.transfer\" with=\"id={{ data.p.id }}, index={{ index }}, name={{ state.tf_name }}, iban={{ state.tf_iban }}, bic={{ state.tf_bic }}, amount={{ state.tf_amount }}, purpose={{ state.tf_purpose }}\" into=\"opsave\" emit=\"todos-changed\" label=\"Save\" variant=primary/>\r\n</col>\r\n</section>\r\n{{/if}}{{/if}}\r\n{{#if href}}<row gap=2 wrap=true><small><a href=\"{{ href }}\">Open ↗</a></small>{{#if not data.p.closed}}<button run=\"todos-ext.browser-done\" with=\"id={{ data.p.id }}, index={{ index }}\" into=\"opsave\" emit=\"todos-changed\" label=\"Done in the browser\" variant=quiet tip=\"You did it yourself: taken off the todo and noted\"/>{{/if}}</row>{{/if}}\r\n</col>\r\n{{#if not data.p.closed}}\r\n{{#if runnable}}<button run=\"todos-ext.run\" with=\"id={{ data.p.id }}, only={{ only }}\" into=\"ran\" confirm=\"Zeff does it itself, no AI\" emit=\"todos-changed\" label=\"Run\" variant=primary/>{{/if}}\r\n<button run=\"todos-ext.op-remove\" with=\"id={{ data.p.id }}, index={{ index }}\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"Remove this action\"/>\r\n{{/if}}\r\n</row>\r\n</box>\r\n{{/each}}\r\n{{#if data.p.manyRunnable}}{{#if not data.p.closed}}<button run=\"todos-ext.run\" with=\"id={{ data.p.id }}\" into=\"ran\" emit=\"todos-changed\" label=\"Run all\" variant=primary/>{{/if}}{{/if}}\r\n{{#if data.ran.message}}<text tone=good>{{ data.ran.message }}</text>{{/if}}\r\n{{#if data.opsave.message}}<small><text tone=good>{{ data.opsave.message }}</text></small>{{/if}}\r\n{{#if data.opsave.error}}<small><text tone=bad>{{ data.opsave.error }}</text></small>{{/if}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n<section title=\"Notes\" aside=\"{{ data.p.nNotes }}\" open=true collapsible=true>\r\n<col gap=2>\r\n{{#each data.p.notes}}\r\n<box>\r\n<row gap=2 wrap=false align=start>\r\n<col fill=true gap=1>\r\n<small><muted>{{#if by}}{{ by }} · {{/if}}{{ when }}</muted></small>\r\n{{#if state.noteedit == at}}\r\n<input bind=\"notetext\" rows=4 value=\"{{ text }}\"/>\r\n<row gap=2><button run=\"todos-ext.note-edit\" with=\"id={{ data.p.id }}, at={{ at }}, text={{ state.notetext }}\" then=\"noteedit=\" emit=\"todos-changed\" label=\"Save\" variant=primary disabled=\"{{ not state.notetext }}\"/><button action=\"state\" state=\"noteedit\" value=\"\" label=\"Cancel\"/></row>\r\n{{#else}}\r\n{{#each parts}}{{#if image}}<a href=\"{{ url }}\"><img src=\"{{ url }}\" alt=\"{{ title }}\"/></a>{{#else}}<text pre=true>{{ text }}</text>{{/if}}{{/each}}\r\n{{/if}}\r\n{{#if url}}<small><a href=\"{{ url }}\">{{ urlLabel }} ↗</a></small>{{/if}}\r\n{{#if sync}}<small><muted>{{ sync }}</muted></small>{{/if}}\r\n</col>\r\n{{#if mine}}<button action=\"state\" state=\"noteedit\" value=\"{{ at }}\" then=\"notetext={{ text }}\" label=\"✎\" variant=quiet tip=\"Change the note\"/>\r\n{{#if data.p.ticket}}<button run=\"todos-ext.note-sync\" with=\"id={{ data.p.id }}, at={{ at }}\" into=\"jira\" confirm=\"Put this note on {{ data.p.ticket }} in Jira as a comment?\" emit=\"todos-changed\" label=\"Jira\" variant=quiet tip=\"Put the note on the ticket in Jira as a comment\"/>{{/if}}{{/if}}\r\n{{#if mine}}<button run=\"todos-ext.note-remove\" with=\"id={{ data.p.id }}, at={{ at }}\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"Remove this note\"/>{{/if}}\r\n</row>\r\n</box>\r\n{{/each}}\r\n<input bind=\"newnote\" rows=3 placeholder=\"Note on {{ data.p.ref }} — what you know, what applies, what's already settled… (@ tags people)\"/>\r\n{{#if data.men.hits}}<row gap=1 wrap=true>{{#each data.men.hits}}<button action=\"state\" state=\"newnote\" value=\"{{ next }}\" label=\"@{{ name }}\" variant=quiet tip=\"{{ jira }}\"/>{{/each}}</row>{{/if}}\r\n{{#if data.p.nImages}}<row gap=1 wrap=true><small><muted>Add a picture</muted></small>{{#each data.p.attachments}}{{#if image}}<button action=\"state\" state=\"newnote\" value=\"{{ state.newnote }}{{ insert }}\" label=\"🖼 {{ name }}\" variant=quiet/>{{/if}}{{/each}}</row>{{/if}}\r\n<row gap=2>\r\n<button run=\"todos-ext.note\" with=\"id={{ data.p.id }}, text={{ state.newnote }}\" into=\"noted\" then=\"newnote=\" emit=\"todos-changed\" label=\"Save note\" variant=primary disabled=\"{{ not state.newnote }}\"/>\r\n</row>\r\n{{#if data.jira.message}}<small><text tone=good>{{ data.jira.message }}</text></small>{{/if}}\r\n{{#if data.jira.error}}<small><text tone=bad>{{ data.jira.error }}</text></small>{{/if}}\r\n{{#if data.noted.message}}<small><text tone=good>{{ data.noted.message }}</text></small>{{/if}}\r\n</col>\r\n</section>\r\n<section title=\"Time\" aside=\"{{ data.p.totalTime }}\" collapsible=true open=true>\r\n<col gap=2>\r\n{{#each data.p.time}}\r\n<row gap=2 wrap=false align=baseline><b>{{ length }}</b><col fill=true><small>{{ note }}</small><small><muted>{{ by }} · {{ when }}</muted></small></col>{{#if mine}}<button run=\"todos-ext.time-delete\" with=\"id={{ id }}\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"Remove this record\"/>{{/if}}</row>\r\n{{/each}}\r\n<row gap=2 wrap=true align=end>\r\n<input bind=\"mins\" type=number placeholder=\"Add time you spent on this todo\"/>\r\n<col fill=true><input bind=\"timenote\" placeholder=\"What was done\"/></col>\r\n<button run=\"todos-ext.time\" with=\"id={{ data.p.id }}, minutes={{ state.mins }}, note={{ state.timenote }}\" then=\"mins=\" emit=\"todos-changed\" label=\"Add time\" disabled=\"{{ not state.mins }}\"/>\r\n</row>\r\n</col>\r\n</section>\r\n{{#if data.p.mrs}}\r\n<section title=\"Merge requests\" collapsible=true open=true>\r\n<col gap=1>{{#each data.p.mrs}}<small><a href=\"{{ url }}\">MR {{ ref }} ↗</a> <muted>{{ title }}{{#if state}} ({{ state }}){{/if}}</muted></small>{{/each}}</col>\r\n</section>\r\n{{/if}}\r\n{{#if data.p.nPlanned}}\r\n<section title=\"Path\" collapsible=true>\r\n<col gap=1>{{#each data.p.planned}}{{#if path}}<small><b>{{ path }}</b></small>{{/if}}{{#each steps}}<small>→ {{ text }} <muted>({{ kind }})</muted></small>{{/each}}{{/each}}</col>\r\n</section>\r\n{{/if}}\r\n{{#if not data.p.closed}}\r\n<section title=\"Attach a document\" collapsible=true>\r\n<col gap=2>\r\n{{#if data.pick_error}}<small><muted>The Documents plugin is not installed (Menu → Plugins).</muted></small>{{#else}}\r\n<row gap=2 align=center>\r\n<col fill=true><search bind=\"aq\" placeholder=\"Search the documents …\"/></col>\r\n<upload bind=\"busy\" run=\"documents.add\" with=\"todo={{ data.p.id }}\" multiple=true label=\"Upload new …\" done=\"Attached — being read …\" emit=\"todos-changed\"/>\r\n</row>\r\n<small><muted>An attached document is context for this todo.</muted></small>\r\n{{#each data.pick.items}}\r\n<row gap=2 align=start wrap=false>\r\n<text>{{ icon }}</text>\r\n<col fill=true><b>{{ title }}</b> <small><muted>{{ sizeText }}</muted></small><small><muted>{{ text }}</muted></small></col>\r\n<button run=\"documents.attach\" with=\"todo={{ data.p.id }}, doc={{ id }}\" done=\"Attached.\" emit=\"todos-changed\" label=\"Attach\"/>\r\n</row>\r\n{{/each}}\r\n{{/if}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n{{#if data.p.nKnowledge}}\r\n<section title=\"Knowledge\" aside=\"{{ data.p.nKnowledge }}\" collapsible=true>\r\n<col gap=1>\r\n{{#if data.p.knowledge.repo}}<box><b>{{ data.p.knowledge.repo.name }}</b><markdown value=\"{{ data.p.knowledge.repo.summary }}\"/></box>{{/if}}\r\n{{#each data.p.knowledge.pages}}<small><a href=\"{{ url }}\">{{ title }} ↗</a> <muted>{{ snippet }}</muted></small>{{/each}}\r\n{{#each data.p.knowledge.entities}}<small><b>{{ name }}</b> <muted>{{ type }} — {{ summary }}</muted></small>{{/each}}\r\n{{#each data.p.knowledge.links}}<small><a href=\"{{ url }}\">{{ label }} ↗</a></small>{{/each}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n{{#if data.p.nSources}}\r\n<section title=\"Context\" aside=\"{{ data.p.nSources }}\" collapsible=true open=true>\r\n<col gap=2>\r\n{{#each data.p.sources}}\r\n<box>\r\n<hover width=520><chip>{{ label }}</chip><hovercard><small><muted>{{ author }} {{ when }}</muted></small>{{#if headline}}<b>{{ headline }}</b>{{/if}}{{#if text}}<text pre=true>{{ text }}</text>{{/if}}</hovercard></hover>\r\n<small><muted>{{#if author}}{{ author }} · {{/if}}{{ when }}</muted></small>\r\n{{#if headline}}<b>{{ headline }}</b>{{/if}}\r\n{{#if text}}<text pre=true>{{ text }}</text>{{/if}}\r\n{{#if not data.p.closed}}<button run=\"todos-ext.context-dismiss\" with=\"id={{ data.p.id }}, ref={{ ref }}\" emit=\"todos-changed\" label=\"✕\" variant=quiet tip=\"Not about this todo\"/>{{/if}}\r\n</box>\r\n{{/each}}\r\n</col>\r\n</section>\r\n{{/if}}\r\n</col>\r\n{{#else}}\r\n<muted>Loading …</muted>\r\n{{/if}}\r\n</dialog>\r\n{{/if}}\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Todos",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Tick a todo off, dismiss it, open it again",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.status",
+        "title": "Tick a todo off, dismiss it, open it again",
+        "description": "A todo's status (input id, status: open | done | dismissed, early). Output { ok, id, confirm, error } — confirm: a repeat ticked off a week or more before its day asks first.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.set-status",
+            "input": {
+              "id": "{{ input.id }}",
+              "status": "{{ input.status }}",
+              "early": "{{ input.early }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "id": "{{ input.id }}",
+              "confirm": "{{ steps.do.confirm }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Flag a todo as important",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.flag",
+        "title": "Flag a todo as important",
+        "description": "A todo flagged important or not (input id, flagged).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.flag",
+            "input": {
+              "id": "{{ input.id }}",
+              "flagged": "{{ input.flagged }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Set a todo aside — or back up",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.defer",
+        "title": "Set a todo aside — or back up",
+        "description": "A todo put to the bottom for now or taken back up (input id, deferred).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.defer",
+            "input": {
+              "id": "{{ input.id }}",
+              "deferred": "{{ input.deferred }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A todo's due day",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.due",
+        "title": "A todo's due day",
+        "description": "A todo's due day (input id, due: YYYY-MM-DD, empty for none).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.set-due",
+            "input": {
+              "id": "{{ input.id }}",
+              "due": "{{ input.due }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.add",
+        "title": "Add a todo",
+        "description": "A todo of yours through the gate every todo goes through (input text, ticket, due). Output { id, ref, merged } — merged: it said the same as an open one.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.add",
+            "input": {
+              "text": "{{ input.text }}",
+              "ticket": "{{ input.ticket }}",
+              "due": "{{ input.due }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "id": "{{ steps.do.id }}",
+              "ref": "{{ steps.do.ref }}",
+              "merged": "{{ steps.do.merged }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A todo's words",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.text",
+        "title": "A todo's words",
+        "description": "A todo's text changed (input id, text).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.set-text",
+            "input": {
+              "id": "{{ input.id }}",
+              "text": "{{ input.text }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A note on a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.note",
+        "title": "A note on a todo",
+        "description": "Your note on a todo (input id, text). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.add-note",
+            "input": {
+              "id": "{{ input.id }}",
+              "text": "{{ input.text }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take a note off a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.note-remove",
+        "title": "Take a note off a todo",
+        "description": "Your note on a todo taken away (input id, at: the note's time).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.remove-note",
+            "input": {
+              "id": "{{ input.id }}",
+              "at": "{{ input.at }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i11",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Time spent on a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.time",
+        "title": "Time spent on a todo",
+        "description": "Time you spent, by hand (input id, minutes, note).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.add-time",
+            "input": {
+              "id": "{{ input.id }}",
+              "minutes": "{{ input.minutes }}",
+              "note": "{{ input.note }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "id": "{{ steps.do.id }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i12",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take an action off a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.op-remove",
+        "title": "Take an action off a todo",
+        "description": "One of a todo's actions taken off it (input id, index).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.remove-op",
+            "input": {
+              "id": "{{ input.id }}",
+              "index": "{{ input.index }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i14",
+      "parent": "i1",
+      "kind": "page",
+      "title": "The activity you have looked at",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.seen",
+        "title": "The activity you have looked at",
+        "description": "The newest event of the todos' activity you have seen (input id).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.activity-seen",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i15",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take back a briefing run's todos",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.undo-run",
+        "title": "Take back a briefing run's todos",
+        "description": "The todos a run made that you haven't touched are dismissed (input run). Output { dismissed, kept, claims }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.undo-run",
+            "input": {
+              "run": "{{ input.run }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "dismissed": "{{ steps.do.dismissed }}",
+              "kept": "{{ steps.do.kept }}",
+              "claims": "{{ steps.do.claims }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i16",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Run the briefing now — or stop it",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.board-run",
+        "title": "Run the briefing now — or stop it",
+        "description": "The Ticket-Lage's run started (Jira synced first) or, with stop, stopped. Output { ok, message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.board-run",
+            "input": {
+              "stop": "{{ input.stop }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i17",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A change the briefing suggests on a ticket",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.ticket-action",
+        "title": "A change the briefing suggests on a ticket",
+        "description": "One suggested change (transition, assignee, comment) done in Jira (input run, ticket, idx). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.ticket-action",
+            "input": {
+              "run": "{{ input.run }}",
+              "ticket": "{{ input.ticket }}",
+              "idx": "{{ input.idx }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i18",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Follow a ticket",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.follow",
+        "title": "Follow a ticket",
+        "description": "A ticket followed (1), no longer followed (-1) or as it comes (0) (input key, value).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.follow",
+            "input": {
+              "key": "{{ input.key }}",
+              "value": "{{ input.value }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i19",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Write the recap of a day",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.recap-start",
+        "title": "Write the recap of a day",
+        "description": "The day gathered and summarized by the AI, in the background (input day). Output { ok, message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.recap-start",
+            "input": {
+              "day": "{{ input.day }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i20",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Make a todo come back",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.recurrence",
+        "title": "Make a todo come back",
+        "description": "A todo that comes back every day, week, month or year, or not (input id, freq: daily | weekly | monthly | yearly | empty).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.set-recurrence",
+            "input": {
+              "id": "{{ input.id }}",
+              "freq": "{{ input.freq }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i21",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Make a repeat's appointments and actions again",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.regenerate",
+        "title": "Make a repeat's appointments and actions again",
+        "description": "A recurring todo's calendar appointments and its actions made again (input id). Output { ok, message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.regenerate-series",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i22",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change a note",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.note-edit",
+        "title": "Change a note",
+        "description": "Your note on a todo changed (input id, at, text).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.update-note",
+            "input": {
+              "id": "{{ input.id }}",
+              "at": "{{ input.at }}",
+              "text": "{{ input.text }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i23",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Put a note on Jira",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.note-sync",
+        "title": "Put a note on Jira",
+        "description": "Your note on a todo posted on its ticket as a comment (input id, at). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.sync-note",
+            "input": {
+              "id": "{{ input.id }}",
+              "at": "{{ input.at }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i24",
+      "parent": "i1",
+      "kind": "page",
+      "title": "An instruction to Copilot",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.instruct",
+        "title": "An instruction to Copilot",
+        "description": "Your instruction on a todo done by the Copilot CLI (input id, text). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.instruct",
+            "input": {
+              "id": "{{ input.id }}",
+              "text": "{{ input.text }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i25",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Draft a reply",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.draft",
+        "title": "Draft a reply",
+        "description": "A reply drafted by the AI from the conversation, never sent (input id). Output { ok, text, channel, to, openUrl, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.draft-reply",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "text": "{{ steps.do.text }}",
+              "channel": "{{ steps.do.channel }}",
+              "to": "{{ steps.do.to }}",
+              "openUrl": "{{ steps.do.openUrl }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true,
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i26",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Bring a reply's page to the front",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.open-reply",
+        "title": "Bring a reply's page to the front",
+        "description": "The page a reply goes to brought to the front in the automation Chrome (input url).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.open-reply",
+            "input": {
+              "url": "{{ input.url }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i27",
+      "parent": "i1",
+      "kind": "page",
+      "title": "The AI proposes actions",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.suggest",
+        "title": "The AI proposes actions",
+        "description": "The AI proposes the actions for a todo now (input id). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.suggest-actions",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true,
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i28",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Do a todo another way",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.alternative",
+        "title": "Do a todo another way",
+        "description": "One of a todo's other ways done (input id, label). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.run-alternative",
+            "input": {
+              "id": "{{ input.id }}",
+              "label": "{{ input.label }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i29",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Worked on it",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.worked-on",
+        "title": "Worked on it",
+        "description": "A booking suggestion for the todo (input id). Output { ok, message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.worked-on",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i30",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take a time record off a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.time-delete",
+        "title": "Take a time record off a todo",
+        "description": "A time record taken away (input id: the record's).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.delete-time",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i31",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take a context off a todo",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.context-dismiss",
+        "title": "Take a context off a todo",
+        "description": "What a todo is shown to come from taken off it (input id, ref).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.dismiss-context",
+            "input": {
+              "id": "{{ input.id }}",
+              "ref": "{{ input.ref }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i32",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change the text an action would send",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.op-text",
+        "title": "Change the text an action would send",
+        "description": "The text of one of a todo's actions changed (input id, index, text). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.save-op-text",
+            "input": {
+              "id": "{{ input.id }}",
+              "index": "{{ input.index }}",
+              "text": "{{ input.text }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i33",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change a transfer's fields",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.transfer",
+        "title": "Change a transfer's fields",
+        "description": "A transfer on a todo changed (input id, index, name, iban, bic, amount, purpose). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.save-transfer",
+            "input": {
+              "id": "{{ input.id }}",
+              "index": "{{ input.index }}",
+              "name": "{{ input.name }}",
+              "iban": "{{ input.iban }}",
+              "bic": "{{ input.bic }}",
+              "amount": "{{ input.amount }}",
+              "purpose": "{{ input.purpose }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i34",
+      "parent": "i1",
+      "kind": "page",
+      "title": "The todos you have looked at",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.list-seen",
+        "title": "The todos you have looked at",
+        "description": "Now is kept as the time up to which you have seen the todos (what is newer shows as new).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.rows-seen",
+            "input": {}
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i35",
+      "parent": "i1",
+      "kind": "page",
+      "title": "An action done in your browser",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.browser-done",
+        "title": "An action done in your browser",
+        "description": "An action you did yourself taken off the todo and noted (input id, index). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.done-browser-op",
+            "input": {
+              "id": "{{ input.id }}",
+              "index": "{{ input.index }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i36",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Ask about a ticket",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.ask",
+        "title": "Ask about a ticket",
+        "description": "A question about a ticket answered from what Zeff knows (input ticket, question). Output { ok, answer, sources, id, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.ask-ticket",
+            "input": {
+              "ticket": "{{ input.ticket }}",
+              "question": "{{ input.question }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "answer": "{{ steps.do.answer }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true,
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i37",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take an answer out of a ticket's chat",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.chat-dismiss",
+        "title": "Take an answer out of a ticket's chat",
+        "description": "An answer taken out of the context (input id).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.dismiss-chat",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {}
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i38",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A comment done — or not",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.resolve",
+        "title": "A comment done — or not",
+        "description": "A Jira or GitLab comment marked done here or taken back (input kind: jira | gitlab, key, ticket, resolved).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.resolve-comment",
+            "input": {
+              "kind": "{{ input.kind }}",
+              "key": "{{ input.key }}",
+              "ticket": "{{ input.ticket }}",
+              "resolved": "{{ input.resolved }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i39",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Which tickets the briefing reads",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.board-settings",
+        "title": "Which tickets the briefing reads",
+        "description": "The briefing's JQL filter (input jql). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.board-settings",
+            "input": {
+              "jql": "{{ input.jql }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i40",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Run a sync step — or stop it",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.sync",
+        "title": "Run a sync step — or stop it",
+        "description": "One of Zeff's sync steps started or stopped (input key, stop). Output { ok, message, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "sync.run",
+            "input": {
+              "key": "{{ input.key }}",
+              "stop": "{{ input.stop }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.do.ok }}",
+              "message": "{{ steps.do.message }}",
+              "error": "{{ steps.do.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i13",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Run a todo's actions now",
+      "icon": "✅",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "todos-ext.run",
+        "title": "Run a todo's actions now",
+        "description": "A todo's actions run by you, right now (input id, only: the place of one action — empty: all). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "todos.run-ops",
+            "input": {
+              "id": "{{ input.id }}",
+              "only": "{{ input.only }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.do.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true,
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

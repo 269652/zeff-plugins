@@ -1,0 +1,11 @@
+{
+  "name": "todos.feed",
+  "label": "Todos: the activity",
+  "what": "What happened to the todos in the last two weeks, by day: who made, closed, reopened or merged which, and what is new since you looked.",
+  "kind": "function",
+  "zeff": [
+    "todos.activity"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

@@ -1,0 +1,13 @@
+{
+  "name": "todos.lage",
+  "label": "Todos: the briefing and the tickets",
+  "what": "The briefing's run and its tickets: the lede, per ticket what the run made of it, the changes it suggests, and the todos on it.",
+  "kind": "function",
+  "zeff": [
+    "todos.board",
+    "todos.rows",
+    "sync.steps"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

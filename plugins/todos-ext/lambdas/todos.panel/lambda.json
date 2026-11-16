@@ -1,0 +1,11 @@
+{
+  "name": "todos.panel",
+  "label": "Todos: what a todo's panel shows",
+  "what": "One todo whole: its notes, its actions in words, the time on it, its merge requests, its path and the comments, messages and mails it comes from.",
+  "kind": "function",
+  "zeff": [
+    "todos.detail"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

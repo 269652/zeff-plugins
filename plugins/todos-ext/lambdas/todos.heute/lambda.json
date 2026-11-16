@@ -1,0 +1,11 @@
+{
+  "name": "todos.heute",
+  "label": "Todos: the todos' parts of Today",
+  "what": "Yours due today or before, what you wait on, what agents ask you, what workers report done.",
+  "kind": "function",
+  "zeff": [
+    "todos.today"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

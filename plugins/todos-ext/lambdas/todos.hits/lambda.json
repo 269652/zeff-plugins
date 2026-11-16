@@ -1,0 +1,11 @@
+{
+  "name": "todos.hits",
+  "label": "Todos: the omnibar's hits",
+  "what": "What a typed text names — tickets, kinds, people, the todos' words and notes, mails, messages, comments, documents — each with the todos it belongs to.",
+  "kind": "function",
+  "zeff": [
+    "todos.omni"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

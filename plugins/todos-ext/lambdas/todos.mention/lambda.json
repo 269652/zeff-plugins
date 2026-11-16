@@ -1,0 +1,11 @@
+{
+  "name": "todos.mention",
+  "label": "Todos: tagging a person in a note",
+  "what": "The word after the last @ in a note being typed found among the people, each with the note as it becomes when picked.",
+  "kind": "function",
+  "zeff": [
+    "people.search"
+  ],
+  "timeoutMs": 20000,
+  "memoryMb": 128
+}
