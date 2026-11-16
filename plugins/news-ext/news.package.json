@@ -1,7 +1,7 @@
 {
   "format": 1,
   "id": "news-ext",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "News",
   "description": "Your news, gathered for you: the feeds you pick, everything scored for you.",
   "icon": "📰",
