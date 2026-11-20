@@ -410,11 +410,14 @@
 {{/if}}
 {{#if data.x.session.copilot.idle}}
 {{#if data.x.session.copilot.waiting}}<box compact=true scroll=20><markdown value="{{ data.x.session.copilot.waiting }}"/></box>{{/if}}
-<input bind="msg" type=textarea rows=2 placeholder="Your answer to Copilot… (Ctrl+Enter)" enter="send-live"/>
-<row gap=2>
-<button run="work.live" with="run={{ data.x.session.runId }}, do=send, text={{ state.msg }}" then="msg=" emit="work-changed" label="Send" variant=primary disabled="{{ not state.msg }}"/>
-<button run="work.live" with="run={{ data.x.session.runId }}, do=wrap-up" emit="work-changed" label="Wrap up" tip="Copilot sums up and gives its result — that ends the run"/>
+<box field=true>
+<input bind="msg" type=textarea bare=true grow=true rows=1 placeholder="Your answer to Copilot…" enter="send-live"/>
+<row gap=1 wrap=true align=center>
+<grow/>
+<button run="work.live" with="run={{ data.x.session.runId }}, do=wrap-up" emit="work-changed" label="Wrap up" tip="Copilot sums up and gives its result — that ends the run" variant=quiet/>
+<button run="work.live" with="run={{ data.x.session.runId }}, do=send, text={{ state.msg }}" then="msg=" emit="work-changed" label="↑" tip="Send" variant=send disabled="{{ not state.msg }}"/>
 </row>
+</box>
 {{/if}}
 </box>
 {{/if}}
