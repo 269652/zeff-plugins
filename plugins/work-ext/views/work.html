@@ -396,33 +396,15 @@
 </box>
 {{/if}}
 {{#if data.x.session.copilot}}
-<box tone=accent compact=true>
-<row gap=2 wrap=true align=center>
-<heading level=4>Mode</heading>
-<row gap=0>{{#each data.x.session.copilot.modes}}<button run="work.live" with="run={{ data.x.session.runId }}, do=mode, mode={{ id }}" emit="work-changed" label="{{ name }}" tip="{{ hint }}" variant="{{ sel ? 'primary' : 'plain' }}" disabled="{{ sel }}"/>{{/each}}</row>
-<small><muted>{{ data.x.session.copilot.status }}</muted></small>
-</row>
 {{#if data.x.session.permission}}
 <box tone=ask compact=true title="Copilot wants to: {{ data.x.session.permission.title }}">
 {{#if data.x.session.permission.detail}}<box compact=true><text pre=true><mono>{{ data.x.session.permission.detail }}</mono></text></box>{{/if}}
 <row gap=2 wrap=true>{{#each data.x.session.permission.options}}<button run="work.live" with="run={{ data.x.session.runId }}, do=answer-option, option={{ id }}" emit="work-changed" label="{{ name }}" variant="{{ kind == 'allow_once' ? 'primary' : 'plain' }}"/>{{/each}}</row>
 </box>
 {{/if}}
-{{#if data.x.session.copilot.idle}}
-{{#if data.x.session.copilot.waiting}}<box compact=true scroll=20><markdown value="{{ data.x.session.copilot.waiting }}"/></box>{{/if}}
-<box field=true>
-<input bind="msg" type=textarea bare=true grow=true rows=1 placeholder="Your answer to Copilot…" enter="send-live"/>
-<row gap=1 wrap=true align=center>
-<grow/>
-<button run="work.live" with="run={{ data.x.session.runId }}, do=wrap-up" emit="work-changed" label="Wrap up" tip="Copilot sums up and gives its result — that ends the run" variant=quiet/>
-<button run="work.live" with="run={{ data.x.session.runId }}, do=send, text={{ state.msg }}" then="msg=" emit="work-changed" label="↑" tip="Send" variant=send disabled="{{ not state.msg }}"/>
-</row>
-</box>
-{{/if}}
-</box>
+{{#if data.x.session.copilot.idle}}{{#if data.x.session.copilot.waiting}}<box compact=true scroll=20><markdown value="{{ data.x.session.copilot.waiting }}"/></box>{{/if}}{{/if}}
 {{/if}}
 {{#if data.shellout.out}}<terminal text="{{ data.shellout.out }}"/>{{/if}}
-{{#if not data.x.session.copilot}}
 {{#if data.x.session.menu}}
 <box compact=true>
 <col gap=0>{{#each data.x.session.menu}}<button action="state" state="msg" value="{{ next }}" label="{{ label }}" tip="{{ hint }}" variant=quiet/>{{/each}}</col>
@@ -432,11 +414,11 @@
 <input bind="msg" type=textarea bare=true grow=true rows=1 placeholder="{{ data.x.session.placeholder }}" enter="{{ data.x.session.isShell ? 'send-shell' : (data.x.session.canReplyLive ? 'send-live' : 'send-msg') }}"/>
 {{#if data.x.session.files}}<row gap=1 wrap=true>{{#each data.x.session.files}}<pill label="📎 {{ name }}" tip="{{ name }} · {{ size }}"/><button run="work.attach-remove" with="scope={{ data.x.session.attachScope }}, ref={{ ref }}" emit="work-changed" label="×" variant=quiet tip="Remove {{ name }}"/>{{/each}}</row>{{/if}}
 <row gap=1 wrap=true align=center>
-<upload bind="busyup" run="work.attach" with="scope={{ data.x.session.attachScope }}" multiple=true zone=view label="📎" look=icon tip="Attach images" accept="{{ data.x.session.kind == 'session' ? 'image/png,image/jpeg,image/gif,image/webp' : '' }}" emit="work-changed"/>
+<upload bind="busyup" run="work.attach" with="scope={{ data.x.session.attachScope }}" multiple=true zone=view label="📎" look=icon tip="{{ data.x.session.attachTip }}" accept="{{ data.x.session.attachAccept }}" emit="work-changed"/>
 {{#if data.x.session.live}}
 <select bind="lmode" look=quiet options="{{ data.x.session.live.modeOptions }}" label="Permission mode" tip="{{ data.x.session.live.modeTip }}" tone="{{ data.x.session.live.modeTone }}" emit="live-mode"/>
-<select bind="lmodel" look=quiet options="{{ data.x.session.live.modelOptions }}" label="Model" emit="live-model"/>
-{{#if data.x.session.live.effortOptions}}<select bind="leffort" look=quiet options="{{ data.x.session.live.effortOptions }}" label="Effort" tip="Changing it restarts the session between turns (resumed — nothing is lost)." disabled="{{ data.x.session.live.working }}" emit="live-effort"/>{{/if}}
+{{#if data.x.session.live.modelOptions}}<select bind="lmodel" look=quiet options="{{ data.x.session.live.modelOptions }}" label="Model" emit="live-model"/>{{/if}}
+{{#if data.x.session.live.effortOptions}}<select bind="leffort" look=quiet options="{{ data.x.session.live.effortOptions }}" label="Effort" tip="{{ data.x.session.live.effortTip or 'Changing it restarts the session between turns (resumed — nothing is lost).' }}" disabled="{{ data.x.session.live.working }}" emit="live-effort"/>{{/if}}
 <grow/>
 <row gap=1 align=center wrap=false>
 <pill shape=bare dot="{{ data.x.session.live.dot == 'run' ? 'pulse' : 'still' }}" tone="{{ data.x.session.live.dot }}" label="{{ data.x.session.hostText }}"/>
@@ -445,7 +427,7 @@
 {{#if data.x.session.elevated}}<pill label="{{ data.x.session.elevatedLabel }}" tone=bad bold=true shape=tag/>{{/if}}
 </row>
 <button run="work.live" with="run={{ data.x.session.runId }}, do=wrap-up" emit="work-changed" label="Finish" tip="It sums up and gives its result — that ends the session: its todo ticked off, the time suggested." variant=quiet disabled="{{ data.x.session.live.working }}"/>
-<button run="work.live" with="run={{ data.x.session.runId }}, do=close" confirm="Close the session without a result? (Nothing is ticked off or booked.)" emit="work-changed" label="Close" tip="End it without a result" variant=quiet/>
+{{#if data.x.session.live.close}}<button run="work.live" with="run={{ data.x.session.runId }}, do=close" confirm="Close the session without a result? (Nothing is ticked off or booked.)" emit="work-changed" label="Close" tip="End it without a result" variant=quiet/>{{/if}}
 {{#else}}
 <grow/>
 {{/if}}
@@ -453,7 +435,7 @@
 <button run="work.live" with="run={{ data.x.session.runId }}, do=shell, cmd={{ data.x.session.shellCmd }}" into="shellout" then="msg=" emit="work-changed" label="↑" tip="Run" variant=send disabled="{{ not data.x.session.shellCmd }}"/>
 {{#else}}
 {{#if data.x.session.live.working and not state.msg}}
-<button run="work.live" with="run={{ data.x.session.runId }}, do=interrupt" emit="work-changed" label="■" tip="Stop its current turn (Esc)" variant=send/>
+<button run="work.live" with="run={{ data.x.session.runId }}, do=interrupt" emit="work-changed" label="■" icon=stop tip="Stop its current turn (Esc)" variant=send/>
 {{#else}}
 {{#if data.x.session.canReplyLive}}
 <button run="work.live" with="run={{ data.x.session.runId }}, do=send, text={{ state.msg }}, attach={{ data.x.session.attachScope }}" then="msg=" emit="work-changed" label="↑" tip="Send" variant=send disabled="{{ not state.msg }}"/>
@@ -464,7 +446,6 @@
 {{/if}}
 </row>
 </box>
-{{/if}}
 </col>
 </dock>
 {{/if}}

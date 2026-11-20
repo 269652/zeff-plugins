@@ -374,7 +374,7 @@ export async function handler(event, context) {
       }
       const attachScope = "run:" + run;
       const files = ((await zeff.call("work.attachments", { scope: attachScope })).files ?? []).map((x) => ({ ref: x.ref, name: x.name, size: Math.max(1, Math.round(x.size / 1024)) + " KB" }));
-      const hostText = live?.kind === "session" ? (live.host === "starting" ? (live.sessionElevated ? t("starting as administrator — confirm Windows' prompt (UAC)") : t("starting …")) : live.host === "down" ? t("restarting …") : live.asks.length ? t("waits for your answer") : live.busy ? t("working …") : t("waiting for you")) : "";
+      const hostText = live?.kind === "live" ? (live.busy ? (live.permission ? t("waiting for your permission") : t("working…")) : t("waiting for you")) : live?.kind === "session" ? (live.host === "starting" ? (live.sessionElevated ? t("starting as administrator — confirm Windows' prompt (UAC)") : t("starting …")) : live.host === "down" ? t("restarting …") : live.asks.length ? t("waits for your answer") : live.busy ? t("working …") : t("waiting for you")) : "";
       const models = live?.kind === "session" ? [...(live.models.some((m) => m.value === live.model) ? [] : [{ value: live.model ?? "", label: live.model || t("Default model") }]), ...live.models].map((m) => ({ value: m.value, label: m.label, sel: m.value === (live.model ?? "") })) : [];
       const curMode = live?.kind === "session" ? live.modes.find((m) => m.id === live.mode) ?? live.modes[0] : null;
       const liveRow =
@@ -392,8 +392,26 @@ export async function handler(event, context) {
               working: !!live.busy && !live.asks.length,
               dot: !!live.busy && !live.asks.length ? "run" : live.host !== "up" ? "run" : live.asks.length ? "warn" : "done",
               queued: live.queued ? t("{n} queued", { n: live.queued }) : "",
+              close: true,
             }
-          : null;
+          : live?.kind === "live"
+            ? // Another agent's live session (Copilot over ACP): the same row — its modes, and the model and effort where it offers them (set at once).
+              {
+                mode: live.mode,
+                modeOptions: JSON.stringify((live.modes ?? []).map((m) => [m.id === live.mode ? "" : m.id, t("Mode: {m}", { m: m.name })])),
+                modeTip: ({ agent: t("Asks you before it does anything that isn't allowed"), plan: t("Plans first, carries it out after your OK"), autopilot: t("Allows itself everything and runs through to the end") })[String(live.mode).replace(/^.*#/, "")] ?? "",
+                modeTone: String(live.mode).endsWith("autopilot") ? "warn" : String(live.mode).endsWith("plan") ? "info" : "",
+                model: live.model ?? "",
+                modelOptions: (live.models ?? []).length ? JSON.stringify(live.models.map((m) => [m.value === live.model ? "" : m.value, m.label])) : "",
+                effort: live.effort ?? "",
+                effortOptions: (live.efforts ?? []).length ? JSON.stringify(live.efforts.map((e) => [e === live.effort ? "" : e, t("Effort: {e}", { e })])) : "",
+                effortTip: t("For its next turn."),
+                working: !!live.busy && !live.permission,
+                dot: live.busy && !live.permission ? "run" : live.permission ? "warn" : "done",
+                queued: "",
+                close: false,
+              }
+            : null;
       const efforts = live?.kind === "session" && (live.features ?? []).includes("effort") ? ["", "low", "medium", "high", "xhigh", "max"].map((e) => ({ value: e, label: e ? t("Effort: {e}", { e }) : t("Effort: default"), sel: e === live.effort })) : [];
       out.session = {
         found: true,
@@ -436,14 +454,19 @@ export async function handler(event, context) {
         shellPendingLabel: live?.shellPending ? t("{n} command output(s) go along with your next message", { n: live.shellPending }) : "",
         features: live?.features ?? [],
         canShell: (live?.features ?? []).includes("shell"),
-        isShell: msg.startsWith("!"),
+        // (! runs a command only where the session does that — Claude Code's; elsewhere it is just text)
+        isShell: msg.startsWith("!") && (live?.features ?? []).includes("shell"),
         shellCmd: msg.startsWith("!") ? msg.slice(1).trim() : "",
         menu,
         menuKind,
         files,
         attachScope,
+        // (pictures and documents alike: pictures go as pictures, any other file as where it is — the session reads it)
+        attachAccept: "",
+        attachTip: t("Attach an image or document (or paste / drop it)"),
         panels: (list.panels ?? []).map((x, i) => ({ ...x, key: "x" + i })),
         paneOptions: (list.panels ?? []).map((x, i) => ",x" + i + ":" + String(x.title).replace(/[,:]/g, " ")).join(""),
+        // (a Copilot session: what it last said while it waits for you, above the message box)
         copilot: live?.kind === "live" ? { mode: live.mode, modes: (live.modes ?? []).map((m) => ({ id: m.id, name: m.name, sel: m.id === live.mode, hint: ({ agent: t("Asks you before it does anything that isn't allowed"), plan: t("Plans first, carries it out after your OK"), autopilot: t("Allows itself everything and runs through to the end") })[m.id.replace(/^.*#/, "")] ?? m.name })), waiting: live.waiting ?? "", idle: !live.busy, status: live.busy ? (live.permission ? t("waiting for your permission") : t("working…")) : t("waiting for you") } : null,
         permission: live?.kind === "live" && live.permission ? { title: live.permission.title, detail: live.permission.detail ?? "", options: live.permission.options } : null,
         lostLive: status === "running" && !live,

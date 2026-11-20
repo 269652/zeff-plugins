@@ -798,8 +798,8 @@
           <scell row=true>
             {{#if project}}<text><b>{{ project }}</b></text><small tone=muted><mono>{{ number }}</mono></small>{{#else}}<text><b>{{ number }} {{ name }}</b></text>{{#if customer}}<small tone=muted>{{ customer }}</small>{{/if}}{{/if}}
           </scell>
-          {{#each days}}<scell num=true tone="{{ tone == 'good' ? 'good' : tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{ text }}{{#if mark}} <small tip="{{ markTitle }}">{{ mark }}</small>{{/if}}</scell>{{/each}}
-          <scell num=true bold=true>{{ total }}</scell>
+          {{#each days}}<scell num=true tone="{{ tone == 'good' ? 'good' : tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{#if offer}}{{#if has}}{{ text }} {{/if}}<button run="{{ offer.run }}" with="dates={{ offer.dates }}" emit="time-changed" done="Booked." label="{{ offer.label }}" tip="{{ offer.tip }}" variant=plain/>{{#else}}{{ text }}{{/if}}{{#if mark}} <small tip="{{ markTitle }}">{{ mark }}</small>{{/if}}</scell>{{/each}}
+          <scell num=true bold=true>{{ total }}{{#if offerAll}} <button run="{{ offerAll.run }}" with="dates={{ offerAll.dates }}" emit="time-changed" done="Booked." label="{{ offerAll.label }}" tip="{{ offerAll.tip }}" variant=plain/>{{/if}}</scell>
         </srow>
         {{/each}}
         {{#else}}
@@ -809,7 +809,7 @@
         <srow tone=muted>
           <scell row=true><text tone=muted><i>{{ data.w.table.flex.job }}</i></text><small tone=muted>Flex time · “{{ data.w.table.flex.comment }}”</small></scell>
           {{#each data.w.table.flex.cells}}<scell num=true tone="{{ tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{#if gap}}<button run="zeiterfassung.flex-book" with="dates={{ iso }}" emit="time-changed" done="Booked." label="+{{ gap }}" tip="{{ label }}" variant=plain/>{{/if}}</scell>{{/each}}
-          <scell num=true></scell>
+          <scell num=true>{{#if data.w.table.flex.total}}<button run="zeiterfassung.flex-book" with="dates={{ data.w.table.flex.dates }}" emit="time-changed" done="Booked." label="{{ data.w.table.flex.total }}" tip="Flex time · all days" variant=plain/>{{/if}}</scell>
         </srow>
         {{/if}}
         {{#each data.w.table.absences}}
