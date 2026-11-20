@@ -12,6 +12,23 @@ export function rowTools(t, lang) {
 
   const minutes = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`);
   const ORIGIN = { Calendar: t("From an appointment — no ticket"), Mail: t("From a mail — no ticket") };
+  // A todo's words with what they name as links, as the built-in page drew them: ticket keys (to Jira), merge requests ("!168", to GitLab), other todos ("T-37").
+  const textParts = (text, data, mrs) => {
+    const base = Object.values(data.tickets ?? {}).find((x) => x.url)?.url?.replace(/\/browse\/[^/]+$/, "/browse/") ?? "";
+    const out = [];
+    for (const [i, p] of String(text ?? "").split(/\b([A-Z][A-Z0-9]+-\d+)\b|(?<![\w-])(T-\d+)\b|((?<![\w/])!\d+\b)/).entries()) {
+      if (p === undefined || p === "") continue;
+      const kind = i % 4;
+      if (kind === 1) out.push({ ticket: p, url: data.tickets?.[p]?.url || (base ? `${base}${p}` : ""), tip: data.tickets?.[p]?.summary ?? "" });
+      else if (kind === 2) out.push({ tref: p, href: `/t/${p.slice(2)}`, tip: t("Show {ref}", { ref: p }) });
+      else if (kind === 3) {
+        const m = (mrs ?? []).find((x) => x.ref === p);
+        out.push(m ? { mr: p, url: m.url, tip: `${m.ref}: ${m.title}${m.state ? ` (${m.state})` : ""}` } : { s: p });
+      } else out.push({ s: p });
+    }
+    // (every part has every field — a template asks each of them)
+    return out.map((x) => ({ s: "", ticket: "", tref: "", mr: "", url: "", href: "", tip: "", ...x }));
+  };
   const view = (r, data) => {
     const links = (keys) => keys.map((k) => ({ key: k, url: data.tickets?.[k]?.url ?? "", title: data.tickets?.[k]?.summary ?? "" }));
     const closed = r.status !== "open";
@@ -25,6 +42,8 @@ export function rowTools(t, lang) {
       id: r.id,
       ref: r.ref,
       text: r.text,
+      textParts: textParts(r.text, data, r.mrs),
+      pathLabel: r.path ? t("Path “{path}”", { path: r.path }) : "",
       ticket: r.ticket,
       ticketUrl: data.tickets?.[r.ticket]?.url ?? "",
       ticketTitle: data.tickets?.[r.ticket]?.summary ?? "",
@@ -74,6 +93,20 @@ export function rowTools(t, lang) {
       qPay: `pay-${r.id}`,
       qRepeat: `repeat-${r.id}`,
       qDue: `due-${r.id}`,
+      qOps: `ops-${r.id}`,
+      // Under the row, as the built-in page had it: the context toggle (counted; its cards come when it opens), the actions as cards, the other ways, the plan.
+      ctx: r.context && r.context.n > 0 && !closed ? JSON.stringify(r.context) : "",
+      opsMode: r.opsMode ?? "",
+      opsN: (r.ops ?? []).length,
+      opsAreaLabel: t("Actions ({n})", { n: (r.ops ?? []).length + (r.opsMode === "folded" ? (r.alternatives ?? []).length : 0) }),
+      opsCards: (r.ops ?? []).map((o) => ({ ...o, todoId: r.id, button: o.button ? t(o.button) : "", runTip: t("Zeff does it itself, no AI: {ops}", { ops: o.heading }), openLabel: o.href ? t("Open in {app}", { app: /outlook|office/i.test(o.href) ? "Outlook" : /mail\.google|gmail/i.test(o.href) ? "Gmail" : /calendar\.google/i.test(o.href) ? "Google Calendar" : t("the browser") }) : "", only: (r.ops ?? []).length > 1 ? String(o.index) : "" })),
+      alternatives: (r.alternatives ?? []).map((a) => ({ ...a, todoId: r.id })),
+      knowledge: !closed && r.knowledgeN > 0,
+      hasToggles: !closed && ((r.context && r.context.n > 0) || r.knowledgeN > 0 || r.opsMode === "proposed" || r.opsMode === "folded"),
+      planned: (r.planned ?? []).map((p) => ({ label: (r.planned ?? []).length > 1 ? (p.path ? t("Then ({path}):", { path: p.path }) : t("Then (path {n}):", { n: p.n })) : t("Then:"), steps: p.steps })),
+      planTip: t("Planned: each step becomes a todo once the one before is done — with several paths, the others drop away once one is taken"),
+      suggestedWhy: r.opsMode === "proposed" && r.opsWhy ? t("Suggested: {why}", { why: r.opsWhy }) : "",
+      blockedTip: r.blockedBy ? t("Waiting: {what} — the GitLab sync notices once it's ready", { what: r.blockedBy }) : "",
       canReply: !!r.canReply && !closed,
       canPay: !!r.canPay && !closed,
       flagTip: r.flagged ? t("Important — moves to the top, urgent for the briefing. Click: remove the flag") : t("Flag as important — moves to the top, urgent for the briefing"),

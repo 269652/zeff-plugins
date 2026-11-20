@@ -2,7 +2,7 @@
   "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
   "id": "todos-ext",
   "name": "Todos (screens)",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The Todos screen in the Workspace, made of Zeff's own kit: your todos grouped by urgency, the ones you wait on, done, the workers'; tick, flag, set aside, dismiss, a due day, add. The todos themselves (the engine) stay Zeff's.",
   "author": "Zeff",
   "apiVersion": 1,
