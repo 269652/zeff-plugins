@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.schedule",
+  "label": "Time tracking: the schedule settings",
+  "what": "The weekly hours, the default break, the flex-time job and the absences with their words.",
+  "kind": "function",
+  "zeff": [
+    "time.schedule"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

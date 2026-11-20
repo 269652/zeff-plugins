@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.week",
+  "label": "Time tracking: the week's report",
+  "what": "The weekly report's figures and words for a week — the booked card, hours per job and day, the closing steps, the suggestions, what was done today, the report, the entries.",
+  "kind": "function",
+  "zeff": [
+    "time.week"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

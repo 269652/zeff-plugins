@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.jobs",
+  "label": "Time tracking: jobs and projects",
+  "what": "The jobs and the projects as the Jobs and Projects pages list them, with the job options of a form.",
+  "kind": "function",
+  "zeff": [
+    "time.jobs"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

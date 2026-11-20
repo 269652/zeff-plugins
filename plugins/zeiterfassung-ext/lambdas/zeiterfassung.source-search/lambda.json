@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.source-search",
+  "label": "Time tracking: sources to add to an entry",
+  "what": "Teams messages, GitLab items, todos and mails found by words or a pasted link, each with the link that adds it.",
+  "kind": "function",
+  "zeff": [
+    "time.source-search"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

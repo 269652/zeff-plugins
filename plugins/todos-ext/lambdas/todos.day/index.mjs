@@ -15,7 +15,8 @@ export async function handler(event, context) {
   const hours = (h) => h.toLocaleString(locale, { maximumFractionDigits: 2 });
   const time = (at) => (at ? new Date(at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }) : "");
   const dayLabel = (d) => new Date(`${d}T00:00:00`).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
-  const facts = (list) => list.map((f) => ({ time: time(f.at), kind: KIND[f.kind] ?? f.kind, hours: f.hours ? `${hours(f.hours)} h` : "", text: f.text }));
+  const TONE = { entry: "fill-emerald", todo: "fill-zinc", work: "fill-indigo", "jira-comment": "fill-sky", "jira-change": "fill-sky", commit: "fill-amber", gitlab: "fill-orange" };
+  const facts = (list) => list.map((f) => ({ time: time(f.at), kind: KIND[f.kind] ?? f.kind, kindTone: TONE[f.kind] ?? "fill-zinc", hours: f.hours ? `${hours(f.hours)} h` : "", text: f.text }));
   const since = r.since ? Math.max(0, Math.round((Date.now() - r.since) / 1000)) : 0;
   const when = (iso) => (iso ? new Date(/Z|[+-]\d\d:?\d\d$/.test(iso) || iso.includes("T") ? iso : `${iso.replace(" ", "T")}Z`).toLocaleString(locale, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
   const mins = (ms) => (ms ? `${Math.floor(ms / 60000)}:${String(Math.round((ms % 60000) / 1000)).padStart(2, "0")} min` : "");
@@ -28,7 +29,7 @@ export async function handler(event, context) {
     running: r.running,
     runningText: r.running ? `${since ? `${Math.floor(since / 60)}:${String(since % 60).padStart(2, "0")}` : ""} · ${r.phase === "ai" ? t("{provider} writing", { provider: r.provider }) : (PHASES[r.phase] ?? t("running"))}` : "",
     again: !!r.shown,
-    facts: r.shown ? [t("As of: {when}", { when: when(r.shown.at) }), r.shown.model, mins(r.shown.durationMs), r.shown.costUsd != null ? `≈ $${r.shown.costUsd.toFixed(2)}` : ""].filter(Boolean).map((text) => ({ text })) : [],
+    facts: r.shown ? [t("As of: {when}", { when: when(r.shown.at) }), r.shown.model, mins(r.shown.durationMs), r.shown.costUsd != null ? `≈ ${r.shown.costUsd.toLocaleString(locale, { style: "currency", currency: "USD" })}` : ""].filter(Boolean).map((text) => ({ text })) : [],
     failed: r.failed ? t("The last run failed: {error}", { error: r.failed.error }) : "",
     summary: r.summary,
     booked: r.booked > 0 ? t("{hours} h booked", { hours: hours(r.booked) }) : "",

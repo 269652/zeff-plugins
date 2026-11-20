@@ -1,0 +1,1034 @@
+{
+  "format": 1,
+  "id": "work-ext",
+  "version": "1.2.0",
+  "name": "Code",
+  "description": "The Code tab in the Workspace: sessions with workers, their conversations, permission questions, tickets.",
+  "icon": "🛠️",
+  "items": [
+    {
+      "id": "i1",
+      "kind": "page",
+      "title": "Code",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i2",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Sessions",
+      "icon": "🛠️",
+      "schema": {
+        "titleName": "Code",
+        "properties": [],
+        "views": [
+          {
+            "id": "vwork1",
+            "name": "Code",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"sel\" value=\"\" keep=url/><state name=\"q\" value=\"\"/><state name=\"sort\" value=\"newest\" keep=true/><state name=\"archived\" value=\"false\"/><state name=\"msg\" value=\"\" keep=true/><state name=\"all\" value=\"false\"/><state name=\"qpick\" value=\"\"/><state name=\"note\" value=\"\"/><state name=\"qo0\" value=\"\"/><state name=\"qo1\" value=\"\"/><state name=\"qo2\" value=\"\"/><state name=\"qo3\" value=\"\"/><state name=\"preview\" value=\"\"/><state name=\"newmsg\" value=\"\"/><state name=\"newticket\" value=\"\"/><state name=\"pane\" value=\"chat\"/><state name=\"branchopen\" value=\"false\"/><state name=\"cprov\" value=\"\"/><state name=\"cmode\" value=\"\"/><state name=\"cmodel\" value=\"\"/><state name=\"ceffort\" value=\"\"/><state name=\"crepo\" value=\"\"/><state name=\"cws\" value=\"\"/><state name=\"cbranch\" value=\"\"/><state name=\"cbrowse\" value=\"0\"/><state name=\"cdir\" value=\"\"/><state name=\"cdirtype\" value=\"\"/><state name=\"cuse\" value=\"\"/><state name=\"celev\" value=\"false\"/><state name=\"lmode\" value=\"\"/><state name=\"lmodel\" value=\"\"/><state name=\"leffort\" value=\"\"/>\r\n<data name=\"x\" lambda=\"work.screen\" with=\"sel={{ state.sel }}, q={{ state.q }}, sort={{ state.sort }}, archived={{ state.archived }}, cprov={{ state.cprov }}, cmode={{ state.cmode }}, cmodel={{ state.cmodel }}, ceffort={{ state.ceffort }}, crepo={{ state.crepo }}, cws={{ state.cws }}, cbrowse={{ state.cbrowse }}, cdir={{ state.cdir }}, cuse={{ state.cuse }}, cbranch={{ state.cbranch }}, branches={{ state.branchopen }}, all={{ state.all }}, msg={{ state.msg }}, qpick={{ state.qpick }}, qo0={{ state.qo0 }}, qo1={{ state.qo1 }}, qo2={{ state.qo2 }}, qo3={{ state.qo3 }}, newticket={{ state.newticket }}\" every=2 debounce=\"300\"/>\r\n<data name=\"panes\" lambda=\"work.panes\" with=\"run={{ data.x.session.runId }}\" when=\"{{ data.x.session.runId }}\" every=5/>\r\n<on event=\"work-changed\" action=\"reload\"/>\r\n<on event=\"work-started\" action=\"state\" state=\"sel\" value=\"run:{{ data.started.runId }}\"/>\r\n<on event=\"work-gone\" action=\"state\" state=\"sel\" value=\"\"/>\r\n<on event=\"send-live\" run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=send, text={{ state.msg }}, attach={{ data.x.session.attachScope }}\" then=\"msg=\" emit=\"work-changed\"/>\r\n<on event=\"send-shell\" run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=shell, cmd={{ data.x.session.shellCmd }}\" into=\"shellout\" then=\"msg=\" emit=\"work-changed\"/>\r\n<on event=\"send-msg\" run=\"work.send\" with=\"run={{ data.x.session.runId }}, text={{ state.msg }}, attach={{ data.x.session.attachScope }}\" then=\"msg=\" emit=\"work-changed\"/>\r\n<on event=\"send-new\" run=\"work.start\" with=\"instruction={{ state.newmsg }}, ticket={{ data.x.ticketPage ? data.x.ticketPage.ticket : state.newticket }}, provider={{ state.cprov }}, mode={{ data.x.composer.mode }}, model={{ data.x.composer.model }}, effort={{ data.x.composer.effort }}, repoPath={{ data.x.composer.repo }}, workspace={{ data.x.composer.workspace }}, branch={{ state.cbranch }}, elevated={{ state.celev }}, attach=new\" into=\"started\" then=\"newmsg=\" emit=\"work-started\"/>\r\n<on event=\"live-mode\" run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=mode, mode={{ state.lmode }}\" then=\"lmode=\" emit=\"work-changed\"/>\r\n<on event=\"live-model\" run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=model, model={{ state.lmodel == '@none' ? '' : state.lmodel }}\" then=\"lmodel=\" emit=\"work-changed\"/>\r\n<on event=\"live-effort\" run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=effort, effort={{ state.leffort == '@none' ? '' : state.leffort }}\" then=\"leffort=\" emit=\"work-changed\"/>\r\n{{#if not data.x}}<muted>Loading …</muted>{{#else}}\r\n<panes plain=true wide=lg>\r\n<pane width=288 flush=true fold=true>\r\n<dock edge=top plain=true line=false>\r\n<col gap=2>\r\n<row gap=2 align=center wrap=false>\r\n<button action=\"state\" state=\"sel\" value=\"\" label=\"+ New\" variant=\"{{ state.sel == '' ? 'primary' : 'plain' }}\" tip=\"New session\"/>\r\n<input bind=\"q\" size=sm placeholder=\"Search sessions…\"/>\r\n</row>\r\n<select bind=\"sort\" label=\"Sort\" size=sm options=\"newest:Newest, priority:Priority, ticket:Ticket, alpha:A–Z\"/>\r\n</col>\r\n</dock>\r\n<scroller>\r\n<col gap=0>\r\n{{#each data.x.groups}}\r\n{{#if heading}}\r\n<section dense=true title=\"{{ heading }}\" aside=\"{{ n }}\" collapsible=true open=true>\r\n{{#each items}}\r\n<item state=\"sel\" value=\"run:{{ id }}\" label=\"{{ title }}\" sub=\"{{ ticket }}\" meta=\"{{ ago }}\" tone=\"{{ tone }}\" selected=\"{{ selected }}\" dim=\"{{ archived }}\" tip=\"{{ tip }}\">\r\n<menu label=\"⋯\" tip=\"Session menu\">\r\n<button run=\"work.archive\" with=\"todo={{ todoId }}, archived={{ archived ? 'false' : 'true' }}\" emit=\"work-changed\" label=\"{{ archived ? 'Unarchive' : 'Archive' }}\" variant=item/>\r\n<button run=\"work.delete\" with=\"todo={{ todoId }}\" confirm=\"Delete this session for good? Its conversation, logs and result are deleted and cannot be brought back; its todo stays.\" emit=\"work-gone\" label=\"Delete …\" variant=item-bad disabled=\"{{ active }}\" tip=\"{{ active ? 'It is working — stop it first.' : '' }}\"/>\r\n</menu>\r\n</item>\r\n{{/each}}\r\n</section>\r\n{{#else}}\r\n{{#if ticketKey}}\r\n<section dense=true title=\"{{ ticket }}\" aside=\"{{ n }}\" collapsible=true open=true>\r\n<item state=\"sel\" value=\"ticket:{{ ticketKey }}\" label=\"{{ summary or ticket }}\" tone=none tip=\"{{ summary }}\"/>\r\n{{#each items}}\r\n<item state=\"sel\" value=\"run:{{ id }}\" label=\"{{ title }}\" meta=\"{{ ago }}\" tone=\"{{ tone }}\" selected=\"{{ selected }}\" dim=\"{{ archived }}\" tip=\"{{ tip }}\">\r\n<menu label=\"⋯\" tip=\"Session menu\">\r\n<button run=\"work.archive\" with=\"todo={{ todoId }}, archived={{ archived ? 'false' : 'true' }}\" emit=\"work-changed\" label=\"{{ archived ? 'Unarchive' : 'Archive' }}\" variant=item/>\r\n<button run=\"work.delete\" with=\"todo={{ todoId }}\" confirm=\"Delete this session for good? Its conversation, logs and result are deleted and cannot be brought back; its todo stays.\" emit=\"work-gone\" label=\"Delete …\" variant=item-bad disabled=\"{{ active }}\"/>\r\n</menu>\r\n</item>\r\n{{/each}}\r\n</section>\r\n{{#else}}\r\n{{#each items}}\r\n<item state=\"sel\" value=\"run:{{ id }}\" label=\"{{ title }}\" sub=\"{{ ticket }}\" meta=\"{{ ago }}\" tone=\"{{ tone }}\" selected=\"{{ selected }}\" dim=\"{{ archived }}\" tip=\"{{ tip }}\">\r\n<menu label=\"⋯\" tip=\"Session menu\">\r\n<button run=\"work.archive\" with=\"todo={{ todoId }}, archived={{ archived ? 'false' : 'true' }}\" emit=\"work-changed\" label=\"{{ archived ? 'Unarchive' : 'Archive' }}\" variant=item/>\r\n<button run=\"work.delete\" with=\"todo={{ todoId }}\" confirm=\"Delete this session for good? Its conversation, logs and result are deleted and cannot be brought back; its todo stays.\" emit=\"work-gone\" label=\"Delete …\" variant=item-bad disabled=\"{{ active }}\"/>\r\n</menu>\r\n</item>\r\n{{/each}}\r\n{{/if}}\r\n{{/if}}\r\n{{/each}}\r\n{{#if not data.x.total}}<small><muted>{{ data.x.labels.nothing }}</muted></small>{{/if}}\r\n{{#if data.x.hidden}}<button action=\"state\" state=\"all\" value=\"true\" label=\"{{ data.x.labels.showMore }}\" variant=quiet/>{{/if}}\r\n</col>\r\n</scroller>\r\n<dock edge=bottom plain=true line=true>\r\n{{#if data.x.tabs}}<col gap=0>{{#each data.x.tabs}}<row gap=2><a href=\"{{ href }}\">{{ title }}</a><small><muted>{{ plugin }}</muted></small></row>{{/each}}</col>{{/if}}\r\n<row gap=2 align=center justify=between>\r\n<small><a href=\"{{ data.x.settingsHref }}\">Code settings</a></small>\r\n{{#if data.x.archivedCount or state.archived == 'true'}}<button action=\"state\" state=\"archived\" value=\"{{ state.archived == 'true' ? 'false' : 'true' }}\" label=\"{{ state.archived == 'true' ? 'Hide archived' : data.x.labels.showArchived }}\" variant=quiet/>{{/if}}\r\n</row>\r\n</dock>\r\n</pane>\r\n<pane flush=true>\r\n{{#if data.x.gitMissing or data.x.dangling.n or data.result.message}}<dock edge=top plain=true line=false>\r\n{{#if data.x.gitMissing}}<text tone=bad>{{ data.x.gitMissing }}</text>{{/if}}\r\n{{#if data.x.dangling.n}}\r\n<box tone=warn compact=true>\r\n<text>{{ data.x.dangling.text }}</text>\r\n<button run=\"work.dangling-end\" into=\"result\" confirm=\"End all of them? Their workers are free, the queue goes on.\" emit=\"work-changed\" label=\"Kill all dangling sessions\" variant=primary/>\r\n</box>\r\n{{/if}}\r\n{{#if data.result.message}}<text tone=good>{{ data.result.message }}</text>{{/if}}\r\n</dock>{{/if}}\r\n{{#if data.x.mode == 'new'}}\r\n<scroller center=true middle=true>\r\n<col gap=6>\r\n<col gap=1 align=center>\r\n<heading level=1>{{ data.x.labels.newTitle }}</heading>\r\n<muted>{{ data.x.labels.newHint }}</muted>\r\n</col>\r\n{{#if data.x.composer.browsing}}\r\n<box compact=true>\r\n{{#if data.x.composer.folders.ok}}\r\n<row gap=1 align=center wrap=false><input bind=\"cdirtype\" size=sm placeholder=\"{{ data.x.composer.folders.path }}\"/><button action=\"state\" state=\"cdir\" value=\"{{ state.cdirtype }}\" label=\"{{ data.x.composer.labels.go }}\"/></row>\r\n<row gap=1 align=center>{{#if data.x.composer.folders.parent}}<button action=\"state\" state=\"cdir\" value=\"{{ data.x.composer.folders.parent }}\" label=\"↑ ..\" variant=quiet/>{{/if}}<col fill=true><truncate><small><muted>{{ data.x.composer.folders.path }}</muted></small></truncate></col>{{#if data.x.composer.folders.repo}}<button action=\"state\" state=\"cuse\" value=\"{{ data.x.composer.folders.path }}\" label=\"Use this repo\" variant=primary/>{{/if}}</row>\r\n<col gap=0 scroll=30>{{#each data.x.composer.folders.dirs}}<button action=\"state\" state=\"cdir\" value=\"{{ path }}\" label=\"{{ name }}\" variant=quiet/>{{/each}}</col>\r\n{{#else}}<text tone=\"bad\">{{ data.x.composer.folders.error }}</text>{{/if}}\r\n</box>\r\n{{/if}}\r\n<box field=true>\r\n<input bind=\"newmsg\" type=textarea bare=true grow=true rows=1 placeholder=\"{{ data.x.ticketPage ? data.x.ticketPage.placeholder : data.x.labels.newTitle }}\" enter=\"send-new\"/>\r\n{{#if data.x.composer.files}}<row gap=1 wrap=true>{{#each data.x.composer.files}}<pill label=\"📎 {{ name }}\" tip=\"{{ name }} · {{ size }}\"/><button run=\"work.attach-remove\" with=\"scope=new, ref={{ ref }}\" emit=\"work-changed\" label=\"×\" variant=quiet tip=\"Remove {{ name }}\"/>{{/each}}</row>{{/if}}\r\n<row gap=1 wrap=true align=center>\r\n<upload bind=\"busyup2\" run=\"work.attach\" with=\"scope=new\" multiple=true zone=view label=\"📎\" look=icon tip=\"Attach an image or document (or paste / drop it)\" emit=\"work-changed\"/>\r\n{{#if data.x.mode == 'new'}}<select bind=\"newticket\" look=quiet options=\"{{ data.x.composer.ticketOptions }}\" label=\"Ticket\"/>{{/if}}\r\n<select bind=\"crepo\" look=quiet options=\"{{ data.x.composer.repoOptions }}\" label=\"Repo folder\" tip=\"{{ data.x.composer.repoNow }}\"/>\r\n{{#if data.x.composer.branchOptions}}<select bind=\"cbranch\" look=quiet options=\"{{ data.x.composer.branchOptions }}\" label=\"Branch\"/>{{/if}}\r\n{{#if data.x.composer.branchError}}<small><text tone=bad>{{ data.x.composer.branchError }}</text></small>{{/if}}\r\n{{#if data.x.composer.repo}}<select bind=\"cws\" look=quiet options=\"{{ data.x.composer.wsOptions }}\" label=\"Isolation\"/>{{/if}}\r\n{{#if data.x.composer.providerOptions}}<select bind=\"cprov\" look=quiet options=\"{{ data.x.composer.providerOptions }}\" label=\"Backend\"/>{{/if}}\r\n{{#if data.x.composer.modeOptions}}<select bind=\"cmode\" look=quiet options=\"{{ data.x.composer.modeOptions }}\" label=\"Permission mode\" tip=\"{{ data.x.composer.modeTip }}\" tone=\"{{ data.x.composer.modeTone }}\"/>{{/if}}\r\n{{#if data.x.composer.modelOptions}}<select bind=\"cmodel\" look=quiet options=\"{{ data.x.composer.modelOptions }}\" label=\"Model\"/>{{/if}}\r\n{{#if data.x.composer.effortOptions}}<select bind=\"ceffort\" look=quiet options=\"{{ data.x.composer.effortOptions }}\" label=\"Effort\"/>{{/if}}\r\n{{#if data.x.composer.admin}}<toggle bind=\"celev\" label=\"As administrator\"/>{{/if}}\r\n<grow/>\r\n<button run=\"work.start\" with=\"instruction={{ state.newmsg }}, ticket={{ data.x.ticketPage ? data.x.ticketPage.ticket : state.newticket }}, provider={{ state.cprov }}, mode={{ data.x.composer.mode }}, model={{ data.x.composer.model }}, effort={{ data.x.composer.effort }}, repoPath={{ data.x.composer.repo }}, workspace={{ data.x.composer.workspace }}, branch={{ state.cbranch }}, elevated={{ state.celev }}, attach=new\" into=\"started\" then=\"newmsg=\" emit=\"work-started\" label=\"↑\" tip=\"Send\" variant=send disabled=\"{{ not state.newmsg and not data.x.composer.files }}\"/>\r\n</row>\r\n</box>\r\n</col>\r\n</scroller>\r\n{{/if}}\r\n{{#if data.x.mode == 'ticket'}}\r\n<scroller>\r\n<col gap=4>\r\n<col gap=0>\r\n<row gap=2 align=baseline><heading level=2 mono=true>{{ data.x.ticketPage.title }}</heading>{{#if data.x.ticketPage.url}}<text><a href=\"{{ data.x.ticketPage.url }}\">{{ data.x.ticketPage.openLabel }}</a></text>{{/if}}</row>\r\n{{#if data.x.ticketPage.summary}}<text tone=muted>{{ data.x.ticketPage.summary }}</text>{{/if}}\r\n{{#if data.x.ticketPage.facts}}<small><muted>{{ data.x.ticketPage.facts }}</muted></small>{{/if}}\r\n</col>\r\n<col gap=1>\r\n<heading level=4>{{ data.x.ticketPage.sessionsLabel }}</heading>\r\n{{#each data.x.ticketPage.sessions}}\r\n<box compact=true action=\"state\" state=\"sel\" value=\"run:{{ id }}\">\r\n<row gap=3 align=center wrap=false>\r\n<small><mono><muted>{{ ref }}</muted></mono></small>\r\n<col fill=true><truncate>{{ title }}</truncate></col>\r\n<pill label=\"{{ status }}\" tone=\"{{ tone }}\" shape=tag/>\r\n<small><muted>{{ at }}</muted></small>\r\n</row>\r\n</box>\r\n{{/each}}\r\n</col>\r\n</col>\r\n</scroller>\r\n<dock edge=bottom plain=true center=true>\r\n{{#if data.x.composer.browsing}}\r\n<box compact=true>\r\n{{#if data.x.composer.folders.ok}}\r\n<row gap=1 align=center wrap=false><input bind=\"cdirtype\" size=sm placeholder=\"{{ data.x.composer.folders.path }}\"/><button action=\"state\" state=\"cdir\" value=\"{{ state.cdirtype }}\" label=\"{{ data.x.composer.labels.go }}\"/></row>\r\n<row gap=1 align=center>{{#if data.x.composer.folders.parent}}<button action=\"state\" state=\"cdir\" value=\"{{ data.x.composer.folders.parent }}\" label=\"↑ ..\" variant=quiet/>{{/if}}<col fill=true><truncate><small><muted>{{ data.x.composer.folders.path }}</muted></small></truncate></col>{{#if data.x.composer.folders.repo}}<button action=\"state\" state=\"cuse\" value=\"{{ data.x.composer.folders.path }}\" label=\"Use this repo\" variant=primary/>{{/if}}</row>\r\n<col gap=0 scroll=30>{{#each data.x.composer.folders.dirs}}<button action=\"state\" state=\"cdir\" value=\"{{ path }}\" label=\"{{ name }}\" variant=quiet/>{{/each}}</col>\r\n{{#else}}<text tone=\"bad\">{{ data.x.composer.folders.error }}</text>{{/if}}\r\n</box>\r\n{{/if}}\r\n<box field=true>\r\n<input bind=\"newmsg\" type=textarea bare=true grow=true rows=1 placeholder=\"{{ data.x.ticketPage ? data.x.ticketPage.placeholder : data.x.labels.newTitle }}\" enter=\"send-new\"/>\r\n{{#if data.x.composer.files}}<row gap=1 wrap=true>{{#each data.x.composer.files}}<pill label=\"📎 {{ name }}\" tip=\"{{ name }} · {{ size }}\"/><button run=\"work.attach-remove\" with=\"scope=new, ref={{ ref }}\" emit=\"work-changed\" label=\"×\" variant=quiet tip=\"Remove {{ name }}\"/>{{/each}}</row>{{/if}}\r\n<row gap=1 wrap=true align=center>\r\n<upload bind=\"busyup2\" run=\"work.attach\" with=\"scope=new\" multiple=true zone=view label=\"📎\" look=icon tip=\"Attach an image or document (or paste / drop it)\" emit=\"work-changed\"/>\r\n{{#if data.x.mode == 'new'}}<select bind=\"newticket\" look=quiet options=\"{{ data.x.composer.ticketOptions }}\" label=\"Ticket\"/>{{/if}}\r\n<select bind=\"crepo\" look=quiet options=\"{{ data.x.composer.repoOptions }}\" label=\"Repo folder\" tip=\"{{ data.x.composer.repoNow }}\"/>\r\n{{#if data.x.composer.branchOptions}}<select bind=\"cbranch\" look=quiet options=\"{{ data.x.composer.branchOptions }}\" label=\"Branch\"/>{{/if}}\r\n{{#if data.x.composer.branchError}}<small><text tone=bad>{{ data.x.composer.branchError }}</text></small>{{/if}}\r\n{{#if data.x.composer.repo}}<select bind=\"cws\" look=quiet options=\"{{ data.x.composer.wsOptions }}\" label=\"Isolation\"/>{{/if}}\r\n{{#if data.x.composer.providerOptions}}<select bind=\"cprov\" look=quiet options=\"{{ data.x.composer.providerOptions }}\" label=\"Backend\"/>{{/if}}\r\n{{#if data.x.composer.modeOptions}}<select bind=\"cmode\" look=quiet options=\"{{ data.x.composer.modeOptions }}\" label=\"Permission mode\" tip=\"{{ data.x.composer.modeTip }}\" tone=\"{{ data.x.composer.modeTone }}\"/>{{/if}}\r\n{{#if data.x.composer.modelOptions}}<select bind=\"cmodel\" look=quiet options=\"{{ data.x.composer.modelOptions }}\" label=\"Model\"/>{{/if}}\r\n{{#if data.x.composer.effortOptions}}<select bind=\"ceffort\" look=quiet options=\"{{ data.x.composer.effortOptions }}\" label=\"Effort\"/>{{/if}}\r\n{{#if data.x.composer.admin}}<toggle bind=\"celev\" label=\"As administrator\"/>{{/if}}\r\n<grow/>\r\n<button run=\"work.start\" with=\"instruction={{ state.newmsg }}, ticket={{ data.x.ticketPage ? data.x.ticketPage.ticket : state.newticket }}, provider={{ state.cprov }}, mode={{ data.x.composer.mode }}, model={{ data.x.composer.model }}, effort={{ data.x.composer.effort }}, repoPath={{ data.x.composer.repo }}, workspace={{ data.x.composer.workspace }}, branch={{ state.cbranch }}, elevated={{ state.celev }}, attach=new\" into=\"started\" then=\"newmsg=\" emit=\"work-started\" label=\"↑\" tip=\"Send\" variant=send disabled=\"{{ not state.newmsg and not data.x.composer.files }}\"/>\r\n</row>\r\n</box>\r\n</dock>\r\n{{/if}}\r\n{{#if data.x.mode == 'session'}}\r\n{{#if not data.x.session.found}}<text tone=warn>{{ data.x.session.error }}</text>{{#else}}\r\n<dock edge=top plain=true>\r\n<row gap=3 align=center wrap=false>\r\n<col fill=true gap=0>\r\n<truncate tip=\"{{ data.x.session.title }}\"><b>{{ data.x.session.title }}</b></truncate>\r\n<row gap=2 wrap=true align=center>\r\n<pill label=\"{{ data.x.session.statusText }}\" tone=\"{{ data.x.session.pill }}\" dot=\"{{ data.x.session.active ? 'pulse' : 'space' }}\" bold=true/>\r\n{{#if data.x.session.elevated}}<pill label=\"{{ data.x.session.elevatedLabel }}\" tone=bad bold=true shape=tag/>{{/if}}\r\n{{#if data.x.session.ticket}}<mono><button action=\"state\" state=\"sel\" value=\"ticket:{{ data.x.session.ticket }}\" label=\"{{ data.x.session.ticket }}\" variant=inline/></mono>{{#else}}<small><muted>{{ data.x.session.noTicket }}</muted></small>{{/if}}\r\n{{#if data.x.session.cardSummary}}<col max=\"18rem\"><truncate><small><muted>{{ data.x.session.cardSummary }}</muted></small></truncate></col>{{/if}}\r\n{{#if data.x.session.repoName}}<small><muted><mono>📁 {{ data.x.session.repoName }}</mono></muted></small>{{/if}}\r\n{{#if data.x.session.branch}}<pill state=\"branchopen\" value=\"{{ state.branchopen == 'true' ? 'false' : 'true' }}\" label=\"⎇ {{ data.x.session.branch }}\" tag=\"{{ data.x.session.worktree ? 'worktree' : '' }}\" caret=\"{{ data.x.session.idle }}\" mono=true tone=muted disabled=\"{{ not data.x.session.idle }}\" tip=\"{{ data.x.session.branchTip }}\"/>{{/if}}\r\n{{#if data.x.session.todoRef}}<pill href=\"/t/{{ data.x.session.todoId }}\" label=\"{{ data.x.session.todoRef }}\" tone=\"{{ data.x.session.active ? 'run' : 'muted' }}\" dot=\"{{ data.x.session.active ? 'pulse' : 'space' }}\" mono=true tip=\"{{ data.x.session.title }}\"/>{{/if}}\r\n{{#if data.x.session.cost}}<small><muted>{{ data.x.session.cost }}</muted></small>{{/if}}\r\n</row>\r\n{{#if data.x.session.side}}<row gap=1 wrap=true>{{#each data.x.session.side}}<pill href=\"/t/{{ todoId }}\" label=\"{{ ref }} {{ text }}\" tone=\"{{ active ? 'run' : 'off' }}\" dot=\"{{ active ? 'pulse' : 'none' }}\" width=256 tip=\"{{ text }}\"/>{{/each}}</row>{{/if}}\r\n{{#if state.branchopen == 'true'}}\r\n<box compact=true>\r\n{{#if data.x.session.branchError}}<text tone=bad>{{ data.x.session.branchError }}</text>{{/if}}\r\n{{#each data.x.session.branchList}}\r\n<row gap=2 align=center>\r\n<button run=\"work.branch\" with=\"run={{ data.x.session.runId }}, branch={{ name }}\" into=\"result\" then=\"branchopen=false\" emit=\"work-changed\" label=\"{{ current ? '✓ ' : '' }}{{ name }}\" tip=\"{{ tip }}\" variant=quiet disabled=\"{{ disabled }}\"/>\r\n{{#if remote}}<small><muted>remote</muted></small>{{/if}}{{#if worktree}}<small><muted>worktree</muted></small>{{/if}}\r\n</row>\r\n{{/each}}\r\n</box>\r\n{{/if}}\r\n</col>\r\n<button action=url href=\"/api/work/{{ data.x.session.runId }}/prompt\" label=\"Prompt\" tip=\"What the worker was told\"/>\r\n{{#if data.x.session.active}}<button run=\"work.stop\" with=\"run={{ data.x.session.runId }}\" confirm=\"Cancel the session?\" emit=\"work-changed\" label=\"Cancel\" variant=danger/>{{/if}}\r\n</row>\r\n</dock>\r\n<tabs look=line bind=\"pane\" options=\"chat:Conversation, changes:Changes, preview:Preview{{ data.x.session.paneOptions }}\"/>\r\n{{#each data.x.session.panels}}{{#if state.pane == key}}<scroller pad=true><frame plugin=\"{{ plugin }}\" entry=\"{{ entry }}\" title=\"{{ title }}\" run=\"{{ data.x.session.runId }}\" ticket=\"{{ data.x.session.ticket }}\" todo=\"{{ data.x.session.todoId }}\" h=640/></scroller>{{/if}}{{/each}}\r\n{{#if state.pane == 'changes'}}\r\n<scroller top=true>\r\n<col gap=2>\r\n{{#if data.panes.found}}\r\n<row gap=2 wrap=true align=center>\r\n{{#if data.panes.files}}<small><muted>{{ data.panes.summary }}</muted></small>{{/if}}\r\n<grow/>\r\n<input bind=\"commitmsg\" size=sm value=\"{{ data.x.session.commitTitle }}\" placeholder=\"Commit message\"/>\r\n<button run=\"work.git\" with=\"run={{ data.x.session.runId }}, do=commit, message={{ state.commitmsg }}\" into=\"gitresult\" emit=\"work-changed\" label=\"Commit all\" disabled=\"{{ data.panes.empty or not state.commitmsg }}\"/>\r\n<button run=\"work.git\" with=\"run={{ data.x.session.runId }}, do=push\" into=\"gitresult\" confirm=\"Push this branch to origin?\" emit=\"work-changed\" label=\"Push\"/>\r\n<button run=\"work.git\" with=\"run={{ data.x.session.runId }}, do=mr, title={{ state.commitmsg }}\" into=\"gitresult\" confirm=\"Open a merge request for this branch on GitLab?\" emit=\"work-changed\" label=\"Merge request\"/>\r\n</row>\r\n{{#if data.gitresult.message}}<text tone=good>{{ data.gitresult.message }}</text>{{/if}}\r\n{{#if data.panes.error}}<text tone=bad>{{ data.panes.error }}</text>{{/if}}\r\n{{#each data.panes.files}}\r\n<section look=bar title=\"{{ status }}\" tone=\"{{ tone }}\" aside=\"{{ path }}\" added=\"+{{ added }}\" removed=\"−{{ removed }}\" collapsible=true open=\"{{ data.panes.few }}\">\r\n{{#if binary}}<small><muted>{{ binaryText }}</muted></small>{{/if}}\r\n{{#if noPatch}}<small><muted>{{ noPatch }}</muted></small>{{/if}}\r\n{{#if patch}}<diff patch=\"{{ patch }}\"/>{{/if}}\r\n</section>\r\n{{/each}}\r\n{{#if data.panes.empty}}<text tone=muted>{{ data.panes.emptyText }}</text>{{/if}}\r\n{{#if data.panes.truncated}}<small><muted>{{ data.panes.truncated }}</muted></small>{{/if}}\r\n{{/if}}\r\n</col>\r\n</scroller>\r\n{{/if}}\r\n{{#if state.pane == 'preview'}}\r\n<scroller top=true>\r\n<col gap=2>\r\n{{#if data.panes.noProcs}}<text tone=muted>{{ data.panes.noProcs }}</text>{{/if}}\r\n{{#each data.panes.procs}}\r\n<box compact=true>\r\n<row gap=2 wrap=true align=center>\r\n<text tone=\"{{ running ? 'good' : 'muted' }}\">●</text><b>{{ name }}</b>\r\n{{#if showUrl}}<small><a href=\"{{ url }}\"><mono>{{ url }} ↗</mono></a></small>{{/if}}\r\n<grow/>\r\n{{#if running}}{{#if showUrl}}<button action=\"state\" state=\"preview\" value=\"{{ state.preview == name ? '' : name }}\" label=\"{{ state.preview == name ? 'Hide preview' : 'Show preview' }}\"/>{{/if}}<button run=\"work.git\" with=\"run={{ data.x.session.runId }}, do=proc-stop, name={{ name }}\" emit=\"work-changed\" label=\"Stop\"/>{{#else}}<button run=\"work.git\" with=\"run={{ data.x.session.runId }}, do=proc-start, name={{ name }}\" emit=\"work-changed\" label=\"Start\" variant=primary/>{{/if}}\r\n</row>\r\n{{#if log}}<section dense=true quiet=true title=\"Output\" collapsible=true open=false><terminal text=\"{{ log }}\"/></section>{{/if}}\r\n</box>\r\n{{/each}}\r\n{{#each data.panes.procs}}{{#if state.preview == name}}<frame src=\"{{ url }}\" title=\"{{ name }}\" h=640/>{{/if}}{{/each}}\r\n</col>\r\n</scroller>\r\n{{/if}}\r\n{{#if state.pane == 'chat'}}\r\n<scroller end=true center=true pad=true>\r\n<col gap=6>\r\n{{#each data.x.session.turns}}\r\n<col gap=4>\r\n{{#if ask}}<bubble text=\"{{ ask }}\"/>{{#else}}{{#if label}}<row justify=center><pill label=\"{{ label }}\" tone=muted/></row>{{/if}}{{/if}}\r\n<col gap=3>\r\n{{#if cut}}<small><muted>{{ cut }}</muted></small>{{/if}}\r\n{{#each blocks}}\r\n{{#if t == 'say'}}<markdown value=\"{{ text }}\"/>{{/if}}\r\n{{#if t == 'you'}}<bubble text=\"{{ text }}\" note=\"{{ note }}\"/>{{/if}}\r\n{{#if t == 'steps'}}\r\n<col gap=0 size=xs>\r\n{{#if fold}}<section dense=true quiet=true title=\"{{ title }}\" aside=\"{{ names }}\" collapsible=true open=false>\r\n{{#each steps}}\r\n{{#if kind == 'tool'}}\r\n{{#if more}}\r\n<section dense=true quiet=true title=\"{{ tool }}\" aside=\"{{ text }}\" collapsible=true open=false>\r\n{{#each diffs}}<diff old=\"{{ old }}\" new=\"{{ new }}\"/>{{/each}}\r\n{{#if detail}}{{#if plan}}<markdown value=\"{{ detail }}\"/>{{#else}}<terminal text=\"{{ detail }}\"/>{{/if}}{{/if}}\r\n</section>\r\n{{#else}}\r\n<row gap=2 align=baseline wrap=false><small><text tone=good>●</text></small><b>{{ tool }}</b><truncate tip=\"{{ text }}\"><small><mono><muted>{{ text }}</muted></mono></small></truncate></row>\r\n{{/if}}\r\n{{/if}}\r\n{{#if kind == 'out'}}<row gap=1 indent=true wrap=false><truncate tip=\"{{ text }}\"><text tone=\"{{ bad ? 'bad' : 'faint' }}\"><mono>⎿ {{ text }}</mono></text></truncate></row>{{/if}}\r\n{{#if kind == 'ask'}}<box tone=ask line=true><row gap=2 align=baseline wrap=false><small><text tone=warn>?</text></small><truncate tip=\"{{ text }}\">{{ text }}</truncate><b><text tone=\"{{ answer ? (bad ? 'bad' : 'good') : 'warn' }}\">{{ answer ? '→ ' + answer : 'waiting for you' }}</text></b></row></box>{{/if}}\r\n{{#if kind == 'deny'}}<row indent=true><text tone=warn>⎿ refused: {{ text }}</text></row>{{/if}}\r\n{{/each}}\r\n</section>\r\n{{#each shown}}\r\n{{#if kind == 'tool'}}\r\n{{#if more}}\r\n<section dense=true quiet=true title=\"{{ tool }}\" aside=\"{{ text }}\" collapsible=true open=false>\r\n{{#each diffs}}<diff old=\"{{ old }}\" new=\"{{ new }}\"/>{{/each}}\r\n{{#if detail}}{{#if plan}}<markdown value=\"{{ detail }}\"/>{{#else}}<terminal text=\"{{ detail }}\"/>{{/if}}{{/if}}\r\n</section>\r\n{{#else}}\r\n<row gap=2 align=baseline wrap=false><small><text tone=good>●</text></small><b>{{ tool }}</b><truncate tip=\"{{ text }}\"><small><mono><muted>{{ text }}</muted></mono></small></truncate></row>\r\n{{/if}}\r\n{{/if}}\r\n{{#if kind == 'out'}}<row gap=1 indent=true wrap=false><truncate tip=\"{{ text }}\"><text tone=\"{{ bad ? 'bad' : 'faint' }}\"><mono>⎿ {{ text }}</mono></text></truncate></row>{{/if}}\r\n{{#if kind == 'ask'}}<box tone=ask line=true><row gap=2 align=baseline wrap=false><small><text tone=warn>?</text></small><truncate tip=\"{{ text }}\">{{ text }}</truncate><b><text tone=\"{{ answer ? (bad ? 'bad' : 'good') : 'warn' }}\">{{ answer ? '→ ' + answer : 'waiting for you' }}</text></b></row></box>{{/if}}\r\n{{#if kind == 'deny'}}<row indent=true><text tone=warn>⎿ refused: {{ text }}</text></row>{{/if}}\r\n{{/each}}\r\n{{#else}}\r\n{{#each steps}}\r\n{{#if kind == 'tool'}}\r\n{{#if more}}\r\n<section dense=true quiet=true title=\"{{ tool }}\" aside=\"{{ text }}\" collapsible=true open=false>\r\n{{#each diffs}}<diff old=\"{{ old }}\" new=\"{{ new }}\"/>{{/each}}\r\n{{#if detail}}{{#if plan}}<markdown value=\"{{ detail }}\"/>{{#else}}<terminal text=\"{{ detail }}\"/>{{/if}}{{/if}}\r\n</section>\r\n{{#else}}\r\n<row gap=2 align=baseline wrap=false><small><text tone=good>●</text></small><b>{{ tool }}</b><truncate tip=\"{{ text }}\"><small><mono><muted>{{ text }}</muted></mono></small></truncate></row>\r\n{{/if}}\r\n{{/if}}\r\n{{#if kind == 'out'}}<row gap=1 indent=true wrap=false><truncate tip=\"{{ text }}\"><text tone=\"{{ bad ? 'bad' : 'faint' }}\"><mono>⎿ {{ text }}</mono></text></truncate></row>{{/if}}\r\n{{#if kind == 'ask'}}<box tone=ask line=true><row gap=2 align=baseline wrap=false><small><text tone=warn>?</text></small><truncate tip=\"{{ text }}\">{{ text }}</truncate><b><text tone=\"{{ answer ? (bad ? 'bad' : 'good') : 'warn' }}\">{{ answer ? '→ ' + answer : 'waiting for you' }}</text></b></row></box>{{/if}}\r\n{{#if kind == 'deny'}}<row indent=true><text tone=warn>⎿ refused: {{ text }}</text></row>{{/if}}\r\n{{/each}}\r\n{{/if}}\r\n</col>\r\n{{/if}}\r\n{{#if t == 'raw'}}<box tone=muted compact=true><text pre=true tone=muted><mono>{{ text }}</mono></text></box>{{/if}}\r\n{{#if t == 'shell'}}<terminal title=\"{{ cmd }}\" text=\"{{ text }}\" tone=\"{{ bad ? 'bad' : 'warn' }}\"/>{{/if}}\r\n{{#if t == 'note'}}<row justify=center><text tone=faint><small>{{ text }}</small></text></row>{{/if}}\r\n{{/each}}\r\n{{#if doing}}<row gap=2 align=center>{{#if spin}}<spinner/>{{/if}}<text tone=muted>{{ doing }}</text></row>{{/if}}\r\n{{#if summary}}<markdown value=\"{{ summary }}\"/>{{/if}}\r\n{{#if draft}}<box compact=true><small><muted><b>{{ draftLabel }}</b></muted></small><markdown value=\"{{ draft }}\"/></box>{{/if}}\r\n{{#if error}}<box tone=bad compact=true><text tone=bad>{{ error }}</text>{{#if errors}}<small><text pre=true tone=bad>{{ errors }}</text></small>{{/if}}</box>{{/if}}\r\n{{#if gitSummary}}<section dense=true quiet=true title=\"Changes\" collapsible=true open=false><text pre=true tone=muted><mono>{{ gitSummary }}</mono></text></section>{{/if}}\r\n{{#if empty}}<text tone=muted>{{ empty }}</text>{{/if}}\r\n{{#if meta}}<text tone=faint tip=\"{{ metaTip }}\"><small>{{ meta }}</small></text>{{/if}}\r\n</col>\r\n</col>\r\n{{/each}}\r\n</col>\r\n</scroller>\r\n<dock edge=bottom plain=true center=true>\r\n<col gap=2>\r\n{{#each data.x.session.asks}}\r\n{{#if question}}\r\n<box tone=info compact=true>\r\n{{#each questions}}\r\n<col gap=1>\r\n<row gap=2 align=center>{{#if header}}<pill label=\"{{ header }}\" tone=run shape=tag/>{{/if}}<b>{{ question }}</b></row>\r\n<row gap=2 wrap=true>{{#each options}}<button action=\"state\" state=\"qpick\" value=\"{{ next }}\" label=\"{{ label }}\" sub=\"{{ description }}\" tip=\"{{ description }}\" variant=\"{{ on ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n{{#if idx == 0}}<input bind=\"qo0\" size=sm placeholder=\"Or your own answer …\"/>{{/if}}\r\n{{#if idx == 1}}<input bind=\"qo1\" size=sm placeholder=\"Or your own answer …\"/>{{/if}}\r\n{{#if idx == 2}}<input bind=\"qo2\" size=sm placeholder=\"Or your own answer …\"/>{{/if}}\r\n{{#if idx == 3}}<input bind=\"qo3\" size=sm placeholder=\"Or your own answer …\"/>{{/if}}\r\n</col>\r\n{{/each}}\r\n<row gap=2 wrap=true align=center>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow, answers={{ submit }}\" then=\"qpick=\" emit=\"work-changed\" label=\"Answer\" variant=primary disabled=\"{{ not ready }}\"/>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=deny, message=The user didn't answer — decide yourself, or ask in plain words.\" then=\"qpick=\" emit=\"work-changed\" label=\"Skip\"/>\r\n{{#if more}}<small><muted>{{ more }}</muted></small>{{/if}}\r\n</row>\r\n</box>\r\n{{#else}}\r\n<box tone=ask compact=true title=\"{{ title }}\" aside=\"{{ description && not plan ? '— ' + description : '' }}{{ more ? '  ' + more : '' }}\">\r\n{{#if plan}}\r\n<box compact=true scroll=50><markdown value=\"{{ planText }}\"/></box>\r\n{{#if state.note}}<input bind=\"note\" type=textarea rows=2 placeholder=\"What should it do instead? (it reads this)\"/>{{/if}}\r\n<row gap=2 wrap=true>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow, then=acceptEdits\" emit=\"work-changed\" label=\"Yes — accept its edits\" variant=primary/>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow, then=auto\" emit=\"work-changed\" label=\"Yes — in Auto\"/>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow, then=default\" emit=\"work-changed\" label=\"Yes — ask me for each step\"/>\r\n{{#if bypass}}<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow, then=bypassPermissions\" emit=\"work-changed\" label=\"Yes — bypass\"/>{{/if}}\r\n{{#if state.note}}<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=deny, message=Keep planning: {{ state.note }}\" then=\"note=\" emit=\"work-changed\" label=\"Send feedback\"/>{{#else}}<button action=\"state\" state=\"note\" value=\" \" label=\"No — keep planning\"/>{{/if}}\r\n</row>\r\n{{#else}}\r\n{{#if detailPath}}<small><mono>{{ detailPath }}</mono></small>{{/if}}\r\n{{#each diffs}}<diff old=\"{{ old }}\" new=\"{{ new }}\"/>{{/each}}\r\n{{#if command}}<terminal text=\"{{ command }}\"/>{{/if}}\r\n{{#if url}}<small><mono>{{ url }}</mono></small>{{/if}}\r\n{{#if reason}}<small><muted>{{ reason }}</muted></small>{{/if}}\r\n{{#if state.note}}<input bind=\"note\" type=textarea rows=2 placeholder=\"What should it do instead? (it reads this)\"/>{{/if}}\r\n<row gap=2 wrap=true>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow\" emit=\"work-changed\" label=\"Allow\" variant=primary keys=\"enter\" tip=\"Enter\"/>\r\n{{#if always}}<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=allow, always=true\" emit=\"work-changed\" label=\"{{ alwaysLabel }}\" tip=\"{{ alwaysTip }}\"/>{{/if}}\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=deny, message={{ state.note }}\" then=\"note=\" emit=\"work-changed\" label=\"{{ state.note ? 'Deny with this' : 'Deny' }}\"/>\r\n{{#if not state.note}}<button action=\"state\" state=\"note\" value=\" \" label=\"Deny and say why …\"/>{{/if}}\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer, requestId={{ requestId }}, behavior=deny, interrupt=true, message={{ state.note }}\" then=\"note=\" emit=\"work-changed\" label=\"Deny & stop\" tip=\"Deny and stop its turn\"/>\r\n</row>\r\n{{/if}}\r\n</box>\r\n{{/if}}\r\n{{/each}}\r\n{{#if data.x.session.lostLive}}\r\n<box tone=ask compact=true title=\"No live connection to this session\">\r\n<small><muted>It is marked as running, but this Zeff isn't connected to its worker — it was started by another Zeff window or before a restart, so its questions and permissions can't be shown here. Stop it and start it again.</muted></small>\r\n<row gap=2><button run=\"work.stop\" with=\"run={{ data.x.session.runId }}\" emit=\"work-changed\" label=\"⏹ Stop it\" variant=danger/></row>\r\n</box>\r\n{{/if}}\r\n{{#if data.x.session.copilot}}\r\n<box tone=accent compact=true>\r\n<row gap=2 wrap=true align=center>\r\n<heading level=4>Mode</heading>\r\n<row gap=0>{{#each data.x.session.copilot.modes}}<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=mode, mode={{ id }}\" emit=\"work-changed\" label=\"{{ name }}\" tip=\"{{ hint }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\" disabled=\"{{ sel }}\"/>{{/each}}</row>\r\n<small><muted>{{ data.x.session.copilot.status }}</muted></small>\r\n</row>\r\n{{#if data.x.session.permission}}\r\n<box tone=ask compact=true title=\"Copilot wants to: {{ data.x.session.permission.title }}\">\r\n{{#if data.x.session.permission.detail}}<box compact=true><text pre=true><mono>{{ data.x.session.permission.detail }}</mono></text></box>{{/if}}\r\n<row gap=2 wrap=true>{{#each data.x.session.permission.options}}<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=answer-option, option={{ id }}\" emit=\"work-changed\" label=\"{{ name }}\" variant=\"{{ kind == 'allow_once' ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n</box>\r\n{{/if}}\r\n{{#if data.x.session.copilot.idle}}\r\n{{#if data.x.session.copilot.waiting}}<box compact=true scroll=20><markdown value=\"{{ data.x.session.copilot.waiting }}\"/></box>{{/if}}\r\n<input bind=\"msg\" type=textarea rows=2 placeholder=\"Your answer to Copilot… (Ctrl+Enter)\" enter=\"send-live\"/>\r\n<row gap=2>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=send, text={{ state.msg }}\" then=\"msg=\" emit=\"work-changed\" label=\"Send\" variant=primary disabled=\"{{ not state.msg }}\"/>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=wrap-up\" emit=\"work-changed\" label=\"Wrap up\" tip=\"Copilot sums up and gives its result — that ends the run\"/>\r\n</row>\r\n{{/if}}\r\n</box>\r\n{{/if}}\r\n{{#if data.shellout.out}}<terminal text=\"{{ data.shellout.out }}\"/>{{/if}}\r\n{{#if not data.x.session.copilot}}\r\n{{#if data.x.session.menu}}\r\n<box compact=true>\r\n<col gap=0>{{#each data.x.session.menu}}<button action=\"state\" state=\"msg\" value=\"{{ next }}\" label=\"{{ label }}\" tip=\"{{ hint }}\" variant=quiet/>{{/each}}</col>\r\n</box>\r\n{{/if}}\r\n<box field=true>\r\n<input bind=\"msg\" type=textarea bare=true grow=true rows=1 placeholder=\"{{ data.x.session.placeholder }}\" enter=\"{{ data.x.session.isShell ? 'send-shell' : (data.x.session.canReplyLive ? 'send-live' : 'send-msg') }}\"/>\r\n{{#if data.x.session.files}}<row gap=1 wrap=true>{{#each data.x.session.files}}<pill label=\"📎 {{ name }}\" tip=\"{{ name }} · {{ size }}\"/><button run=\"work.attach-remove\" with=\"scope={{ data.x.session.attachScope }}, ref={{ ref }}\" emit=\"work-changed\" label=\"×\" variant=quiet tip=\"Remove {{ name }}\"/>{{/each}}</row>{{/if}}\r\n<row gap=1 wrap=true align=center>\r\n<upload bind=\"busyup\" run=\"work.attach\" with=\"scope={{ data.x.session.attachScope }}\" multiple=true zone=view label=\"📎\" look=icon tip=\"Attach images\" accept=\"{{ data.x.session.kind == 'session' ? 'image/png,image/jpeg,image/gif,image/webp' : '' }}\" emit=\"work-changed\"/>\r\n{{#if data.x.session.live}}\r\n<select bind=\"lmode\" look=quiet options=\"{{ data.x.session.live.modeOptions }}\" label=\"Permission mode\" tip=\"{{ data.x.session.live.modeTip }}\" tone=\"{{ data.x.session.live.modeTone }}\" emit=\"live-mode\"/>\r\n<select bind=\"lmodel\" look=quiet options=\"{{ data.x.session.live.modelOptions }}\" label=\"Model\" emit=\"live-model\"/>\r\n{{#if data.x.session.live.effortOptions}}<select bind=\"leffort\" look=quiet options=\"{{ data.x.session.live.effortOptions }}\" label=\"Effort\" tip=\"Changing it restarts the session between turns (resumed — nothing is lost).\" disabled=\"{{ data.x.session.live.working }}\" emit=\"live-effort\"/>{{/if}}\r\n<grow/>\r\n<row gap=1 align=center wrap=false>\r\n<pill shape=bare dot=\"{{ data.x.session.live.dot == 'run' ? 'pulse' : 'still' }}\" tone=\"{{ data.x.session.live.dot }}\" label=\"{{ data.x.session.hostText }}\"/>\r\n{{#if data.x.session.live.queued}}<pill label=\"{{ data.x.session.live.queued }}\" shape=tag/>{{/if}}\r\n{{#if data.x.session.shellPendingLabel}}<pill label=\"{{ data.x.session.shellPendingLabel }}\" tone=warn shape=tag tip=\"Claude Code's !: the output goes along with your next message\"/>{{/if}}\r\n{{#if data.x.session.elevated}}<pill label=\"{{ data.x.session.elevatedLabel }}\" tone=bad bold=true shape=tag/>{{/if}}\r\n</row>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=wrap-up\" emit=\"work-changed\" label=\"Finish\" tip=\"It sums up and gives its result — that ends the session: its todo ticked off, the time suggested.\" variant=quiet disabled=\"{{ data.x.session.live.working }}\"/>\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=close\" confirm=\"Close the session without a result? (Nothing is ticked off or booked.)\" emit=\"work-changed\" label=\"Close\" tip=\"End it without a result\" variant=quiet/>\r\n{{#else}}\r\n<grow/>\r\n{{/if}}\r\n{{#if data.x.session.isShell}}\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=shell, cmd={{ data.x.session.shellCmd }}\" into=\"shellout\" then=\"msg=\" emit=\"work-changed\" label=\"↑\" tip=\"Run\" variant=send disabled=\"{{ not data.x.session.shellCmd }}\"/>\r\n{{#else}}\r\n{{#if data.x.session.live.working and not state.msg}}\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=interrupt\" emit=\"work-changed\" label=\"■\" tip=\"Stop its current turn (Esc)\" variant=send/>\r\n{{#else}}\r\n{{#if data.x.session.canReplyLive}}\r\n<button run=\"work.live\" with=\"run={{ data.x.session.runId }}, do=send, text={{ state.msg }}, attach={{ data.x.session.attachScope }}\" then=\"msg=\" emit=\"work-changed\" label=\"↑\" tip=\"Send\" variant=send disabled=\"{{ not state.msg }}\"/>\r\n{{#else}}\r\n<button run=\"work.send\" with=\"run={{ data.x.session.runId }}, text={{ state.msg }}, attach={{ data.x.session.attachScope }}\" then=\"msg=\" emit=\"work-changed\" label=\"↑\" tip=\"Send\" variant=send disabled=\"{{ not state.msg }}\"/>\r\n{{/if}}\r\n{{/if}}\r\n{{/if}}\r\n</row>\r\n</box>\r\n{{/if}}\r\n</col>\r\n</dock>\r\n{{/if}}\r\n{{/if}}\r\n{{/if}}\r\n</pane>\r\n</panes>\r\n{{/if}}\r\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Code",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i3",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Start a session",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.start",
+        "title": "Start a session",
+        "description": "A new session (a new todo and a worker on it): input instruction, ticket, repoId, provider, repoPath, branch, workspace, mode, model, effort, elevated. Output { runId }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-start",
+            "input": {
+              "instruction": "{{ input.instruction }}",
+              "ticket": "{{ input.ticket }}",
+              "repoId": "{{ input.repoId }}",
+              "provider": "{{ input.provider }}",
+              "repoPath": "{{ input.repoPath }}",
+              "branch": "{{ input.branch }}",
+              "workspace": "{{ input.workspace }}",
+              "mode": "{{ input.mode }}",
+              "model": "{{ input.model }}",
+              "effort": "{{ input.effort }}",
+              "elevated": "{{ input.elevated }}",
+              "attach": "{{ input.attach }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i4",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Send a message into a session",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.send",
+        "title": "Send a message into a session",
+        "description": "Your next message in a session's conversation (input run, text). Output { runId }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-send",
+            "input": {
+              "run": "{{ input.run }}",
+              "text": "{{ input.text }}",
+              "attach": "{{ input.attach }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i5",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Do something in a live session",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.live",
+        "title": "Do something in a live session",
+        "description": "Send, answer an ask, interrupt, switch the mode (input run, do, text, requestId, behavior, always, message, interrupt, then, answers, mode, option).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-live",
+            "input": {
+              "run": "{{ input.run }}",
+              "do": "{{ input.do }}",
+              "text": "{{ input.text }}",
+              "requestId": "{{ input.requestId }}",
+              "behavior": "{{ input.behavior }}",
+              "always": "{{ input.always }}",
+              "message": "{{ input.message }}",
+              "interrupt": "{{ input.interrupt }}",
+              "then": "{{ input.then }}",
+              "answers": "{{ input.answers }}",
+              "mode": "{{ input.mode }}",
+              "option": "{{ input.option }}",
+              "model": "{{ input.model }}",
+              "effort": "{{ input.effort }}",
+              "cmd": "{{ input.cmd }}",
+              "attach": "{{ input.attach }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Code settings",
+      "icon": "⚙️",
+      "schema": {
+        "titleName": "Code settings",
+        "properties": [],
+        "views": [
+          {
+            "id": "vwork2",
+            "name": "Code settings",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"instr\" value=\"\"/><state name=\"instred\" value=\"\"/><state name=\"acode\" value=\"\"/><state name=\"aother\" value=\"\"/><state name=\"agented\" value=\"\"/><state name=\"repoedit\" value=\"\"/><state name=\"rname\" value=\"\"/><state name=\"rpath\" value=\"\"/><state name=\"rgitlab\" value=\"\"/><state name=\"rboards\" value=\"\"/><state name=\"rtickets\" value=\"\"/><state name=\"rinstr\" value=\"\"/><state name=\"nname\" value=\"\"/><state name=\"npath\" value=\"\"/><state name=\"ngitlab\" value=\"\"/><state name=\"nboards\" value=\"\"/><state name=\"ntickets\" value=\"\"/>\r\n<data name=\"s\" lambda=\"work.settings\" every=10/>\r\n<on event=\"settings-changed\" action=\"reload\"/>\r\n<on event=\"instr-start\" action=\"state\" state=\"instr\" value=\"{{ data.s.instructions }}\"/>\r\n<on event=\"instr-start\" action=\"state\" state=\"instred\" value=\"1\"/>\r\n<on event=\"instr-stop\" action=\"state\" state=\"instred\" value=\"\"/>\r\n<on event=\"agent-start\" action=\"state\" state=\"acode\" value=\"{{ data.s.agentCode }}\"/>\r\n<on event=\"agent-start\" action=\"state\" state=\"aother\" value=\"{{ data.s.agentOther }}\"/>\r\n<on event=\"agent-start\" action=\"state\" state=\"agented\" value=\"1\"/>\r\n<on event=\"agent-stop\" action=\"state\" state=\"agented\" value=\"\"/>\r\n{{#if not data.s}}<muted>Loading …</muted>{{#else}}\r\n<col gap=4>\r\n{{#if data.result.message}}<text tone=good>{{ data.result.message }}</text>{{/if}}\r\n<heading level=2>Code</heading>\r\n<muted>How the Code tab's sessions and workers run: Claude Code live, its permission modes, and the workers' limits, model and house rules.</muted>\r\n\r\n<section title=\"Claude sessions\" collapsible=true open=true>\r\n<col gap=3>\r\n<muted>Claude workers as live sessions, like Claude Code: you talk to them, they ask you (permissions, plans, questions) on the Code tab, you switch their mode any time.</muted>\r\n<row gap=2 wrap=true align=center>\r\n<b>Live sessions (off: one-shot runs that refuse what isn't allowed, as before)</b>\r\n<button run=\"work.setting\" with=\"scope=claude, field=live, value={{ data.s.claude.live ? 'false' : 'true' }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ data.s.claude.live ? 'On' : 'Off' }}\" variant=\"{{ data.s.claude.live ? 'primary' : 'plain' }}\"/>\r\n</row>\r\n<b>Your sessions start in</b>\r\n<row gap=1 wrap=true>{{#each data.s.claude.mode}}<button run=\"work.setting\" with=\"scope=claude, field=mode, value={{ id }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" tip=\"{{ hint }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n<b>Runs Zeff starts on its own start in</b>\r\n<row gap=1 wrap=true>{{#each data.s.claude.autoMode}}<button run=\"work.setting\" with=\"scope=claude, field=autoMode, value={{ id }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" tip=\"{{ hint }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n<b>Effort</b>\r\n<row gap=1 wrap=true>{{#each data.s.claude.effort}}<button run=\"work.setting\" with=\"scope=claude, field=effort, value={{ id }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n<row gap=2 wrap=true align=center>\r\n<b>A question in a run Zeff started: refused after (minutes, 0 = it waits)</b>\r\n<button run=\"work.setting\" with=\"scope=claude, field=askTimeoutMin, value={{ data.s.claude.timeoutLess }}\" into=\"result\" emit=\"settings-changed\" label=\"−5\"/>\r\n<b>{{ data.s.claude.askTimeoutMin }}</b>\r\n<button run=\"work.setting\" with=\"scope=claude, field=askTimeoutMin, value={{ data.s.claude.timeoutMore }}\" into=\"result\" emit=\"settings-changed\" label=\"+5\"/>\r\n</row>\r\n<row gap=2 wrap=true align=center>\r\n<b>Bypass may be picked — no permission checks at all.</b>\r\n<button run=\"work.setting\" with=\"scope=claude, field=allowBypass, value={{ data.s.claude.allowBypass ? 'false' : 'true' }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ data.s.claude.allowBypass ? 'Allowed' : 'Not allowed' }}\" variant=\"{{ data.s.claude.allowBypass ? 'danger' : 'plain' }}\"/>\r\n</row>\r\n<small><muted>Only where nothing can go wrong: a worktree, a sandbox. Applies to sessions started from now on.</muted></small>\r\n{{#if data.s.admin}}\r\n<b>Admin sessions</b>\r\n{{#if data.s.adminInfo.windows}}\r\n{{#if data.s.adminInfo.elevated}}<text tone=warn>Zeff itself runs as administrator — so does every session, ticked or not.</text>{{/if}}\r\n<small><muted>How they start: {{ data.s.adminInfo.how }} · Scheduled task: {{ data.s.adminInfo.taskText }}</muted></small>\r\n<row gap=2>\r\n{{#if data.s.adminInfo.task}}<button run=\"work.admin\" with=\"do=remove\" into=\"result\" confirm=\"Remove the scheduled task? Windows asks for administrator rights once more to remove it.\" emit=\"settings-changed\" label=\"Remove — ask each time again\"/>\r\n{{#else}}<button run=\"work.admin\" with=\"do=install\" into=\"result\" confirm=\"Set up a scheduled task that starts admin sessions without asking? Windows asks for administrator rights once now. Anything that can write to your user profile could then get a process elevated through it.\" emit=\"settings-changed\" label=\"Set up — start them without asking\" variant=primary/>{{/if}}\r\n</row>\r\n{{#else}}<muted>Admin sessions are for Windows. Elsewhere, start Zeff itself with the rights its sessions need.</muted>{{/if}}\r\n{{#else}}<small><muted>Sessions as administrator (Windows) come with the “Admin sessions” plugin — <a href=\"/plugins\">Plugins</a>.</muted></small>{{/if}}\r\n</col>\r\n</section>\r\n\r\n<section title=\"Workers\" collapsible=true open=true>\r\n<col gap=3>\r\n<small><muted>Repos: {{ data.s.reposLine }} — set below, by Jira board or ticket.</muted></small>\r\n<row gap=2 wrap=true align=center>\r\n<b>{{ data.s.labels.workers }}</b>\r\n<button run=\"work.setting\" with=\"scope=work, field=parallel, value={{ data.s.parallelLess }}\" into=\"result\" emit=\"settings-changed\" label=\"−\"/>\r\n<b>{{ data.s.parallel }}</b>\r\n<button run=\"work.setting\" with=\"scope=work, field=parallel, value={{ data.s.parallelMore }}\" into=\"result\" emit=\"settings-changed\" label=\"+\"/>\r\n<small><muted>{{ data.s.labels.workersHint }}</muted></small>\r\n</row>\r\n{{#each data.s.pools}}\r\n<row gap=2 wrap=true align=center>\r\n<b>{{ label }}</b>\r\n<button run=\"work.setting\" with=\"scope=work, field=reserved:{{ source }}, value={{ less }}\" into=\"result\" emit=\"settings-changed\" label=\"−\"/>\r\n<b>{{ n }}</b>\r\n<button run=\"work.setting\" with=\"scope=work, field=reserved:{{ source }}, value={{ more }}\" into=\"result\" emit=\"settings-changed\" label=\"+\"/>\r\n<small><muted>{{ hint }}</muted></small>\r\n</row>\r\n{{/each}}\r\n<b>What a worker may do (Claude)</b>\r\n{{#each data.s.permission}}<row gap=2 align=center><button run=\"work.setting\" with=\"scope=work, field=permissionMode, value={{ id }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/><small><muted>{{ hint }}</muted></small></row>{{/each}}\r\n<b>Copilot worker</b>\r\n<row gap=1 wrap=true>{{#each data.s.copilot}}<button run=\"work.setting\" with=\"scope=work, field=copilotMode, value={{ id }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n<b>Where code work happens</b>\r\n{{#each data.s.isolation}}<row gap=2 align=center><button run=\"work.setting\" with=\"scope=work, field=isolation, value={{ id }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/><small><muted>{{ hint }}</muted></small></row>{{/each}}\r\n<b>Model</b>\r\n<row gap=1 wrap=true>{{#each data.s.models}}<button run=\"work.setting\" with=\"scope=work, field=model, value={{ value }}\" into=\"result\" emit=\"settings-changed\" label=\"{{ label }}\" variant=\"{{ sel ? 'primary' : 'plain' }}\"/>{{/each}}</row>\r\n<b>Copied instruction (what a click on a todo's label copies; $todo.id, $todo.ticket, $todo.text)</b>\r\n{{#if state.agented}}\r\n<input bind=\"acode\" placeholder=\"code todos\"/>\r\n<input bind=\"aother\" placeholder=\"other todos\"/>\r\n<row gap=2>\r\n<button run=\"work.setting\" with=\"scope=work, field=agentInstructionCode, value={{ state.acode }}\" into=\"result\" emit=\"settings-changed\" label=\"Save code\" variant=primary/>\r\n<button run=\"work.setting\" with=\"scope=work, field=agentInstructionOther, value={{ state.aother }}\" into=\"result\" emit=\"settings-changed\" label=\"Save other\" variant=primary/>\r\n<button emit=\"agent-stop\" label=\"Close\"/>\r\n</row>\r\n{{#else}}\r\n<small><mono>{{ data.s.agentCode }}</mono></small><small><mono>{{ data.s.agentOther }}</mono></small>\r\n<button emit=\"agent-start\" label=\"✎ Edit\" variant=quiet/>\r\n{{/if}}\r\n<b>House rules for every worker</b>\r\n{{#if state.instred}}\r\n<input bind=\"instr\" rows=6 value=\"{{ data.s.instructions }}\" placeholder=\"e.g. Run the Playwright suite with npm run test:e2e in packages/acme-core/Build.\"/>\r\n<row gap=2>\r\n<button run=\"work.setting\" with=\"scope=work, field=instructions, value={{ state.instr }}\" into=\"result\" emit=\"settings-changed\" label=\"Save\" variant=primary/>\r\n<button emit=\"instr-stop\" label=\"Close\"/>\r\n</row>\r\n{{#else}}\r\n<text pre=true>{{ data.s.instructions }}</text>\r\n<button emit=\"instr-start\" label=\"✎ Edit\" variant=quiet/>\r\n{{/if}}\r\n</col>\r\n</section>\r\n\r\n<section title=\"Repos\" collapsible=true open=true>\r\n<col gap=3>\r\n<muted>Where the Code tab's workers implement. A ticket's work goes to the repo that names the ticket, else to the one its Jira board is assigned to, else to the one whose GitLab project its merge requests are in.</muted>\r\n{{#each data.s.repos}}\r\n<box>\r\n<row gap=3 wrap=true align=center>\r\n<b>{{ name }}</b><small><muted>{{ path }}</muted></small>\r\n<small><text tone=\"{{ ok ? 'muted' : 'bad' }}\">{{ where }}</text></small>\r\n<small><muted>{{ boards }}{{ tickets ? ' · ' + tickets : '' }}</muted></small>\r\n<grow/>\r\n<button run=\"work.repo-delivery\" with=\"id={{ id }}, delivery=mr\" into=\"result\" emit=\"settings-changed\" label=\"Merge request\" variant=\"{{ mr ? 'primary' : 'plain' }}\" tip=\"Push a feature branch, open a merge request, merge once approved\"/>\r\n<button run=\"work.repo-delivery\" with=\"id={{ id }}, delivery=direct\" into=\"result\" emit=\"settings-changed\" label=\"Direct\" variant=\"{{ direct ? 'primary' : 'plain' }}\" tip=\"Merge into the default branch and push\"/>\r\n<button action=\"state\" state=\"repoedit\" value=\"{{ id }}\" label=\"✎ Edit\" variant=quiet/>\r\n<button run=\"work.repo-delete\" with=\"id={{ id }}\" confirm=\"Remove this repo from the list? Its folder is not touched.\" into=\"result\" emit=\"settings-changed\" label=\"Remove\" variant=danger/>\r\n</row>\r\n<small><b>Systems (from the knowledge)</b></small>\r\n{{#if systems}}<markdown value=\"{{ systems }}\"/>{{#else}}<small><muted>{{ systemsNote }}</muted></small>{{/if}}\r\n{{#if state.repoedit == id}}\r\n<col gap=2>\r\n<input bind=\"rname\" value=\"{{ name }}\" placeholder=\"Name\"/>\r\n<input bind=\"rpath\" value=\"{{ path }}\" placeholder=\"Folder (a git repo)\"/>\r\n<input bind=\"rgitlab\" value=\"{{ gitlabProject }}\" placeholder=\"GitLab project (optional)\"/>\r\n<input bind=\"rboards\" value=\"{{ boardsText }}\" placeholder=\"Jira board ids, comma separated\"/>\r\n<input bind=\"rtickets\" value=\"{{ tickets }}\" placeholder=\"Single tickets, comma separated\"/>\r\n<input bind=\"rinstr\" rows=3 value=\"{{ instructions }}\" placeholder=\"Instructions for workers in this repo\"/>\r\n<row gap=2>\r\n<button run=\"work.repo-save\" with=\"id={{ id }}, name={{ state.rname }}, path={{ state.rpath }}, gitlabProject={{ state.rgitlab }}, boards={{ state.rboards }}, tickets={{ state.rtickets }}, instructions={{ state.rinstr }}\" into=\"result\" emit=\"settings-changed\" label=\"Save\" variant=primary/>\r\n<button action=\"state\" state=\"repoedit\" value=\"\" label=\"Close\"/>\r\n</row>\r\n</col>\r\n{{/if}}\r\n</box>\r\n{{/each}}\r\n<button run=\"work.repo-systems\" into=\"result\" emit=\"settings-changed\" label=\"Read the systems from the knowledge now\"/>\r\n<b>Add a repo</b>\r\n<small><muted>Jira boards: {{#each data.s.boardChoices}}{{ name }}; {{/each}}</muted></small>\r\n<input bind=\"nname\" placeholder=\"Name\"/>\r\n<input bind=\"npath\" placeholder=\"Folder (a git repo)\"/>\r\n<input bind=\"ngitlab\" placeholder=\"GitLab project (optional)\"/>\r\n<input bind=\"nboards\" placeholder=\"Jira board ids, comma separated\"/>\r\n<input bind=\"ntickets\" placeholder=\"Single tickets, comma separated\"/>\r\n<row gap=2>\r\n<button run=\"work.repo-save\" with=\"name={{ state.nname }}, path={{ state.npath }}, gitlabProject={{ state.ngitlab }}, boards={{ state.nboards }}, tickets={{ state.ntickets }}\" into=\"result\" then=\"nname=\" emit=\"settings-changed\" label=\"Add\" variant=primary disabled=\"{{ not state.npath }}\"/>\r\n</row>\r\n</col>\r\n</section>\r\n</col>\r\n{{/if}}\r\n"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r2",
+          "title": "Code settings",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "i11",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change a Code setting",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.setting",
+        "title": "Change a Code setting",
+        "description": "One setting changed (input scope: work | claude, field, value). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.settings-save",
+            "input": {
+              "scope": "{{ input.scope }}",
+              "field": "{{ input.field }}",
+              "value": "{{ input.value }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i12",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add or change a repo",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.repo-save",
+        "title": "Add or change a repo",
+        "description": "A repo for workers (input id, name, path, gitlabProject, boards, tickets, instructions, delivery).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.repo-save",
+            "input": {
+              "id": "{{ input.id }}",
+              "name": "{{ input.name }}",
+              "path": "{{ input.path }}",
+              "gitlabProject": "{{ input.gitlabProject }}",
+              "boards": "{{ input.boards }}",
+              "tickets": "{{ input.tickets }}",
+              "instructions": "{{ input.instructions }}",
+              "delivery": "{{ input.delivery }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i13",
+      "parent": "i1",
+      "kind": "page",
+      "title": "How a repo's work is delivered",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.repo-delivery",
+        "title": "How a repo's work is delivered",
+        "description": "A repo's delivery only: mr | direct (input id, delivery).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.repo-save",
+            "input": {
+              "id": "{{ input.id }}",
+              "part": "delivery",
+              "delivery": "{{ input.delivery }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i14",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Remove a repo",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.repo-delete",
+        "title": "Remove a repo",
+        "description": "A repo off the list; its folder is not touched (input id).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.repo-delete",
+            "input": {
+              "id": "{{ input.id }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i15",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Switch a session's branch",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.branch",
+        "title": "Switch a session's branch",
+        "description": "The branch a session works on (input run, branch). Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-branch",
+            "input": {
+              "run": "{{ input.run }}",
+              "branch": "{{ input.branch }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i16",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Kill all dangling sessions",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.dangling-end",
+        "title": "Kill all dangling sessions",
+        "description": "Every dangling session stopped, the workers free. Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.dangling-end",
+            "input": {}
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i17",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Set up or remove automatic admin sessions",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.admin",
+        "title": "Set up or remove automatic admin sessions",
+        "description": "input do: install | remove | uac. Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.admin-do",
+            "input": {
+              "do": "{{ input.do }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i18",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Attach a file or picture",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.attach",
+        "title": "Attach a file or picture",
+        "description": "A file the upload brought, kept for the next message (input scope: new | run:<id>, token, name). Output { ref, name, size }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.attach",
+            "input": {
+              "scope": "{{ input.scope }}",
+              "token": "{{ input.token }}",
+              "name": "{{ input.name }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i19",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take an attachment off",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.attach-remove",
+        "title": "Take an attachment off",
+        "description": "One waiting attachment, or all of a scope (input scope, ref).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.attach-remove",
+            "input": {
+              "scope": "{{ input.scope }}",
+              "ref": "{{ input.ref }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i20",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Read the repos' systems",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.repo-systems",
+        "title": "Read the repos' systems",
+        "description": "The systems of all repos read from the knowledge again. Output { message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.repo-systems",
+            "input": {}
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Commit, push, merge request, dev servers",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.git",
+        "title": "Commit, push, merge request, dev servers",
+        "description": "In a session's folder: input run, do (commit | push | mr | proc-start | proc-stop), message, title, name. Output { message, url }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-git",
+            "input": {
+              "run": "{{ input.run }}",
+              "do": "{{ input.do }}",
+              "message": "{{ input.message }}",
+              "title": "{{ input.title }}",
+              "name": "{{ input.name }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Stop a session's run",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.stop",
+        "title": "Stop a session's run",
+        "description": "A run stopped or taken out of the queue (input run).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-stop",
+            "input": {
+              "run": "{{ input.run }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Archive a session",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.archive",
+        "title": "Archive a session",
+        "description": "A session out of the list, or back (input todo, archived: true | false).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-archive",
+            "input": {
+              "todo": "{{ input.todo }}",
+              "archived": "{{ input.archived }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Delete a session",
+      "icon": "🛠️",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "work.delete",
+        "title": "Delete a session",
+        "description": "A session deleted for good — its runs and logs; its todo stays (input todo).",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "do",
+            "kind": "action",
+            "action": "work.session-delete",
+            "input": {
+              "todo": "{{ input.todo }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "runId": "{{ steps.do.runId }}",
+              "runs": "{{ steps.do.runs }}",
+              "message": "{{ steps.do.message }}",
+              "url": "{{ steps.do.url }}",
+              "out": "{{ steps.do.out }}",
+              "code": "{{ steps.do.code }}",
+              "ref": "{{ steps.do.ref }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    }
+  ]
+}

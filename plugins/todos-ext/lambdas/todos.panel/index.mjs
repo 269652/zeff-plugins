@@ -23,7 +23,8 @@ export async function handler(event, context) {
   const t = tFor(context.language);
   const lang = context.language === "de" || context.language === "es" ? context.language : "en";
   const locale = { de: "de-DE", es: "es-ES", en: "en-GB" }[lang];
-  const id = Number(event?.id);
+  // (a number, or a quick panel's key "time-3": the todo it is open on)
+  const id = Number(String(event?.id ?? "").replace(/^[a-z]+-/, ""));
   if (!Number.isInteger(id) || id <= 0) return { found: false };
   const d = await context.zeff.call("todos.detail", { id });
   if (!d.found) return { found: false, error: t("Unknown todo.") };
@@ -70,6 +71,7 @@ export async function handler(event, context) {
     opsWhy: d.opsWhy ? t("Suggested: {why}", { why: d.opsWhy }) : "",
     blockedBy: d.blockedBy ? t("Waiting: {what} — the GitLab sync notices once it's ready", { what: d.blockedBy }) : "",
     time: d.time.map((r) => ({ ...r, when: stamp(r.at), length: minutes(r.minutes), mine: r.by === "Du" })),
+    timeTotal: d.time.length ? minutes(d.time.reduce((n, r) => n + r.minutes, 0)) : "",
     nTime: d.time.length,
     totalTime: d.totalMinutes ? minutes(d.totalMinutes) : "",
     mrs: d.mrs,

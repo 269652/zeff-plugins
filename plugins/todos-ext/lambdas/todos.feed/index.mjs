@@ -38,6 +38,8 @@ export async function handler(event, context) {
       run: e.event === "created" ? e.by.run : 0,
       note: e.note ? (e.event === "created" ? t("Source: {note}", { note: e.note }) : e.note) : "",
       isNew,
+      tone: { created: "sky", done: "emerald", dismissed: "zinc", reopened: "amber", merged: "violet" }[e.event] ?? "zinc",
+      closedEvent: e.event === "done" || e.event === "dismissed",
     };
     const last = days[days.length - 1];
     if (last?.key === k) last.items.push(row);

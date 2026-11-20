@@ -1,0 +1,16 @@
+{
+  "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
+  "id": "work-ext",
+  "name": "Code",
+  "version": "0.1.0",
+  "description": "The Code tab in the Workspace: your sessions with workers and agents, each conversation live, the questions they ask you, tickets and new sessions. The engine stays Zeff's.",
+  "author": "Zeff",
+  "apiVersion": 1,
+  "permissions": [],
+  "contributes": {
+    "lambdas": "lambdas",
+    "workspacePackages": [
+      "work.package.json"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.entry-detail",
+  "label": "Time tracking: what stands behind an entry",
+  "what": "An entry's context items and what its todos bring along.",
+  "kind": "function",
+  "zeff": [
+    "time.entry-detail"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

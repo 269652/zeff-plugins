@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.rules",
+  "label": "Time tracking: the rules",
+  "what": "The entry type rules, the report rewriting rules, the meeting rules, the exclude rules and the entry types with the options of their forms.",
+  "kind": "function",
+  "zeff": [
+    "time.rules"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

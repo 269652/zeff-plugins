@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.month",
+  "label": "Time tracking: the month's report",
+  "what": "The monthly report's figures and words for a month — the booked card, the calendar, hours per job and week, by type and tag, what each job's time went to.",
+  "kind": "function",
+  "zeff": [
+    "time.month"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

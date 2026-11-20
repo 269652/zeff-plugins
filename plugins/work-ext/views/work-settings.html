@@ -1,0 +1,156 @@
+<state name="instr" value=""/><state name="instred" value=""/><state name="acode" value=""/><state name="aother" value=""/><state name="agented" value=""/><state name="repoedit" value=""/><state name="rname" value=""/><state name="rpath" value=""/><state name="rgitlab" value=""/><state name="rboards" value=""/><state name="rtickets" value=""/><state name="rinstr" value=""/><state name="nname" value=""/><state name="npath" value=""/><state name="ngitlab" value=""/><state name="nboards" value=""/><state name="ntickets" value=""/>
+<data name="s" lambda="work.settings" every=10/>
+<on event="settings-changed" action="reload"/>
+<on event="instr-start" action="state" state="instr" value="{{ data.s.instructions }}"/>
+<on event="instr-start" action="state" state="instred" value="1"/>
+<on event="instr-stop" action="state" state="instred" value=""/>
+<on event="agent-start" action="state" state="acode" value="{{ data.s.agentCode }}"/>
+<on event="agent-start" action="state" state="aother" value="{{ data.s.agentOther }}"/>
+<on event="agent-start" action="state" state="agented" value="1"/>
+<on event="agent-stop" action="state" state="agented" value=""/>
+{{#if not data.s}}<muted>Loading …</muted>{{#else}}
+<col gap=4>
+{{#if data.result.message}}<text tone=good>{{ data.result.message }}</text>{{/if}}
+<heading level=2>Code</heading>
+<muted>How the Code tab's sessions and workers run: Claude Code live, its permission modes, and the workers' limits, model and house rules.</muted>
+
+<section title="Claude sessions" collapsible=true open=true>
+<col gap=3>
+<muted>Claude workers as live sessions, like Claude Code: you talk to them, they ask you (permissions, plans, questions) on the Code tab, you switch their mode any time.</muted>
+<row gap=2 wrap=true align=center>
+<b>Live sessions (off: one-shot runs that refuse what isn't allowed, as before)</b>
+<button run="work.setting" with="scope=claude, field=live, value={{ data.s.claude.live ? 'false' : 'true' }}" into="result" emit="settings-changed" label="{{ data.s.claude.live ? 'On' : 'Off' }}" variant="{{ data.s.claude.live ? 'primary' : 'plain' }}"/>
+</row>
+<b>Your sessions start in</b>
+<row gap=1 wrap=true>{{#each data.s.claude.mode}}<button run="work.setting" with="scope=claude, field=mode, value={{ id }}" into="result" emit="settings-changed" label="{{ label }}" tip="{{ hint }}" variant="{{ sel ? 'primary' : 'plain' }}"/>{{/each}}</row>
+<b>Runs Zeff starts on its own start in</b>
+<row gap=1 wrap=true>{{#each data.s.claude.autoMode}}<button run="work.setting" with="scope=claude, field=autoMode, value={{ id }}" into="result" emit="settings-changed" label="{{ label }}" tip="{{ hint }}" variant="{{ sel ? 'primary' : 'plain' }}"/>{{/each}}</row>
+<b>Effort</b>
+<row gap=1 wrap=true>{{#each data.s.claude.effort}}<button run="work.setting" with="scope=claude, field=effort, value={{ id }}" into="result" emit="settings-changed" label="{{ label }}" variant="{{ sel ? 'primary' : 'plain' }}"/>{{/each}}</row>
+<row gap=2 wrap=true align=center>
+<b>A question in a run Zeff started: refused after (minutes, 0 = it waits)</b>
+<button run="work.setting" with="scope=claude, field=askTimeoutMin, value={{ data.s.claude.timeoutLess }}" into="result" emit="settings-changed" label="−5"/>
+<b>{{ data.s.claude.askTimeoutMin }}</b>
+<button run="work.setting" with="scope=claude, field=askTimeoutMin, value={{ data.s.claude.timeoutMore }}" into="result" emit="settings-changed" label="+5"/>
+</row>
+<row gap=2 wrap=true align=center>
+<b>Bypass may be picked — no permission checks at all.</b>
+<button run="work.setting" with="scope=claude, field=allowBypass, value={{ data.s.claude.allowBypass ? 'false' : 'true' }}" into="result" emit="settings-changed" label="{{ data.s.claude.allowBypass ? 'Allowed' : 'Not allowed' }}" variant="{{ data.s.claude.allowBypass ? 'danger' : 'plain' }}"/>
+</row>
+<small><muted>Only where nothing can go wrong: a worktree, a sandbox. Applies to sessions started from now on.</muted></small>
+{{#if data.s.admin}}
+<b>Admin sessions</b>
+{{#if data.s.adminInfo.windows}}
+{{#if data.s.adminInfo.elevated}}<text tone=warn>Zeff itself runs as administrator — so does every session, ticked or not.</text>{{/if}}
+<small><muted>How they start: {{ data.s.adminInfo.how }} · Scheduled task: {{ data.s.adminInfo.taskText }}</muted></small>
+<row gap=2>
+{{#if data.s.adminInfo.task}}<button run="work.admin" with="do=remove" into="result" confirm="Remove the scheduled task? Windows asks for administrator rights once more to remove it." emit="settings-changed" label="Remove — ask each time again"/>
+{{#else}}<button run="work.admin" with="do=install" into="result" confirm="Set up a scheduled task that starts admin sessions without asking? Windows asks for administrator rights once now. Anything that can write to your user profile could then get a process elevated through it." emit="settings-changed" label="Set up — start them without asking" variant=primary/>{{/if}}
+</row>
+{{#else}}<muted>Admin sessions are for Windows. Elsewhere, start Zeff itself with the rights its sessions need.</muted>{{/if}}
+{{#else}}<small><muted>Sessions as administrator (Windows) come with the “Admin sessions” plugin — <a href="/plugins">Plugins</a>.</muted></small>{{/if}}
+</col>
+</section>
+
+<section title="Workers" collapsible=true open=true>
+<col gap=3>
+<small><muted>Repos: {{ data.s.reposLine }} — set below, by Jira board or ticket.</muted></small>
+<row gap=2 wrap=true align=center>
+<b>{{ data.s.labels.workers }}</b>
+<button run="work.setting" with="scope=work, field=parallel, value={{ data.s.parallelLess }}" into="result" emit="settings-changed" label="−"/>
+<b>{{ data.s.parallel }}</b>
+<button run="work.setting" with="scope=work, field=parallel, value={{ data.s.parallelMore }}" into="result" emit="settings-changed" label="+"/>
+<small><muted>{{ data.s.labels.workersHint }}</muted></small>
+</row>
+{{#each data.s.pools}}
+<row gap=2 wrap=true align=center>
+<b>{{ label }}</b>
+<button run="work.setting" with="scope=work, field=reserved:{{ source }}, value={{ less }}" into="result" emit="settings-changed" label="−"/>
+<b>{{ n }}</b>
+<button run="work.setting" with="scope=work, field=reserved:{{ source }}, value={{ more }}" into="result" emit="settings-changed" label="+"/>
+<small><muted>{{ hint }}</muted></small>
+</row>
+{{/each}}
+<b>What a worker may do (Claude)</b>
+{{#each data.s.permission}}<row gap=2 align=center><button run="work.setting" with="scope=work, field=permissionMode, value={{ id }}" into="result" emit="settings-changed" label="{{ label }}" variant="{{ sel ? 'primary' : 'plain' }}"/><small><muted>{{ hint }}</muted></small></row>{{/each}}
+<b>Copilot worker</b>
+<row gap=1 wrap=true>{{#each data.s.copilot}}<button run="work.setting" with="scope=work, field=copilotMode, value={{ id }}" into="result" emit="settings-changed" label="{{ label }}" variant="{{ sel ? 'primary' : 'plain' }}"/>{{/each}}</row>
+<b>Where code work happens</b>
+{{#each data.s.isolation}}<row gap=2 align=center><button run="work.setting" with="scope=work, field=isolation, value={{ id }}" into="result" emit="settings-changed" label="{{ label }}" variant="{{ sel ? 'primary' : 'plain' }}"/><small><muted>{{ hint }}</muted></small></row>{{/each}}
+<b>Model</b>
+<row gap=1 wrap=true>{{#each data.s.models}}<button run="work.setting" with="scope=work, field=model, value={{ value }}" into="result" emit="settings-changed" label="{{ label }}" variant="{{ sel ? 'primary' : 'plain' }}"/>{{/each}}</row>
+<b>Copied instruction (what a click on a todo's label copies; $todo.id, $todo.ticket, $todo.text)</b>
+{{#if state.agented}}
+<input bind="acode" placeholder="code todos"/>
+<input bind="aother" placeholder="other todos"/>
+<row gap=2>
+<button run="work.setting" with="scope=work, field=agentInstructionCode, value={{ state.acode }}" into="result" emit="settings-changed" label="Save code" variant=primary/>
+<button run="work.setting" with="scope=work, field=agentInstructionOther, value={{ state.aother }}" into="result" emit="settings-changed" label="Save other" variant=primary/>
+<button emit="agent-stop" label="Close"/>
+</row>
+{{#else}}
+<small><mono>{{ data.s.agentCode }}</mono></small><small><mono>{{ data.s.agentOther }}</mono></small>
+<button emit="agent-start" label="✎ Edit" variant=quiet/>
+{{/if}}
+<b>House rules for every worker</b>
+{{#if state.instred}}
+<input bind="instr" rows=6 value="{{ data.s.instructions }}" placeholder="e.g. Run the Playwright suite with npm run test:e2e in packages/acme-core/Build."/>
+<row gap=2>
+<button run="work.setting" with="scope=work, field=instructions, value={{ state.instr }}" into="result" emit="settings-changed" label="Save" variant=primary/>
+<button emit="instr-stop" label="Close"/>
+</row>
+{{#else}}
+<text pre=true>{{ data.s.instructions }}</text>
+<button emit="instr-start" label="✎ Edit" variant=quiet/>
+{{/if}}
+</col>
+</section>
+
+<section title="Repos" collapsible=true open=true>
+<col gap=3>
+<muted>Where the Code tab's workers implement. A ticket's work goes to the repo that names the ticket, else to the one its Jira board is assigned to, else to the one whose GitLab project its merge requests are in.</muted>
+{{#each data.s.repos}}
+<box>
+<row gap=3 wrap=true align=center>
+<b>{{ name }}</b><small><muted>{{ path }}</muted></small>
+<small><text tone="{{ ok ? 'muted' : 'bad' }}">{{ where }}</text></small>
+<small><muted>{{ boards }}{{ tickets ? ' · ' + tickets : '' }}</muted></small>
+<grow/>
+<button run="work.repo-delivery" with="id={{ id }}, delivery=mr" into="result" emit="settings-changed" label="Merge request" variant="{{ mr ? 'primary' : 'plain' }}" tip="Push a feature branch, open a merge request, merge once approved"/>
+<button run="work.repo-delivery" with="id={{ id }}, delivery=direct" into="result" emit="settings-changed" label="Direct" variant="{{ direct ? 'primary' : 'plain' }}" tip="Merge into the default branch and push"/>
+<button action="state" state="repoedit" value="{{ id }}" label="✎ Edit" variant=quiet/>
+<button run="work.repo-delete" with="id={{ id }}" confirm="Remove this repo from the list? Its folder is not touched." into="result" emit="settings-changed" label="Remove" variant=danger/>
+</row>
+<small><b>Systems (from the knowledge)</b></small>
+{{#if systems}}<markdown value="{{ systems }}"/>{{#else}}<small><muted>{{ systemsNote }}</muted></small>{{/if}}
+{{#if state.repoedit == id}}
+<col gap=2>
+<input bind="rname" value="{{ name }}" placeholder="Name"/>
+<input bind="rpath" value="{{ path }}" placeholder="Folder (a git repo)"/>
+<input bind="rgitlab" value="{{ gitlabProject }}" placeholder="GitLab project (optional)"/>
+<input bind="rboards" value="{{ boardsText }}" placeholder="Jira board ids, comma separated"/>
+<input bind="rtickets" value="{{ tickets }}" placeholder="Single tickets, comma separated"/>
+<input bind="rinstr" rows=3 value="{{ instructions }}" placeholder="Instructions for workers in this repo"/>
+<row gap=2>
+<button run="work.repo-save" with="id={{ id }}, name={{ state.rname }}, path={{ state.rpath }}, gitlabProject={{ state.rgitlab }}, boards={{ state.rboards }}, tickets={{ state.rtickets }}, instructions={{ state.rinstr }}" into="result" emit="settings-changed" label="Save" variant=primary/>
+<button action="state" state="repoedit" value="" label="Close"/>
+</row>
+</col>
+{{/if}}
+</box>
+{{/each}}
+<button run="work.repo-systems" into="result" emit="settings-changed" label="Read the systems from the knowledge now"/>
+<b>Add a repo</b>
+<small><muted>Jira boards: {{#each data.s.boardChoices}}{{ name }}; {{/each}}</muted></small>
+<input bind="nname" placeholder="Name"/>
+<input bind="npath" placeholder="Folder (a git repo)"/>
+<input bind="ngitlab" placeholder="GitLab project (optional)"/>
+<input bind="nboards" placeholder="Jira board ids, comma separated"/>
+<input bind="ntickets" placeholder="Single tickets, comma separated"/>
+<row gap=2>
+<button run="work.repo-save" with="name={{ state.nname }}, path={{ state.npath }}, gitlabProject={{ state.ngitlab }}, boards={{ state.nboards }}, tickets={{ state.ntickets }}" into="result" then="nname=" emit="settings-changed" label="Add" variant=primary disabled="{{ not state.npath }}"/>
+</row>
+</col>
+</section>
+</col>
+{{/if}}

@@ -1,0 +1,1164 @@
+<state name="view" value="week" keep=url/><state name="week" value=""/><state name="month" value=""/><state name="by" value=""/><state name="aweeks" value="8"/><state name="atickets" value=""/><state name="asplit" value=""/><state name="jpart" value="jobs" keep=url/>
+<on event="openweek" action="state" state="view" value="week"/>
+{{#if state.view == 'month'}}
+<data name="m" lambda="zeiterfassung.month" with="month={{ state.month }}, by={{ state.by }}" when="{{ state.view == 'month' }}"/>
+<split width=288 side=left gap=6 sticky=true>
+<col gap=3>
+  <tabs bind="view" look=line options="week:Week, month:Month, analysis:Analysis, day:End of day, jobs:Jobs, settings:Settings"/>
+  {{#if data.m}}
+  <row gap=2 align=center wrap=true>
+    <button action="state" state="month" value="{{ data.m.prev }}" label="←" tip="Previous month" variant=plain size=md/>
+    <col width=176 align=center><heading level=2>{{ data.m.label }}</heading><text tone=muted>{{ data.m.weeksText }}</text></col>
+    <button action="state" state="month" value="{{ data.m.next }}" label="→" tip="Next month" variant=plain size=md/>
+    {{#if not data.m.isCurrent}}<button action="state" state="month" value="{{ data.m.current }}" label="This month" variant=plain/>{{/if}}
+  </row>
+  <row gap=2 align=end wrap=true>
+    <col width=170><input stack=true bind="month" type=month label="Jump to month" value="{{ data.m.key }}"/></col>
+    <col width=144><select stack=true bind="by" options="{{ data.m.reporterOptions | tojson }}" label="Reported by"/></col>
+    <button action="url" href="{{ data.m.csv }}" label="CSV" variant=plain size=md/>
+  </row>
+  {{/if}}
+</col>
+{{#if data.m}}
+<col gap=6>
+  {{#if data.m.unreadable}}<callout tone=bad>{{ data.m.unreadable }}</callout>{{/if}}
+  <grid cols=3 gap=3 min=200 keep=true>
+    <tile tint=true label="{{ data.m.booked.label }}" value="{{ data.m.booked.num }}" suffix="{{ data.m.booked.of }}" sub="{{ data.m.booked.sub }}" tone="{{ data.m.booked.tone }}" mark="{{ data.m.booked.mark }}"/>
+    <tile tint=true label="{{ data.m.past.label }}" value="{{ data.m.past.value }}" sub="{{ data.m.past.sub }}" tone="{{ data.m.past.tone }}" mark="{{ data.m.past.mark }}">
+      {{#if data.m.past.weeks}}<row gap=1 wrap=true>{{#each data.m.past.weeks}}<button action="state" state="week" value="{{ key }}" emit="openweek" label="{{ label }}" tip="{{ title }}" variant=chip tone="{{ missing ? 'bad' : 'good' }}"/>{{/each}}</row>{{/if}}
+    </tile>
+    <tile tint=true label="{{ data.m.entries.label }}" value="{{ data.m.entries.value }}" sub="{{ data.m.entries.sub }}" tone="{{ data.m.entries.tone }}" mark="{{ data.m.entries.mark }}"/>
+  </grid>
+
+  <section card=true title="Days" sub="{{ data.m.calendarHint }}">
+    {{#if data.m.slotActions}}<row gap=2 wrap=true justify=end align=center>{{#if data.m.oldestPull}}<small><muted>{{ data.m.oldestPull }}</muted></small>{{/if}}{{#each data.m.slotActions}}<button run="{{ flow }}" with="{{ with }}" emit="time-changed" confirm="{{ confirm }}" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{/each}}</row>{{/if}}
+    <grid tracks="3rem repeat(7,minmax(0,1fr)) 4.5rem" gap=1 minw=576>
+      <text></text>
+      {{#each data.m.weekdays}}<col><small tone=muted><b>{{ this | upper }}</b></small></col>{{/each}}
+      <col align=end><small tone=muted><b>WEEK</b></small></col>
+      {{#each data.m.calendar}}
+      <col align=center><button action="state" state="week" value="{{ key }}" emit="openweek" label="{{ label }}" tip="{{ title }}" variant=quiet/></col>
+      {{#each cells}}
+      {{#if in}}
+      <box dense=true tone="{{ tone }}" ring="{{ today ? 'true' : 'false' }}" action="state" state="week" value="{{ week }}" emit="openweek" tip="{{ title }}">
+        <row justify=between><small>{{#if today}}<b>{{ day }}</b>{{#else}}{{ day }}{{/if}}</small><small>{{ note }}</small></row>
+        <col align=end><text><b>{{ main }}</b>{{#if gap}} <small>{{ gap }}</small>{{/if}}</text></col>
+      </box>
+      {{#else}}<text></text>{{/if}}
+      {{/each}}
+      <col align=end gap=0><text><b>{{ booked }}</b></text><small tone=muted>{{ of }}</small></col>
+      {{/each}}
+    </grid>
+    <small><muted>red: hours missing · amber: due today · grey: off / absent</muted></small>
+    {{#if data.m.approvals}}<row gap=3 wrap=true><small><muted>green: {{ data.m.approvals.legendAll }}</muted></small><small><muted>8 / 12 {{ data.m.approvals.legendPartly }}</muted></small><small><muted>{{ data.m.approvals.legendNone }}</muted></small>{{#if data.m.approvals.unpulled}}<small><muted>{{ data.m.approvals.unpulled }}</muted></small>{{/if}}</row>{{/if}}
+  </section>
+
+  <section card=true title="Hours per job and week">
+    {{#if data.m.jobRows}}
+    <sheet compact=true caption="Hours per job and week">
+      <shead><srow>
+        <scell head=true>Job</scell>
+        {{#each data.m.weekHeads}}<scell head=true num=true><col align=end><button action="state" state="week" value="{{ key }}" emit="openweek" label="{{ label }}" variant=link/><small>{{ range }}</small></col></scell>{{/each}}
+        <scell head=true num=true>Total</scell>
+        <scell head=true num=true>Share</scell>
+      </srow></shead>
+      <sbody>
+        {{#each data.m.jobRows}}
+        <srow hover=true>
+          <scell row=true>{{#if project}}<text><b>{{ project }}</b></text><small tone=muted><mono>{{ number }}</mono></small>{{#else}}<text><b>{{ number }} {{ name }}</b></text>{{#if customer}}<small tone=muted>{{ customer }}</small>{{/if}}{{/if}}</scell>
+          {{#each weeks}}<scell num=true>{{ this }}</scell>{{/each}}
+          <scell num=true bold=true>{{ total }}</scell>
+          <scell num=true tone=muted>{{ share }}</scell>
+        </srow>
+        {{/each}}
+      </sbody>
+      <sfoot>
+        <srow bold=true><scell row=true>Booked</scell>{{#each data.m.foot.booked}}<scell num=true>{{ this }}</scell>{{/each}}<scell num=true>{{ data.m.foot.bookedTotal }}</scell><scell num=true></scell></srow>
+        {{#if data.m.foot.missing}}<srow bold=true tone=bad><scell row=true>Missing</scell>{{#each data.m.foot.missing}}<scell num=true>{{ this }}</scell>{{/each}}<scell num=true>{{ data.m.foot.missingTotal }}</scell><scell num=true></scell></srow>{{/if}}
+        <srow tone=muted><scell row=true>Target</scell>{{#each data.m.foot.target}}<scell num=true>{{ this }}</scell>{{/each}}<scell num=true>{{ data.m.foot.targetTotal }}</scell><scell num=true></scell></srow>
+      </sfoot>
+    </sheet>
+    {{#else}}<text tone=muted>{{ data.m.emptyJobs }}</text>{{/if}}
+  </section>
+
+  <grid cols=2 gap=4 min=300>
+    <section card=true title="Hours by type">
+      <chart kind=bar look=track source="data.m.typeItems" group="label" value="value" text="valueLabel" empty="No entries."/>
+    </section>
+    <section card=true title="Hours by tag">
+      <chart kind=bar look=track source="data.m.tagItems" group="label" value="value" text="valueLabel" empty="No entries."/>
+    </section>
+  </grid>
+
+  <section card=true title="{{ data.m.reportHead }}" sub="{{ data.m.reportMeta }}">
+    {{#if data.m.summaries}}
+    <row justify=end><copy text="{{ data.m.summaryText }}" label="Copy report"/></row>
+    <col gap=3>
+    {{#each data.m.summaries}}
+    <section framed=true collapsible=true open=true title="{{ number }} {{ name }}" aside="{{ share }} · {{ hours }}">
+      {{#each lines}}
+      <row justify=between gap=3 wrap=false align=start><text>{{ label }} {{#if count}}<small tone=muted>{{ count }}</small>{{/if}}</text><row gap=2 wrap=false><small tone=muted tip="{{ title }}">{{ days }}</small><badge tint="{{ color }}">{{ type }}</badge><b>{{ hours }}</b></row></row>
+      {{/each}}
+    </section>
+    {{/each}}
+    </col>
+    {{#else}}<text tone=muted>No time booked in this month.</text>{{/if}}
+  </section>
+
+  <section card=true title="{{ data.m.entriesHead }}" aside="{{ data.m.entryList | count }}" collapsible=true open=false>
+    {{#if data.m.entryList}}
+    <sheet compact=true caption="Entries of the month">
+      <shead><srow><scell head=true>Date</scell><scell head=true>Job</scell><scell head=true num=true>Hours</scell><scell head=true>Report</scell><scell head=true>Ticket</scell><scell head=true>Type · tags</scell><scell head=true></scell></srow></shead>
+      <sbody>
+        {{#each data.m.entryList}}
+        <srow hover=true>
+          <scell><mono size=sm>{{ date }}</mono>{{#if start}}<small tone=muted><mono>{{ start }}</mono></small>{{/if}}</scell>
+          <scell>{{ jobName }}</scell>
+          <scell num=true bold=true>{{ hours }}</scell>
+          <scell>{{#if mark}}<small tip="{{ markTitle }}">{{ mark }}</small> {{/if}}{{ description }}</scell>
+          <scell>{{#if ticket}}{{#if ticketUrl}}<button action="url" href="{{ ticketUrl }}" label="{{ ticket }}" tip="{{ ticketTip }}" variant=link/>{{#else}}<mono size=sm>{{ ticket }}</mono>{{/if}}{{/if}}</scell>
+          <scell><col gap=1 align=start><badge tint="{{ color }}">{{ type }}</badge>{{#each tagNames}}<badge color=teal>{{ this }}</badge>{{/each}}</col></scell>
+          <scell><button action="state" state="week" value="{{ date }}" emit="openweek" label="→" tip="Open its week to edit it" variant=quiet/></scell>
+        </srow>
+        {{/each}}
+      </sbody>
+    </sheet>
+    {{#else}}<empty text="No entries."/>{{/if}}
+  </section>
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+</split>
+
+{{#else}}
+{{#if state.view == 'analysis'}}
+<data name="a" lambda="zeiterfassung.analysis" with="weeks={{ state.aweeks }}, tickets={{ state.atickets }}, split={{ state.asplit }}" when="{{ state.view == 'analysis' }}"/>
+<split width=288 side=left gap=6 sticky=true>
+<col gap=3>
+  <tabs bind="view" look=line options="week:Week, month:Month, analysis:Analysis, day:End of day, jobs:Jobs, settings:Settings"/>
+  <col gap=1><heading level=2>Analysis</heading>{{#if data.a}}<text tone=muted>{{ data.a.intro }}</text>{{/if}}</col>
+  {{#if data.a}}
+  <row gap=1>
+    <button action="state" state="atickets" value="" label="Everyone" variant="{{ data.a.mine ? 'plain' : 'primary' }}" tip="Jira metrics for everyone's tickets, or only the tickets you booked time on in this range"/>
+    <button action="state" state="atickets" value="mine" label="Mine" variant="{{ data.a.mine ? 'primary' : 'plain' }}"/>
+  </row>
+  <row gap=1 wrap=true>
+    {{#each data.a.ranges}}<button action="state" state="aweeks" value="{{ weeks }}" label="{{ label }}" variant="{{ weeks == data.a.weeks ? 'primary' : 'plain' }}"/>{{/each}}
+  </row>
+  {{/if}}
+</col>
+{{#if data.a}}
+<col gap=6>
+  {{#if data.a.hasData}}
+  <col gap=3>
+  <grid cols=5 gap=3 min=150>
+    {{#each data.a.cards}}<tile label="{{ label }}" value="{{ value }}" tip="{{ hint }}" tint=true/>{{/each}}
+  </grid>
+  {{#if data.a.jiraCards}}<grid cols=4 gap=3 min=150>{{#each data.a.jiraCards}}<tile tint=true label="{{ label }}" value="{{ value }}" tone="{{ tone }}" tip="{{ hint }}"/>{{/each}}</grid>{{/if}}
+  {{#if data.a.ticketCards}}<grid cols=4 gap=3 min=150>{{#each data.a.ticketCards}}<tile tint=true label="{{ label }}" value="{{ value }}" tone="{{ tone }}" tip="{{ hint }}"/>{{/each}}</grid>{{/if}}
+  </col>
+
+  <grid cols=2 gap=4 min=320>
+    <section card=true title="Time split by type">
+      <row gap=6 align=center wrap=false>
+        <chart kind=pie source="data.a.typeSplit" group="label" value="hours" center="{{ data.a.meetingPercent }}" centersub="Meetings" legend=false/>
+        <col gap=2>
+          {{#each data.a.typeSplit}}<row gap=2 align=center wrap=false><dot color="{{ color }}"/><col width=80><truncate tip="{{ label }}">{{ label }}</truncate></col><b>{{ hoursText }}</b><small tone=muted>{{ pct }}</small></row>{{/each}}
+        </col>
+      </row>
+    </section>
+    <section card=true title="Hours by job">
+      <chart kind=bar look=track source="data.a.jobItems" group="label" value="value" text="valueLabel" empty="No entries."/>
+    </section>
+  </grid>
+
+  <section card=true title="Weekly hours & tickets" aside="{{ data.a.weekLegend }}">
+    <chart kind=column look=track source="data.a.weekRows" group="week" value="hours" series="type" text="badge"/>
+  </section>
+
+  {{#if data.a.ticketCards}}
+  <grid cols=2 gap=4 min=320>
+    <section card=true title="Performance" aside="resolution time · lower is better">
+      <chart kind=line source="data.a.performance" group="week" value="days"/>
+      <small><muted>Avg days from a ticket opening to its resolution, by the week it was resolved.</muted></small>
+    </section>
+    <section card=true title="Parallelism" aside="tickets open at once">
+      <chart kind=line source="data.a.parallel" group="week" value="tickets"/>
+      <small><muted>Number of tickets in flight (opened but not yet resolved) during each week.</muted></small>
+    </section>
+  </grid>
+  {{/if}}
+  {{#if data.a.datesHint}}<callout tone=info>Reaction time and parallelism need ticket opened dates. Re-sync on the Jira tab to backfill them.</callout>{{/if}}
+
+  <grid cols=2 gap=4 min=320>
+    <section card=true>
+      <row gap=2 align=center><text tone=muted><b>HOURS BY</b></text><select bind="asplit" options='[["","Tag"],["type","Type"]]' value="{{ data.a.split == 'type' ? 'type' : '' }}"/></row>
+      <chart kind=bar look=track source="data.a.splitItems" group="label" value="value" text="valueLabel" empty="{{ data.a.splitEmpty }}"/>
+    </section>
+    <section card=true title="Top tickets by hours">
+      <chart kind=bar look=track source="data.a.ticketItems" group="label" value="value" text="valueLabel" link="url" empty="No tickets."/>
+    </section>
+  </grid>
+  <small tone=muted>{{ data.a.foot }}</small>
+  {{#else}}<box><text tone=muted>{{ data.a.empty }}</text></box>{{/if}}
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+</split>
+
+{{#else}}
+{{#if state.view == 'day'}}
+<data name="f" lambda="zeiterfassung.day" with="date={{ state.fdate }}, week={{ state.fweek }}, state={{ state | tojson }}" when="{{ state.view == 'day' }}" debounce=600/>
+<on event="day-changed" action="reload"/>
+<split width=288 side=left gap=6 sticky=true>
+<col gap=3>
+  <tabs bind="view" look=line options="week:Week, month:Month, analysis:Analysis, day:End of day, jobs:Jobs, settings:Settings"/>
+  {{#if data.f}}
+  <col gap=3>
+    <heading level=2>{{ data.f.title }}</heading>
+    <text tone=muted>{{ data.f.intro }}</text>
+    <text>{{#if data.f.mode == 'week'}}<button action="state" state="fweek" value="" label="← End of day" variant=link/>{{#else}}<button action="state" state="fweek" value="current" label="The whole week →" variant=link/>{{/if}}</text>
+    <small tone=muted>It's booked just like by hand; then everything is in the weekly report (and goes from there to Chrono/Punch when you export).</small>
+  </col>
+  {{/if}}
+</col>
+{{#if data.f}}
+<col gap=6>
+  {{#if data.fbooked.fbooked.message}}
+  <callout tone=good>
+    <row gap=2 align=center justify=between wrap=true>
+      <text>{{ data.fbooked.fbooked.message }}</text>
+      {{#if data.fbooked.fbooked.created}}<button run="zeiterfassung.day-undo" with="created={{ data.fbooked.fbooked.created }}" into="fundone" emit="day-changed" done="Taken back." label="Undo" variant=plain/>{{/if}}
+    </row>
+  </callout>
+  {{/if}}
+  {{#each data.f.days}}
+  {{#if data.f.mode == 'week'}}<heading level=3>{{ head }} <small tone=muted>{{ sub }}</small></heading>{{/if}}
+  <section card=true>
+    <row gap=4 wrap=true align=start justify=between>
+      <row gap=6 wrap=true align=center>
+        <text>{{ sums.booked }}</text><text>{{ sums.selected }}</text>
+        {{#if sums.itemized}}<text tone=muted>{{ sums.itemized }}</text>{{/if}}
+        <text tone="{{ sums.tone }}">{{ sums.result }}</text>
+      </row>
+      <col gap=1 align=end>
+        <row gap=2 align=center>
+          <button action="state" state="{{ spreadKey }}" value="{{ spreadOn ? '' : '1' }}" label="Spread the rest" tip="Spread the missing hours over the ticked ticket lines" variant="{{ spreadOn ? 'primary' : 'plain' }}" disabled="{{ canSpread ? 'false' : 'true' }}"/>
+          <button run="zeiterfassung.day-book" with="date={{ date }}, state={{ state | tojson }}" into="fbooked" emit="day-changed" label="{{ bookLabel }}" disabled="{{ whyNot ? 'true' : 'false' }}" variant=primary/>
+        </row>
+        {{#if whyNot}}<small tone=warn>{{ whyNot }}</small>{{/if}}
+      </col>
+    </row>
+  </section>
+    {{#if lines}}
+    <col gap=2>
+      {{#each lines}}
+      <let name="inc" value="state | get(ki) | default(include)"/>
+      <box tone="{{ inc == '1' ? 'plain' : 'muted' }}">
+        <row gap=2 align=center wrap=true>
+          <button action="state" state="{{ ki }}" value="{{ inc == '1' ? '0' : '1' }}" label="{{ inc == '1' ? '☑' : '☐' }}" tip="Book {{ description }}" variant=quiet/>
+          <small><muted>{{ kindLabel }}</muted></small>
+          <input bind="{{ kh }}" type=number label="Hours" value="{{ hours }}" placeholder="h"/>
+          {{#if kind == 'suggestion'}}<small><muted>{{ jobText }}</muted></small>{{#else}}<select bind="{{ kj }}" options="{{ jobOptions | tojson }}" label="Job"/>{{/if}}
+          <input bind="{{ kd }}" label="Description" value="{{ description }}"/>
+        </row>
+        <row gap=3 wrap=true align=center>
+          <small><muted>{{#if ticket}}{{ ticket }} · {{/if}}{{ from }}</muted></small>
+          {{#if isGroup}}<small>Group: the day's work goes under it</small>{{/if}}
+          {{#if itemize}}<let name="sep" value="state | get(ks) | default(standalone)"/><button action="state" state="{{ ks }}" value="{{ sep == '1' ? '0' : '1' }}" label="{{ sep == '1' ? '☐' : '☑' }} {{ itemize }}" variant=quiet/>{{/if}}
+        </row>
+      </box>
+      {{/each}}
+    </col>
+    {{#else}}<col align=center><text tone=muted>{{ empty }}</text></col>{{/if}}
+  {{/each}}
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+</split>
+
+{{#else}}
+{{#if state.view == 'jobs'}}
+<data name="j" lambda="zeiterfassung.jobs" with="n={{ state.jn }}" when="{{ state.view == 'jobs' }}"/>
+<on event="jobs-changed" action="reload"/>
+<data name="d" lambda="zeiterfassung.job-detail" with="ref={{ state.jd }}" when="{{ state.jd }}"/>
+<split width=288 side=left gap=6 sticky=true>
+<col gap=3>
+  <tabs bind="view" look=line options="week:Week, month:Month, analysis:Analysis, day:End of day, jobs:Jobs, settings:Settings"/>
+  <tabs bind="jpart" options="jobs:Jobs, projects:Projects"/>
+  {{#if state.jpart == 'projects'}}
+  <col gap=1><heading level=2>Projects</heading><text tone=muted>Book time on a project instead of a job — e.g. a training. The hours land on the project's job, and setting or changing that job later moves all its entries along.</text></col>
+  {{#else}}
+  <col gap=1><heading level=2>Jobs</heading><text tone=muted>Job numbers that time can be booked on — from the web UI or via the MCP report_time tool.</text></col>
+  {{/if}}
+</col>
+{{#if data.j}}
+<col gap=6>
+  {{#if state.jd}}{{#if data.d.found}}
+  <section card=true title="{{ data.d.title }}" aside="{{ data.d.sub }}">
+    <col gap=2>
+      <row gap=2 align=center wrap=true>
+        <button action="state" state="jd" value="" label="← All jobs" variant=plain/>
+        {{#if data.d.inactive}}<small><muted>inactive</muted></small>{{/if}}
+        {{#if data.d.job}}<small><muted>{{ data.d.job }}</muted></small>{{/if}}
+        <button run="zeiterfassung.job-delete" with="kind={{ data.d.kind }}, id={{ data.d.id }}" confirm="{{ data.d.deleteConfirm }}" then="jd=" emit="jobs-changed" done="Deleted." label="Delete" variant=danger/>
+      </row>
+      {{#if data.d.noJobWarning}}<callout tone=warn>{{ data.d.noJobWarning }}</callout>{{/if}}
+      {{#if data.d.today}}
+      <section title="Book days" collapsible=true open=false>
+        <col gap=2>
+          <text tone=muted>One entry per working day — e.g. all days of a training. Single entries can also be booked on the project from the week page (“Book on”).</text>
+          <grid cols=4 gap=2 min=150>
+            <input bind="bd_from" type=date label="From" value="{{ data.d.today }}"/>
+            <input bind="bd_to" type=date label="To"/>
+            <input bind="bd_hours" type=number label="Hours" placeholder="the day's target"/>
+            <select bind="bd_type" options="{{ data.d.typeOptions | tojson }}" label="Type"/>
+          </grid>
+          <input bind="bd_desc" label="Description" value="{{ data.d.title }}"/>
+          <row gap=2><button run="zeiterfassung.book-days" with="id={{ data.d.id }}, from={{ state.bd_from | default(data.d.today) }}, to={{ state.bd_to }}, hours={{ state.bd_hours }}, type={{ state.bd_type }}, description={{ state.bd_desc | default(data.d.title) }}" into="jsaved" emit="jobs-changed" label="Book days" variant=primary/></row>
+        </col>
+      </section>
+      {{/if}}
+      <datatable source="data.d.entries" empty="No entries.">
+        <column label="Date">{{ dateText }}</column>
+        <column label="Description">{{ description }}{{#if ticket}} <small><muted>{{ ticket }}</muted></small>{{/if}}</column>
+        <column label="Type">{{ type }}</column>
+        <column label="Hours" align=right>{{ hours }}</column>
+      </datatable>
+    </col>
+  </section>
+  {{/if}}{{/if}}
+  {{#if data.jsaved.jsaved.message}}<callout tone=good>{{ data.jsaved.jsaved.message }}</callout>{{/if}}
+  {{#if state.jpart == 'projects'}}
+  <section card=true title="New project">
+    <col gap=3>
+      <grid cols=3 gap=3 min=180>
+        <input stack=true bind="np_title" label="Title" placeholder="TYPO3 Training"/>
+        {{#if data.j.jobOptions}}<select stack=true bind="np_job" options="{{ data.j.jobOptions | tojson }}" label="Job"/>{{#else}}<text tone=warn>No active jobs yet — create one on the Jobs page before booking time.</text>{{/if}}
+        <input stack=true bind="np_customer" label="Customer" placeholder="Optional"/>
+      </grid>
+      <grid tracks="minmax(0,2fr) repeat(2,minmax(0,0.5fr))" gap=3>
+        <input stack=true bind="np_description" label="Description" placeholder="Optional notes"/>
+        <input stack=true bind="np_start" type=date label="Start"/>
+        <input stack=true bind="np_end" type=date label="End"/>
+      </grid>
+      <grid tracks="minmax(0,1fr) minmax(0,1fr) minmax(0,0.5fr)" gap=3>
+        <input stack=true bind="np_tags" label="Default tags" placeholder="Add tag…"/>
+        <small tone=muted>Entries booked on the project land on its job. Without a job they wait under “No job yet” (skipped by the Chrono export) until you set one.</small>
+        <col align=end><button run="zeiterfassung.project-save" with="title={{ state.np_title }}, jobNumber={{ state.np_job }}, customer={{ state.np_customer }}, description={{ state.np_description }}, startDate={{ state.np_start }}, endDate={{ state.np_end }}, defaultTags={{ state.np_tags }}" into="jsaved" then="np_title=" emit="jobs-changed" label="Create project" variant=primary size=md wide=true/></col>
+      </grid>
+    </col>
+  </section>
+  <section card=true title="{{ data.j.projectsHead }}">
+    {{#if data.j.projects}}
+    <sheet caption="All projects">
+      <shead><srow><scell head=true>Title</scell><scell head=true>Job</scell><scell head=true>Customer</scell><scell head=true>Booked</scell><scell head=true num=true>Hours</scell><scell head=true num=true>Entries</scell><scell head=true>Status</scell><scell head=true></scell></srow></shead>
+      <sbody>
+        {{#each data.j.projects}}
+        <srow tone="{{ active ? 'plain' : 'muted' }}">
+          <scell><text><b>{{ title }}</b></text>{{#if description}}<small tone=muted>{{ description }}</small>{{/if}}{{#if tags}} <small tone=muted>{{ tags }}</small>{{/if}}</scell>
+          <scell>{{#if jobNumber}}{{ job }}{{#else}}<badge tint="#f59e0b">{{ job }}</badge>{{/if}}</scell>
+          <scell>{{ customer }}</scell>
+          <scell><mono>{{ booked }}</mono></scell>
+          <scell num=true>{{ hours }}</scell>
+          <scell num=true>{{ entries }}</scell>
+          <scell><badge tint="{{ active ? '#7c3aed' : '#a1a1aa' }}">{{ status }}</badge></scell>
+          <scell><row gap=1 justify=end wrap=false>
+            <button action="state" state="jd" value="project:{{ id }}" label="Open" variant=plain/>
+            <button action="state" state="projectedit" value="{{ id }}" label="Edit" variant=plain/>
+            <button run="zeiterfassung.project-save" with="id={{ id }}, active={{ active ? 'false' : 'true' }}" emit="jobs-changed" label="{{ toggle }}" variant=plain/>
+          </row></scell>
+        </srow>
+        {{/each}}
+      </sbody>
+    </sheet>
+    {{#else}}<empty text="No projects yet."/>{{/if}}
+  </section>
+  <dialog bind="projectedit" reset="ep_" title="Edit project">
+    {{#each data.j.projects | where('id', state.projectedit)}}
+    <let name="pcu" value="state | get('ep_customer') | default(customer)"/>
+    <let name="pde" value="state | get('ep_description') | default(description)"/>
+    <col gap=2>
+      <grid cols=2 gap=2 min=150>
+        <input bind="ep_title" label="Title" value="{{ title }}"/>
+        {{#if data.j.jobOptions}}<select bind="ep_job" value="{{ jobNumber }}" options="{{ data.j.jobOptions | tojson }}" search=true label="Job"/>{{#else}}<text tone=warn>No active jobs yet — create one on the Jobs page before booking time.</text>{{/if}}
+        <input bind="ep_customer" label="Customer" value="{{ customer }}"/>
+        <input bind="ep_tags" label="Default tags" value="{{ tags }}"/>
+      </grid>
+      <input bind="ep_description" label="Description" value="{{ description }}"/>
+      <row gap=2><button run="zeiterfassung.project-save" with="id={{ id }}, full=true, title={{ state.ep_title | default(title) }}, jobNumber={{ state.ep_job | default(jobNumber) }}, customer={{ state.ep_customer == '' ? '~' : pcu }}, description={{ state.ep_description == '' ? '~' : pde }}, defaultTags={{ state.ep_tags | default(tags) }}" into="jsaved" then="projectedit=" emit="jobs-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/each}}
+  </dialog>
+  {{#else}}
+  <section card=true title="New job">
+    <col gap=3>
+      <grid cols=3 gap=3 min=180>
+        <input stack=true bind="nj_number" label="Job number" placeholder="2026-0815"/>
+        <input stack=true bind="nj_name" label="Name" placeholder="Website relaunch"/>
+        <input stack=true bind="nj_customer" label="Customer" placeholder="ACME GmbH"/>
+      </grid>
+      <grid tracks="minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.5fr)" gap=3>
+        <input stack=true bind="nj_description" label="Description" placeholder="Optional notes"/>
+        <input stack=true bind="nj_tags" label="Default tags" placeholder="Add tag…"/>
+        <col align=end><button run="zeiterfassung.job-save" with="number={{ state.nj_number }}, name={{ state.nj_name }}, customer={{ state.nj_customer }}, description={{ state.nj_description }}, defaultTags={{ state.nj_tags }}" into="jsaved" then="nj_number=" emit="jobs-changed" label="Create job" variant=primary size=md wide=true/></col>
+      </grid>
+    </col>
+  </section>
+  <section card=true title="{{ data.j.jobsHead }}">
+    {{#if data.j.toolbar}}<row gap=2 wrap=true justify=end>{{#each data.j.toolbar}}<button run="{{ flow }}" with="{{ with }}" emit="jobs-changed" confirm="{{ confirm }}" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{/each}}</row>{{/if}}
+    {{#if data.j.jobs}}
+    <sheet caption="All jobs">
+      <shead><srow><scell head=true>Number</scell><scell head=true>Name</scell><scell head=true>Customer</scell><scell head=true num=true>Hours</scell><scell head=true num=true>Entries</scell>{{#if data.j.columnTitle}}<scell head=true>{{ data.j.columnTitle }}</scell>{{/if}}<scell head=true>Status</scell><scell head=true></scell></srow></shead>
+      <sbody>
+        {{#each data.j.jobs}}
+        <srow tone="{{ active ? 'plain' : 'muted' }}">
+          <scell><mono size=sm>{{ number }}</mono></scell>
+          <scell><text><b>{{ name }}</b></text>{{#if description}}<small tone=muted>{{ description }}</small>{{/if}}{{#if tags}} <small tone=muted>{{ tags }}</small>{{/if}}</scell>
+          <scell>{{ customer }}</scell>
+          <scell num=true>{{ hours }}</scell>
+          <scell num=true>{{ entries }}</scell>
+          {{#if data.j.columnTitle}}<scell><small tip="{{ markTitle }}">{{ mark }}</small></scell>{{/if}}
+          <scell><badge tint="{{ active ? '#7c3aed' : '#a1a1aa' }}">{{ status }}</badge></scell>
+          <scell><row gap=1 justify=end wrap=false>
+            <button action="state" state="jd" value="job:{{ id }}" label="Open" variant=plain/>
+            <button action="state" state="jobedit" value="{{ id }}" label="Edit" variant=plain/>
+            <button run="zeiterfassung.job-save" with="id={{ id }}, active={{ active ? 'false' : 'true' }}" emit="jobs-changed" label="{{ toggle }}" variant=plain/>
+          </row></scell>
+        </srow>
+        {{/each}}
+      </sbody>
+    </sheet>
+    {{#else}}<empty text="No jobs yet."/>{{/if}}
+  </section>
+  <dialog bind="jobedit" reset="ej_" title="Edit job">
+    {{#each data.j.jobs | where('id', state.jobedit)}}
+    <let name="ecu" value="state | get('ej_customer') | default(customer)"/>
+    <let name="ede" value="state | get('ej_description') | default(description)"/>
+    <col gap=2>
+      <grid cols=2 gap=2 min=150>
+        <input bind="ej_number" label="Number" value="{{ number }}"/>
+        <input bind="ej_name" label="Name" value="{{ name }}"/>
+        <input bind="ej_customer" label="Customer" value="{{ customer }}"/>
+        <input bind="ej_tags" label="Default tags" value="{{ tags }}"/>
+      </grid>
+      <input bind="ej_description" label="Description" value="{{ description }}"/>
+      <row gap=2><button run="zeiterfassung.job-save" with="id={{ id }}, full=true, number={{ state.ej_number | default(number) }}, name={{ state.ej_name | default(name) }}, customer={{ state.ej_customer == '' ? '~' : ecu }}, description={{ state.ej_description == '' ? '~' : ede }}, defaultTags={{ state.ej_tags | default(tags) }}" into="jsaved" then="jobedit=" emit="jobs-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/each}}
+  </dialog>
+  {{/if}}
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+</split>
+
+{{#else}}
+{{#if state.view == 'settings'}}
+<data name="s" lambda="zeiterfassung.schedule" with="n={{ state.sn }}" when="{{ state.view == 'settings' }}"/>
+<on event="settings-changed" action="reload"/>
+<split width=288 side=left gap=6 sticky=true>
+<col gap=3>
+  <tabs bind="view" look=line options="week:Week, month:Month, analysis:Analysis, day:End of day, jobs:Jobs, settings:Settings"/>
+  <col gap=1><heading level=2>Time-tracking settings</heading><text tone=muted>Set your weekly working pattern (part-time) and record time off. The weekly report uses this to show booked hours against your target.</text></col>
+</col>
+<col gap=6>
+{{#if data.s}}
+<col gap=6>
+  {{#if data.ssaved.ssaved.message}}<callout tone=good>{{ data.ssaved.ssaved.message }}</callout>{{/if}}
+
+  <section card=true title="{{ data.s.hoursHead }}">
+    <col gap=2>
+      <grid cols=7 gap=2 min=70>
+        {{#each data.s.days}}<input stack=true bind="sh_{{ key }}" label="{{ label }}" value="{{ hours }}"/>{{/each}}
+      </grid>
+      <row gap=2><button run="zeiterfassung.schedule-save" with="what=hours, mon={{ state.sh_mon | default(data.s.h_mon) }}, tue={{ state.sh_tue | default(data.s.h_tue) }}, wed={{ state.sh_wed | default(data.s.h_wed) }}, thu={{ state.sh_thu | default(data.s.h_thu) }}, fri={{ state.sh_fri | default(data.s.h_fri) }}, sat={{ state.sh_sat | default(data.s.h_sat) }}, sun={{ state.sh_sun | default(data.s.h_sun) }}" into="ssaved" emit="settings-changed" label="Save working hours" variant=primary/><small tone=muted>A day set to 0 counts as non-working (e.g. free Fridays).</small></row>
+    </col>
+  </section>
+
+  <section card=true title="Default break">
+    <col gap=2>
+      <text tone=muted>Your usual break window on workdays, e.g. 12:00-13:00 (several with “;”). The weekly table shows it greyed out on days without an entered break.</text>
+      <input stack=true bind="sp_text" label="Default break" value="{{ data.s.defaultPauses }}" placeholder="12:00-13:00"/>
+      {{#if data.s.punchOn}}<button action="state" state="sp_punch" value="{{ (state | get('sp_punch') | default(data.s.punchExport)) == '1' ? '0' : '1' }}" label="{{ (state | get('sp_punch') | default(data.s.punchExport)) == '1' ? '☑' : '☐' }} Punch records it too" variant=quiet/>{{/if}}
+      <row gap=2><button run="zeiterfassung.schedule-save" with="what=pauses, punch={{ state | get('sp_punch') | default(data.s.punchExport) }}, text={{ state.sp_text | default(data.s.defaultPauses) }}" into="ssaved" emit="settings-changed" label="Save default break" variant=primary/></row>
+    </col>
+  </section>
+
+  <section card=true title="Flex time">
+    <col gap=2>
+      <text tone=muted>The job for hours you take off your overtime. In the weekly table, days that aren't fully booked get a greyed-out row for it under the booked jobs.</text>
+      <grid cols=2 gap=2 min=200>
+        <select stack=true bind="sf_job" value="{{ data.s.flexJob }}" options="{{ data.s.flexJobOptions | tojson }}" label="Gleitzeit job"/>
+        <input stack=true bind="sf_comment" label="Comment" value="{{ data.s.flexComment }}"/>
+      </grid>
+      <row gap=2><button run="zeiterfassung.schedule-save" with="what=flex, jobNumber={{ state.sf_job | default(data.s.flexJob) }}, comment={{ state.sf_comment | default(data.s.flexComment) }}" into="ssaved" emit="settings-changed" label="Save flex time" variant=primary/></row>
+    </col>
+  </section>
+
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+
+<data name="r" lambda="zeiterfassung.rules" with="n={{ state.rn }}" when="{{ state.view == 'settings' }}"/>
+<on event="rules-changed" action="reload"/>
+{{#if data.r}}
+<col gap=6>
+  {{#if data.rsaved.rsaved.message}}<callout tone=good>{{ data.rsaved.rsaved.message }}</callout>{{/if}}
+
+  <section card=true title="Entry type rules">
+    <col gap=2>
+      <text tone=muted>Infer an entry's type (Ticket, Meeting, Internal, Other, Absence) from its job and description — e.g. job Abwesenheit + “Urlaub” → Absence. The first rule that matches wins.</text>
+      {{#each data.r.typeRules}}
+      <row gap=2 align=center wrap=true>
+        <text>When job is <b>{{ job }}</b> and description contains <b>{{ text }}</b> → <b>{{ type }}</b></text>
+        <button action="state" state="ruleedit" value="types:{{ i }}" label="✎" tip="Edit" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=types, op=up, index={{ i }}" into="rsaved" emit="rules-changed" label="↑" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=types, op=down, index={{ i }}" into="rsaved" emit="rules-changed" label="↓" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=types, op=remove, index={{ i }}" into="rsaved" emit="rules-changed" label="✕" variant=quiet/>
+      </row>
+      {{/each}}
+      <grid cols=3 gap=2 min=180>
+        <select stack=true bind="tr_job" options="{{ data.r.jobOptionsAny | tojson }}" search=true label="When job is"/>
+        <input stack=true bind="tr_text" label="and description contains"/>
+        <select stack=true bind="tr_type" options="{{ data.r.typeOptions | tojson }}" label="→ Type"/>
+      </grid>
+      <row gap=2>
+        <button run="zeiterfassung.rule-op" with="what=types, op=add, jobNumber={{ state.tr_job }}, description={{ state.tr_text }}, type={{ state.tr_type }}" into="rsaved" then="tr_text=" emit="rules-changed" label="Add rule" variant=primary/>
+        <button run="zeiterfassung.rule-op" with="what=types, op=none, apply=true" into="rsaved" emit="rules-changed" label="Apply to existing entries" confirm="Re-type the existing entries by these rules?" variant=plain/>
+      </row>
+    </col>
+  </section>
+
+  <section card=true title="Report rewriting">
+    <col gap=2>
+      <text tone=muted>Rules that rewrite and group the “Report” view on the weekly page — a condition on each entry maps to an output label, and optionally to tags for those entries. The first rule that matches wins.</text>
+      {{#each data.r.reportRules}}
+      <row gap=2 align=center wrap=true>
+        <text>When <b>{{ when }}</b> → <b>{{ template }}</b> <small><muted>{{ tags }}</muted></small></text>
+        <button action="state" state="ruleedit" value="report:{{ i }}" label="✎" tip="Edit" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=report, op=up, index={{ i }}" into="rsaved" emit="rules-changed" label="↑" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=report, op=down, index={{ i }}" into="rsaved" emit="rules-changed" label="↓" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=report, op=remove, index={{ i }}" into="rsaved" emit="rules-changed" label="✕" variant=quiet/>
+      </row>
+      {{/each}}
+      <grid cols=3 gap=2 min=180>
+        <select stack=true bind="rr_f1" options="{{ data.r.fieldOptions | tojson }}" label="Condition 1"/><input stack=true bind="rr_v1" label="value"/>
+        <input stack=true bind="rr_template" label="Output" placeholder="{ticket}: {desc}"/>
+        <select stack=true bind="rr_f2" options="{{ data.r.fieldOptions | tojson }}" label="Condition 2"/><input stack=true bind="rr_v2" label="value"/>
+        <input stack=true bind="rr_tags" label="Tags" placeholder="mob"/>
+      </grid>
+      <small><muted>Leave a value empty to leave its condition out; no condition at all matches every entry.</muted></small>
+      <row gap=2>
+        <button run="zeiterfassung.rule-op" with="what=report, op=add, f1={{ state.rr_f1 }}, v1={{ state.rr_v1 }}, f2={{ state.rr_f2 }}, v2={{ state.rr_v2 }}, template={{ state.rr_template }}, tags={{ state.rr_tags }}" into="rsaved" then="rr_v1=" emit="rules-changed" label="Add rule" variant=primary/>
+        <button run="zeiterfassung.rule-op" with="what=report, op=none, apply=true" into="rsaved" emit="rules-changed" label="Tag existing entries" confirm="Give the existing entries the tags of their rule?" variant=plain/>
+      </row>
+    </col>
+  </section>
+
+  {{#if data.r.meetings}}
+  <section card=true title="Meeting → job rules">
+    <col gap=2>
+      <text tone=muted>Auto-pick a job when importing meetings, by matching the meeting title — e.g. book every “Mob Programming” meeting on your Relaunch job.</text>
+      {{#each data.r.meetingRules}}
+      <row gap=2 align=center wrap=true>
+        <text>Title contains <b>{{ match }}</b> → <b>{{ job }}</b>{{#if group}} <small><muted>(group meeting)</muted></small>{{/if}}</text>
+        <button action="state" state="ruleedit" value="meetings:{{ i }}" label="✎" tip="Edit" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=meetings, op=up, index={{ i }}" into="rsaved" emit="rules-changed" label="↑" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=meetings, op=down, index={{ i }}" into="rsaved" emit="rules-changed" label="↓" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=meetings, op=remove, index={{ i }}" into="rsaved" emit="rules-changed" label="✕" variant=quiet/>
+      </row>
+      {{/each}}
+      <grid cols=3 gap=2 min=180>
+        <input stack=true bind="mr_match" label="Title contains"/>
+        {{#if data.r.jobOptions}}<select stack=true bind="mr_job" options="{{ data.r.jobOptions | tojson }}" search=true label="Job"/>{{#else}}<text tone=warn>Create a job first — rules book meetings on a job number.</text>{{/if}}
+        <toggle bind="mr_group" label="Group meeting (a mob day)"/>
+      </grid>
+      <row gap=2>
+        <button run="zeiterfassung.rule-op" with="what=meetings, op=add, match={{ state.mr_match }}, jobNumber={{ state.mr_job }}, group={{ state.mr_group }}" into="rsaved" then="mr_match=" emit="rules-changed" label="Add rule" variant=primary/>
+        <button run="zeiterfassung.rule-op" with="what=meetings, op=none, apply=true" into="rsaved" emit="rules-changed" label="Reapply to imported meetings" confirm="Move the imported meetings that match a rule to its job?" variant=plain/>
+      </row>
+      <row gap=2 align=end>
+        <select stack=true bind="mr_default" options="{{ data.r.jobOptionsAny | tojson }}" search=true label="Job for every other meeting"/>
+        <button run="zeiterfassung.rule-op" with="what=meetings, op=default, jobNumber={{ state.mr_default | default(data.r.meetingDefaultJob) }}" into="rsaved" emit="rules-changed" label="Save" variant=plain/>
+      </row>
+    </col>
+  </section>
+
+  <section card=true title="Meeting exclude rules">
+    <col gap=2>
+      <text tone=muted>Imported meetings whose title contains one of these start unticked — for placeholders and reminders like “Zeiten in Chrono Erfassen”.</text>
+      {{#each data.r.excludeRules}}
+      <row gap=2 align=center><text>{{ value }}</text><button action="state" state="ruleedit" value="exclude:{{ i }}" label="✎" tip="Edit" variant=quiet/><button run="zeiterfassung.rule-op" with="what=exclude, op=remove, index={{ i }}" into="rsaved" emit="rules-changed" label="✕" variant=quiet/></row>
+      {{/each}}
+      <row gap=2 align=end>
+        <input stack=true bind="ex_value" label="Title contains"/>
+        <button run="zeiterfassung.rule-op" with="what=exclude, op=add, value={{ state.ex_value }}" into="rsaved" then="ex_value=" emit="rules-changed" label="Add" variant=primary/>
+      </row>
+    </col>
+  </section>
+  {{/if}}
+
+  <section card=true title="Parallel work">
+    <col gap=2>
+      <text tone=muted>Two tasks of one job done at the same time (by their start and hours) are not booked on top of each other. Choose how they are booked when Zeff notices — you can change each case afterwards.</text>
+      <row gap=2 align=end wrap=true>
+        <select stack=true bind="pm_mode" options="{{ data.r.parallelOptions | tojson }}" value="{{ data.r.parallelMode }}" label="Parallel work, by default"/>
+        <button run="zeiterfassung.rule-op" with="what=parallel, mode={{ state.pm_mode }}" into="rsaved" emit="rules-changed" label="Save" variant=plain/>
+      </row>
+      <small><muted>{{ data.r.parallelWhat }}</muted></small>
+    </col>
+  </section>
+
+  <section card=true title="Tags" aside="{{ data.r.tagsHead }}">
+    <col gap=2>
+      <text tone=muted>Tags label entries (typically tickets). Add them here, or just type #tag in an entry description — the hashtag becomes a tag.</text>
+      <row gap=2 align=end wrap=true>
+        <input stack=true bind="tg_name" label="New tag"/>
+        <button run="zeiterfassung.rule-op" with="what=tag, op=add, name={{ state.tg_name }}" into="rsaved" then="tg_name=" emit="rules-changed" label="Add tag" variant=primary/>
+      </row>
+      {{#each data.r.tagList}}
+      <row gap=2 align=center wrap=true><b>#{{ name }}</b><small><muted>{{ count }}</muted></small>
+        <button action="state" state="tagedit" value="{{ id }}" label="✎" tip="Rename" variant=quiet/>
+        <button run="zeiterfassung.rule-op" with="what=tag, op=remove, id={{ id }}" confirm="Delete this tag?" into="rsaved" emit="rules-changed" label="✕" variant=quiet/>
+      </row>
+      {{/each}}
+      {{#if not data.r.tagList}}<text tone=muted>No tags yet.</text>{{/if}}
+    </col>
+  </section>
+  <dialog bind="tagedit" reset="tn_" title="Rename tag">
+    {{#each data.r.tagList | where('id', state.tagedit)}}
+    <col gap=2>
+      <input stack=true bind="tn_name" label="Name" value="{{ name }}"/>
+      <row gap=2><button run="zeiterfassung.rule-op" with="what=tag, op=rename, id={{ id }}, name={{ state.tn_name | default(name) }}" into="rsaved" then="tagedit=" emit="rules-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/each}}
+  </dialog>
+
+  <section card=true title="Entry types">
+    <col gap=2>
+      {{#each data.r.entryTypes}}
+      <row gap=2 align=center wrap=true>
+        <dot color="{{ color }}"/><b>{{ label }}</b><small><muted>{{ used }} ×{{#if builtin}} · built in{{/if}}</muted></small>
+        <button action="state" state="typeedit" value="{{ key }}" label="Edit" variant=plain/>
+        {{#if not builtin}}<button run="zeiterfassung.rule-op" with="what=entry-type, op=remove, key={{ key }}" confirm="Delete this type?" into="rsaved" emit="rules-changed" label="Delete" variant=danger/>{{/if}}
+      </row>
+      {{/each}}
+      <row gap=2 align=end>
+        <input stack=true bind="nt_label" label="New type"/>
+        <input stack=true bind="nt_color" type=color label="Color" value="#6366f1"/>
+        <button run="zeiterfassung.rule-op" with="what=entry-type, op=add, label={{ state.nt_label }}, color={{ state.nt_color | default('#6366f1') }}" into="rsaved" then="nt_label=" emit="rules-changed" label="Add type" variant=primary/>
+      </row>
+    </col>
+  </section>
+  <dialog bind="ruleedit" reset="rt_, rp_, rm_, rx_" title="Edit rule" wide=true>
+    {{#each data.r.typeRules}}{{#if state.ruleedit == 'types:' + i}}
+    <col gap=2>
+      <grid cols=3 gap=2 min=180>
+        <select stack=true bind="rt_job" value="{{ jobNumber }}" options="{{ data.r.jobOptionsAny | tojson }}" search=true label="When job is"/>
+        <input stack=true bind="rt_text" label="and description contains" value="{{ description }}"/>
+        <select stack=true bind="rt_type" value="{{ typeKey }}" options="{{ data.r.typeOptions | tojson }}" label="→ Type"/>
+      </grid>
+      <small><muted>Now: {{ job }} · {{ text }} → {{ type }}</muted></small>
+      <row gap=2><button run="zeiterfassung.rule-op" with="what=types, op=update, index={{ i }}, jobNumber={{ state.rt_job | default(jobNumber) }}, description={{ state.rt_text | default(description) }}, type={{ state.rt_type | default(typeKey) }}" into="rsaved" then="ruleedit=" emit="rules-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/if}}{{/each}}
+    {{#each data.r.reportRules}}{{#if state.ruleedit == 'report:' + i}}
+    <col gap=2>
+      <grid cols=3 gap=2 min=180>
+        <select stack=true bind="rp_f1" value="{{ f1 }}" options="{{ data.r.fieldOptions | tojson }}" label="Condition 1"/><input stack=true bind="rp_v1" label="value" value="{{ v1 }}"/>
+        <input stack=true bind="rp_template" label="Output" value="{{ template }}"/>
+        <select stack=true bind="rp_f2" value="{{ f2 }}" options="{{ data.r.fieldOptions | tojson }}" label="Condition 2"/><input stack=true bind="rp_v2" label="value" value="{{ v2 }}"/>
+        <input stack=true bind="rp_tags" label="Tags" value="{{ tagsText }}"/>
+        <select stack=true bind="rp_f3" value="{{ f3 }}" options="{{ data.r.fieldOptions | tojson }}" label="Condition 3"/><input stack=true bind="rp_v3" label="value" value="{{ v3 }}"/>
+      </grid>
+      <small><muted>Now: {{ when }} → {{ template }}</muted></small>
+      <row gap=2><button run="zeiterfassung.rule-op" with="what=report, op=update, index={{ i }}, f1={{ state.rp_f1 | default(f1) }}, v1={{ state.rp_v1 | default(v1) }}, f2={{ state.rp_f2 | default(f2) }}, v2={{ state.rp_v2 | default(v2) }}, f3={{ state.rp_f3 | default(f3) }}, v3={{ state.rp_v3 | default(v3) }}, template={{ state.rp_template | default(template) }}, tags={{ state.rp_tags | default(tagsText) }}" into="rsaved" then="ruleedit=" emit="rules-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/if}}{{/each}}
+    {{#each data.r.meetingRules}}{{#if state.ruleedit == 'meetings:' + i}}
+    <col gap=2>
+      <grid cols=3 gap=2 min=180>
+        <input stack=true bind="rm_match" label="Title contains" value="{{ match }}"/>
+        <select stack=true bind="rm_job" value="{{ jobNumber }}" options="{{ data.r.jobOptions | tojson }}" search=true label="Job"/>
+      </grid>
+      <button action="state" state="rm_group" value="{{ (state | get('rm_group') | default(groupFlag)) == 'true' ? 'false' : 'true' }}" label="{{ (state | get('rm_group') | default(groupFlag)) == 'true' ? '☑' : '☐' }} Group meeting (a mob day)" variant=quiet/>
+      <small><muted>Now: {{ match }} → {{ job }}</muted></small>
+      <row gap=2><button run="zeiterfassung.rule-op" with="what=meetings, op=update, index={{ i }}, match={{ state.rm_match | default(match) }}, jobNumber={{ state.rm_job | default(jobNumber) }}, group={{ state | get('rm_group') | default(groupFlag) }}" into="rsaved" then="ruleedit=" emit="rules-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/if}}{{/each}}
+    {{#each data.r.excludeRules}}{{#if state.ruleedit == 'exclude:' + i}}
+    <col gap=2>
+      <input stack=true bind="rx_value" label="Title contains" value="{{ value }}"/>
+      <row gap=2><button run="zeiterfassung.rule-op" with="what=exclude, op=update, index={{ i }}, value={{ state.rx_value | default(value) }}" into="rsaved" then="ruleedit=" emit="rules-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/if}}{{/each}}
+  </dialog>
+  <dialog bind="typeedit" reset="et_" title="Entry types">
+    {{#each data.r.entryTypes | where('key', state.typeedit)}}
+    <col gap=2>
+      <input stack=true bind="et_label" label="Name" value="{{ label }}"/>
+      <input stack=true bind="et_color" type=color label="Color" value="{{ color }}"/>
+      <row gap=2><button run="zeiterfassung.rule-op" with="what=entry-type, op=update, key={{ key }}, label={{ state.et_label | default(label) }}, color={{ state.et_color | default(color) }}" into="rsaved" then="typeedit=" emit="rules-changed" label="Save" variant=primary/></row>
+    </col>
+    {{/each}}
+  </dialog>
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+{{#if data.s}}
+  <section card=true title="Absences & time off">
+    <col gap=2>
+      <grid cols=5 gap=2 min=130>
+        <input stack=true bind="na_start" type=date label="From" value="{{ data.s.today }}"/>
+        <input stack=true bind="na_end" type=date label="To"/>
+        <select stack=true bind="na_type" options="{{ data.s.absenceTypes | tojson }}" label="Type"/>
+        <input stack=true bind="na_hours" type=number label="Hours/day" placeholder="full day"/>
+        <input stack=true bind="na_until" type=date label="Repeat weekly until"/>
+      </grid>
+      <input stack=true bind="na_note" label="Note"/>
+      <row gap=2><button run="zeiterfassung.absence" with="startDate={{ state.na_start | default(data.s.today) }}, endDate={{ state.na_end }}, type={{ state.na_type }}, hours={{ state.na_hours }}, note={{ state.na_note }}, repeatUntil={{ state.na_until }}" into="ssaved" emit="settings-changed" label="Add absence" variant=primary/></row>
+      {{#if data.s.absences}}
+      <sheet caption="Absences">
+        <shead><srow><scell head=true>From</scell><scell head=true>To</scell><scell head=true>Type</scell><scell head=true num=true>Hours/day</scell><scell head=true>Note</scell><scell head=true></scell></srow></shead>
+        <sbody>{{#each data.s.absences}}<srow><scell><mono size=sm>{{ from }}</mono></scell><scell><mono size=sm>{{ to }}</mono></scell><scell><badge color=gray>{{ type }}</badge></scell><scell num=true>{{ hours }}</scell><scell>{{ note }}</scell><scell><row justify=end><button run="zeiterfassung.absence" with="delete={{ id }}" confirm="{{ confirm }}" emit="settings-changed" label="Delete" variant=danger/></row></scell></srow>{{/each}}</sbody>
+      </sheet>
+      {{#else}}<empty text="No absences recorded."/>{{/if}}
+    </col>
+  </section>
+{{/if}}
+</col>
+</split>
+
+{{#else}}
+<data name="w" lambda="zeiterfassung.week" with="week={{ state.week }}, by={{ state.by }}" when="{{ state.view == 'week' }}"/>
+<on event="time-changed" action="reload"/>
+<split width=288 side=left gap=6 sticky=true>
+<col gap=3>
+  <tabs bind="view" look=line options="week:Week, month:Month, analysis:Analysis, day:End of day, jobs:Jobs, settings:Settings"/>
+  {{#if data.w}}
+  <row gap=2 align=center wrap=true>
+    <button action="state" state="week" value="{{ data.w.prev }}" label="←" tip="Previous week" variant=plain size=md/>
+    <col width=176 align=center><heading level=2>{{ data.w.title }} · {{ data.w.year }}</heading><text tone=muted>{{ data.w.range }}</text></col>
+    <button action="state" state="week" value="{{ data.w.next }}" label="→" tip="Next week" variant=plain size=md/>
+    {{#if not data.w.isCurrent}}<button action="state" state="week" value="{{ data.w.current }}" label="This week" variant=plain/>{{/if}}
+  </row>
+  <row gap=2 align=end wrap=true>
+    <col width=170><input stack=true bind="week" type=week label="Jump to week" value="{{ data.w.key }}"/></col>
+    <col width=144><select stack=true bind="by" options="{{ data.w.reporterOptions | tojson }}" label="Reported by"/></col>
+    <button action="url" href="{{ data.w.csv }}" label="CSV" variant=plain size=md/>
+  </row>
+  {{/if}}
+</col>
+{{#if data.w}}
+<col gap=6>
+  {{#if data.w.unreadable}}<callout tone=bad>{{ data.w.unreadable }}</callout>{{/if}}
+  {{#if data.booked.booked.message}}<callout tone=good>{{ data.booked.booked.message }}</callout>{{/if}}
+
+  <grid cols=4 gap=3 min=220 keep=true>
+    <tile tint=true label="{{ data.w.booked.label }}" value="{{ data.w.booked.num }}" suffix="{{ data.w.booked.of }}" sub="{{ data.w.booked.sub }}" tone="{{ data.w.booked.tone }}" mark="{{ data.w.booked.mark }}">
+      {{#if data.w.booked.todayHours}}<text><muted>Today </muted>{{#if data.w.booked.todayDone}}<b tone=good>{{ data.w.booked.todayHours }}</b>{{#else}}<b>{{ data.w.booked.todayHours }}</b>{{/if}}<muted>{{ data.w.booked.todayOf }}</muted></text>{{/if}}
+    </tile>
+    <tile tint=true label="{{ data.w.past.label }}" value="{{ data.w.past.value }}" sub="{{ data.w.past.sub }}" tone="{{ data.w.past.tone }}" mark="{{ data.w.past.mark }}">
+      {{#if data.w.past.weeks}}<row gap=1 wrap=true>{{#each data.w.past.weeks}}<button action="state" state="week" value="{{ key }}" label="{{ label }}" tip="{{ title }}" variant=chip tone="{{ missing ? 'bad' : 'good' }}"/>{{/each}}</row>{{/if}}
+    </tile>
+    {{#each data.w.slots.cards}}<tile tint=true label="{{ label }}" value="{{ value }}" sub="{{ sub }}" tone="{{ tone }}"/>{{/each}}
+  </grid>
+
+  <section card=true title="Hours per job and day">
+    {{#if data.w.slots.actions}}<row gap=2 wrap=true justify=end>{{#each data.w.slots.actions}}<button run="{{ flow }}" with="{{ with }}" emit="time-changed" confirm="{{ confirm }}" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{/each}}</row>{{/if}}
+    <sheet caption="Entries of the week">
+      <shead><srow>
+        <scell head=true>Job</scell>
+        {{#each data.w.table.heads}}<scell head=true num=true tone="{{ bg == 'accent' ? 'today' : bg == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}"><col gap=0><col><small tone="{{ tone == 'bad' ? 'bad' : 'plain' }}">{{ name }}</small></col><col><small normal=true>{{ date }}</small></col>{{#if note}}<col><small normal=true tone="{{ absence ? 'warn' : 'muted' }}">{{ note }}</small></col>{{/if}}</col></scell>{{/each}}
+        <scell head=true num=true>Total</scell>
+      </srow></shead>
+      <sbody>
+        {{#if data.w.table.rows}}
+        {{#each data.w.table.rows}}
+        <srow hover=true>
+          <scell row=true>
+            {{#if project}}<text><b>{{ project }}</b></text><small tone=muted><mono>{{ number }}</mono></small>{{#else}}<text><b>{{ number }} {{ name }}</b></text>{{#if customer}}<small tone=muted>{{ customer }}</small>{{/if}}{{/if}}
+          </scell>
+          {{#each days}}<scell num=true tone="{{ tone == 'good' ? 'good' : tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{ text }}{{#if mark}} <small tip="{{ markTitle }}">{{ mark }}</small>{{/if}}</scell>{{/each}}
+          <scell num=true bold=true>{{ total }}</scell>
+        </srow>
+        {{/each}}
+        {{#else}}
+        <srow><scell span=9><text tone=muted>{{ data.w.table.empty }}</text></scell></srow>
+        {{/if}}
+        {{#if data.w.table.flex.any}}
+        <srow tone=muted>
+          <scell row=true><text tone=muted><i>{{ data.w.table.flex.job }}</i></text><small tone=muted>Flex time · “{{ data.w.table.flex.comment }}”</small></scell>
+          {{#each data.w.table.flex.cells}}<scell num=true tone="{{ tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{#if gap}}<button run="zeiterfassung.flex-book" with="dates={{ iso }}" emit="time-changed" done="Booked." label="+{{ gap }}" tip="{{ label }}" variant=plain/>{{/if}}</scell>{{/each}}
+          <scell num=true></scell>
+        </srow>
+        {{/if}}
+      </sbody>
+      <sfoot>
+        <srow bold=true>
+          <scell row=true>Booked</scell>
+          {{#each data.w.table.foot.booked}}<scell num=true tone="{{ tone == 'bad' ? 'bad' : tone == 'warn' ? 'warn' : tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}" tip="{{ title }}">{{ text }}{{#if mark}} <small tip="{{ markTitle }}">{{ mark }}</small>{{/if}}</scell>{{/each}}
+          <scell num=true>{{ data.w.table.foot.bookedTotal }}</scell>
+        </srow>
+        {{#if data.w.table.foot.missing}}
+        <srow bold=true tone=bad>
+          <scell row=true>Missing</scell>
+          {{#each data.w.table.foot.missing}}<scell num=true tone="{{ tone == 'bad' ? 'bad' : 'plain' }}">{{ text }}</scell>{{/each}}
+          <scell num=true>{{ data.w.table.foot.missingTotal }}</scell>
+        </srow>
+        {{/if}}
+        <srow tone=muted>
+          <scell row=true>Target</scell>
+          {{#each data.w.table.foot.target}}<scell num=true tone="{{ tone == 'muted' ? 'off' : 'plain' }}">{{ text }}</scell>{{/each}}
+          <scell num=true>{{ data.w.table.foot.targetTotal }}</scell>
+        </srow>
+        <srow>
+          <scell row=true>Pause</scell>
+          {{#each data.w.table.foot.pause}}<scell num=true top=true tone="{{ off ? 'off' : 'plain' }}"><col align=end><row gap=1 justify=end align=center>{{#if not current}}<button action="state" state="pauseday" value="{{ iso }}" label="+" tip="{{ label }}" variant=quiet/>{{/if}}{{#if hours}}{{#if current}}<button action="state" state="pauseday" value="{{ iso }}" label="{{ hours }}" tip="{{ label }}" variant=quiet/>{{#else}}<small tone=muted>{{ hours }}</small>{{/if}}{{/if}}</row>{{#if text}}<small tone=muted>{{ text }}</small>{{/if}}</col></scell>{{/each}}
+          <scell num=true top=true>{{ data.w.table.foot.pauseTotal }}</scell>
+        </srow>
+      </sfoot>
+    </sheet>
+  </section>
+
+  <section card=true title="Add entry">
+    <col gap=3>
+      <grid tracks="minmax(0,2fr) repeat(4,minmax(0,1fr))" gap=3>
+        {{#if data.w.form.bookOptions}}<select stack=true bind="n_bookon" options="{{ data.w.form.bookOptions | tojson }}" label="Book on"/>{{#else}}<text tone=warn>No active jobs yet — create one on the Jobs page before booking time.</text>{{/if}}
+        {{#if data.w.form.typeOptions}}<select stack=true bind="n_type" options="{{ data.w.form.typeOptions | tojson }}" label="Type"/>{{#else}}<text tone=warn>…</text>{{/if}}
+        <input stack=true bind="n_date" type=date label="Date" value="{{ data.w.form.defaultDate }}"/>
+        <input stack=true bind="n_hours" label="Hours" placeholder="1.5"/>
+        <input stack=true bind="n_start" type=time label="Start"/>
+      </grid>
+      <grid tracks="repeat(6,minmax(0,1fr))" gap=3>
+        <input stack=true bind="n_ticket" label="Ticket" placeholder="PROJ-337" options="{{ data.w.form.tickets | tojson }}"/>
+        <input stack=true bind="n_tags" label="Tags" placeholder="tag1, tag2"/>
+        <input stack=true bind="n_by" label="Reported by"/>
+      </grid>
+      <input stack=true bind="n_description" type=textarea rows=2 label="Report" placeholder="What did you do?"/>
+      {{#if state.n_cm == 'true'}}<input stack=true bind="n_comment" type=textarea rows=2 label="Comment" placeholder="Your own note on this entry — it isn't part of the booking's report text"/>{{#else}}<text><button action="state" state="n_cm" value="true" label="+ Comment" variant=link/></text>{{/if}}
+      
+      <row gap=2 align=start wrap=false>
+        <check bind="n_grp" value="1"/>
+        <col fill=true><text>This entry collects the day's work (e.g. Mob Programming)</text><small tone=muted>The hours are booked once, as they are here. What you implement that day and that runs parallel to it (by start and hours) is itemized under this entry — not booked on top, and traceable through the todos.</small></col>
+      </row>
+      <row gap=3 wrap=true>
+        <button action="state" state="n_sep" value="{{ state.n_sep == 'true' ? 'false' : 'true' }}" label="{{ state.n_sep == 'true' ? '☑' : '☐' }} Separate entry" tip="Do not group it with work that runs parallel to it" variant=quiet/>
+      </row>
+      <box dashed=true>
+        <section collapsible=true open=false title="+ Add context" aside="Teams messages, merge requests, a note — kept with this entry">
+        <grid cols=3 gap=2 min=160>
+          <select bind="nc_kind" options="{{ data.w.contextKinds | tojson }}" label="Kind"/>
+          <input bind="nc_title" label="Headline"/>
+          <input bind="nc_author" label="Author"/>
+          <input bind="nc_link" label="Link"/>
+        </grid>
+        <input bind="nc_body" type=textarea rows=3 label="Message"/>
+        </section>
+      </box>
+      <row gap=2>
+        <button run="zeiterfassung.add-entry" with="date={{ state.n_date | default(data.w.form.defaultDate) }}, bookOn={{ state.n_bookon }}, hours={{ state.n_hours }}, type={{ state.n_type }}, description={{ state.n_description }}, ticket={{ state.n_ticket }}, tags={{ state.n_tags }}, comment={{ state.n_comment }}, start={{ state.n_start }}, reportedBy={{ state.n_by }}, isGroup={{ state.n_grp ? 'true' : 'false' }}, separate={{ state.n_sep }}, ctxKind={{ state.nc_kind }}, ctxTitle={{ state.nc_title }}, ctxAuthor={{ state.nc_author }}, ctxLink={{ state.nc_link }}, ctxBody={{ state.nc_body }}, ctxDate={{ state.n_date | default(data.w.form.defaultDate) }}, ctxTicket={{ state.n_ticket }}" into="booked" then="n_description=" emit="time-changed" label="Add entry" variant=primary size=md/>
+      </row>
+    </col>
+  </section>
+
+  {{#if not data.w.closing.hidden}}
+  <section card=true title="{{ data.w.closing.head }}" aside="{{ data.w.closing.summary }}">
+    <grid cols=2 gap=1 min=340>
+    {{#each data.w.closing.items}}
+    <row gap=2 align=baseline><text tone="{{ tone }}" tip="{{ title }}"><b>{{ icon }}</b></text><text>{{ label }}</text><truncate tip="{{ detail }}"><small><muted>{{ detail }}</muted></small></truncate></row>
+    {{/each}}
+    </grid>
+  </section>
+  {{/if}}
+
+  {{#if data.w.suggestions.items}}
+  <section card=true title="{{ data.w.suggestions.head }}" aside="{{ data.w.suggestions.count }}">
+    <small><muted>Reported by agents, not booked yet — check the hours and the line, then accept.</muted></small>
+    {{#each data.w.suggestions.items}}
+    <box>
+      <row gap=2 wrap=true align=baseline><small><muted>{{ ref }}</muted></small><b>{{ date }}</b>{{#if ticket}}<mono>{{ ticket }}</mono>{{/if}}{{#if target}}<small><muted>{{ target }}</muted></small>{{#else}}<text tone=warn>{{ noJobText }}</text>{{/if}}<small><muted>{{ by }}</muted></small></row>
+      <text>{{ description }}</text>
+      <small><muted tip="{{ evidence }}">Evidence: {{ evidence }}</muted></small>
+      <row gap=2 align=center justify=end>
+        <b>{{ hoursText }} h</b>
+        <button action="state" state="sugedit" value="{{ id }}" label="Edit" variant=plain/>
+        {{#if target}}<button run="zeiterfassung.suggestion" with="id={{ id }}, accept=true, hours={{ hours }}, description={{ description }}" emit="time-changed" done="Accepted." label="Accept" tip="{{ title }}" variant=primary/>{{/if}}
+        <button run="zeiterfassung.suggestion" with="id={{ id }}, accept=false" emit="time-changed" done="Suggestion dismissed." label="Dismiss" variant=plain/>
+      </row>
+    </box>
+    {{/each}}
+  </section>
+  <dialog bind="sugedit" reset="s_" title="Suggested entries">
+    {{#each data.w.suggestions.items | where('id', state.sugedit)}}
+    <col gap=2>
+      <small><muted>{{ ref }} · {{ date }} {{ ticket }} {{ target }}</muted></small>
+      <input bind="s_desc" label="Description" value="{{ description }}"/>
+      <input bind="s_hours" type=number label="Hours" value="{{ hours }}"/>
+      <row gap=2>
+        <button run="zeiterfassung.suggestion" with="id={{ id }}, accept=true, hours={{ state.s_hours | default(hours) }}, description={{ state.s_desc | default(description) }}" emit="time-changed" then="sugedit=" done="Accepted." label="Accept" variant=primary/>
+      </row>
+    </col>
+    {{/each}}
+  </dialog>
+  {{/if}}
+
+  {{#if data.w.done}}
+  <section card=true title="Done today">
+    <small><muted>Todos ticked off today and time tracked on todos today, by ticket — adjust the hours and the words, then add them as entries.</muted></small>
+    {{#each data.w.done}}
+    <box>
+      <row gap=2 wrap=true align=baseline><mono>{{ ticket }}</mono><text>{{ summary }}</text>{{#if job}}<small><muted>{{ job }}</muted></small>{{#else}}<text tone=warn>{{ noJobText }}</text>{{/if}}</row>
+      <text>{{ description }}</text>
+      <small><muted>{{ todos }}</muted></small>
+      {{#if time}}<small><muted>{{ time }}</muted></small>{{/if}}
+      <row gap=2 align=center justify=end>
+        <b>{{ hoursText }} h</b>
+        {{#if job}}<button run="zeiterfassung.done-today" with="ticket={{ ticket }}, todoIds={{ todoIds | tojson }}, hours={{ hours }}, description={{ description }}" emit="time-changed" done="Booked." label="Add" variant=primary/>{{/if}}
+        <button run="zeiterfassung.done-today" with="ticket={{ ticket }}, todoIds={{ todoIds | tojson }}, skip=true" emit="time-changed" done="Skipped." label="Skip" variant=plain/>
+      </row>
+    </box>
+    {{/each}}
+  </section>
+  {{/if}}
+
+  <dialog bind="pauseday" reset="pz_" title="Pause">
+    {{#each data.w.table.foot.pause | where('iso', state.pauseday)}}
+    <col gap=2>
+      <text>{{ label }}</text>
+      <input bind="pz_text" label="Break" value="{{ current }}" placeholder="12:00-12:30"/>
+      <row gap=2 wrap=true>
+        <button run="zeiterfassung.entry-op" with="op=pauses, dates={{ iso }}, text={{ state.pz_text | default(current) }}" emit="time-changed" then="pauseday=" label="Save" variant=primary/>
+        {{#if suggest}}<button run="zeiterfassung.entry-op" with="op=pauses, dates={{ iso }}, text={{ suggest }}" emit="time-changed" then="pauseday=" label="Use {{ suggest }}" variant=plain/>{{/if}}
+        <button run="zeiterfassung.entry-op" with="op=pauses, dates={{ iso }}, text=none" emit="time-changed" then="pauseday=" label="No break" variant=plain/>
+        <button run="zeiterfassung.entry-op" with="op=pauses, dates={{ iso }}, text=" emit="time-changed" then="pauseday=" label="Remove" variant=plain/>
+      </row>
+    </col>
+    {{/each}}
+  </dialog>
+
+  {{#if data.w.parallel.sets}}
+  <section card=true tone=warn title="{{ data.w.parallel.head }}" aside="{{ data.w.parallel.sets | count }}">
+    <small><muted>{{ data.w.parallel.hint }}</muted></small>
+    {{#each data.w.parallel.sets}}
+    <box tone=warn>
+      <row gap=3 wrap=true align=baseline><b>{{ label }}</b><small><muted>{{ when }}</muted></small><small>{{ cost }}</small></row>
+      {{#each lines}}<small>{{ this }}</small>{{/each}}
+      <row gap=2 wrap=true>
+        <button run="zeiterfassung.entry-op" with="op=parallel, mode=combine, ids={{ ids }}" emit="time-changed" done="Combined into one spanning entry." label="Book all on group ({{ span }} h)" variant=plain/>
+        <button run="zeiterfassung.entry-op" with="op=parallel, mode=divide, ids={{ ids }}" emit="time-changed" done="The stretch's hours are divided between the entries." label="Divide time on subtasks ({{ span }} h)" variant=plain/>
+        <button run="zeiterfassung.entry-op" with="op=parallel, mode=sequential, ids={{ ids }}" emit="time-changed" done="Booked one after the other." label="Book sequential" variant=plain/>
+      </row>
+    </box>
+    {{/each}}
+  </section>
+  {{/if}}
+
+  <section card=true title="{{ data.w.report.head }}" aside="grouped per day · configure on Schedule">
+    {{#if data.w.slots.exports}}<row gap=2 wrap=true justify=end>{{#each data.w.slots.exports}}{{#if href}}<button action="url" href="{{ href }}" label="{{ label }}" tip="{{ tip }}" variant=link/>{{#else}}<button run="{{ flow }}" with="{{ with }}" label="{{ label }}" tip="{{ tip }}" variant=link/>{{/if}}{{/each}}</row>{{/if}}
+    {{#if data.w.report.days}}
+    <row justify=between gap=2><text tone=muted>rewritten by your report rules</text><copy text="{{ data.w.report.text }}" label="Copy report"/></row>
+    <col gap=3>
+    {{#each data.w.report.days}}
+    <section framed=true collapsible=true open="{{ open ? 'true' : 'false' }}" title="{{ dayText }}" note="{{ linesText }}" aside="{{ total }}">
+      {{#each lines}}
+      {{#if expandable}}
+      <section quiet=true collapsible=true open=false title="{{ label }} {{ count }}" aside="{{ type }} · {{ hours }}">
+        <col gap=1>{{#each entries}}<row justify=between gap=3 wrap=false><small tone=muted>{{#if ticket}}{{#if ticketUrl}}<button action="url" href="{{ ticketUrl }}" label="{{ ticket }}" tip="{{ ticketTip }}" variant=link/>{{#else}}{{ ticket }}{{/if}} {{/if}}{{ description }} · {{ job }}</small><small tone=muted>{{ hours }}</small></row>{{/each}}</col>
+      </section>
+      {{#else}}
+      <row justify=between gap=3 wrap=false align=start><text>{{ label }} {{#if count}}<small tone=muted>{{ count }}</small>{{/if}} {{#if tags}}<small tone=muted>{{ tags }}</small>{{/if}}</text><row gap=2 wrap=false><badge tint="{{ color }}">{{ type }}</badge><b>{{ hours }}</b></row></row>
+      {{/if}}
+      {{/each}}
+    </section>
+    {{/each}}
+    </col>
+    <row justify=between gap=2><b>Total</b><b>{{ data.w.report.total }}</b></row>
+    {{#else}}<empty text="No time booked in this week."/>{{/if}}
+  </section>
+
+  <section card=true title="{{ data.w.entriesHead }}" aside="{{ data.w.entryList | count }}" collapsible=true open=false>
+    {{#if data.w.entryList}}
+    <sheet compact=true caption="Entries of the week">
+      <shead><srow><scell head=true>Date</scell><scell head=true>Job</scell><scell head=true num=true>Hours</scell><scell head=true>Report</scell><scell head=true>Group</scell><scell head=true>Ticket</scell><scell head=true>Type · tags</scell><scell head=true></scell></srow></shead>
+      <sbody>
+        {{#each data.w.entryList}}
+        <srow hover=true>
+          <scell><mono size=sm>{{ date }}</mono>{{#if start}}<small tone=muted><mono>{{ start }}</mono></small>{{/if}}</scell>
+          <scell>{{ jobName }}</scell>
+          <scell num=true><button action="state" state="hoursedit" value="{{ id }}" label="{{ hoursText }}" variant=link/>{{#if worked}}<small tone=muted>{{ worked }}</small>{{/if}}</scell>
+          <scell>{{#if draggable}}<drag value="{{ id }}" tip="Drag onto a collecting entry">⠿</drag> {{/if}}{{#if dropKey}}<drop bind="{{ dropKey }}" emit="entry-dropped" label="Drop here">{{ description }}</drop>{{#else}}{{ description }}{{/if}}</scell>
+          <scell><small>{{ groupText }}</small>{{#if books}}<small><muted>{{ books }}</muted></small>{{/if}}{{#if start}}<small><muted>{{ start }}</muted></small>{{/if}}</scell>
+          <scell>{{#if ticket}}{{#if ticketUrl}}<button action="url" href="{{ ticketUrl }}" label="{{ ticket }}" tip="{{ ticketTip }}" variant=link/>{{#else}}<mono size=sm>{{ ticket }}</mono>{{/if}}{{/if}}</scell>
+          <scell><col gap=1 align=start><badge tint="{{ color }}">{{ type }}</badge>{{#each tagNames}}<badge color=teal>{{ this }}</badge>{{/each}}{{#if mark}}<small tip="{{ markTitle }}">{{ mark }}</small>{{/if}}</col></scell>
+          <scell>
+            <row gap=1 justify=end>
+              {{#if ctxCount}}<button action="state" state="ctxentry" value="{{ id }}" label="💬 {{ ctxCount }}" tip="Context" variant=quiet/>{{/if}}
+              <button action="state" state="entryedit" value="{{ id }}" label="✎" tip="Edit this entry" variant=quiet/>
+              <button action="state" state="ctxentry" value="{{ id }}" label="＋" tip="Context" variant=quiet/>
+              <button action="state" state="groupedit" value="{{ id }}" label="⛓" tip="Group" variant=quiet/>
+              <button action="state" state="entrycopy" value="{{ id }}" label="⧉" tip="Copy to another day" variant=quiet/>
+              <button run="zeiterfassung.delete-entry" with="id={{ id }}" confirm="Delete this entry?" emit="time-changed" done="Deleted." label="✕" variant=quiet/>
+            </row>
+              </scell>
+        </srow>
+        {{/each}}
+      </sbody>
+    </sheet>
+    {{#else}}<empty text="No entries."/>{{/if}}
+  </section>
+  <dialog bind="hoursedit" reset="e_hours" title="Hours">
+    {{#each data.w.entryList | where('id', state.hoursedit)}}
+    <col gap=2>
+      <text>{{ description }}</text>
+      <input bind="e_hours" type=number label="Hours" value="{{ hours }}"/>
+      <row gap=2>
+        <button run="zeiterfassung.entry-hours" with="id={{ id }}, hours={{ state.e_hours | default(hours) }}" emit="time-changed" then="hoursedit=" done="Saved." label="Save" variant=primary/>
+      </row>
+    </col>
+    {{/each}}
+  </dialog>
+  <dialog bind="entryedit" reset="ee_" title="Edit this entry" wide=true>
+    {{#each data.w.entryList | where('id', state.entryedit)}}
+    <let name="grp" value="state | get('ee_group') | default(groupFlag)"/>
+    <col gap=2>
+      <grid cols=3 gap=2 min=170>
+        <input bind="ee_date" type=date label="Date" value="{{ date }}"/>
+        {{#if data.w.form.bookOptions}}<select bind="ee_bookon" value="{{ bookOn }}" options="{{ data.w.form.bookOptions | tojson }}" search=true label="Book on"/>{{#else}}<text tone=warn>No active jobs yet — create one on the Jobs page before booking time.</text>{{/if}}
+        <input bind="ee_hours" type=number label="Hours" value="{{ hours }}"/>
+        {{#if data.w.form.typeOptions}}<select bind="ee_type" value="{{ typeKey }}" options="{{ data.w.form.typeOptions | tojson }}" label="Type"/>{{#else}}<text tone=warn>…</text>{{/if}}
+        <input bind="ee_ticket" label="Ticket" value="{{ ticket }}"/>
+        <input bind="ee_start" label="Start" value="{{ start }}" placeholder="09:30"/>
+      </grid>
+      <input bind="ee_description" label="Description" value="{{ description }}"/>
+      <grid cols=2 gap=2 min=200>
+        <input bind="ee_tags" label="Tags" value="{{ tagsText }}"/>
+        <input bind="ee_comment" label="Comment" value="{{ comment }}"/>
+      </grid>
+      <button action="state" state="ee_group" value="{{ grp == 'true' ? 'false' : 'true' }}" label="{{ grp == 'true' ? '☑' : '☐' }} Group entry" variant=quiet/>
+      <row gap=2>
+        <button run="zeiterfassung.entry-op" with="op=update, id={{ id }}, date={{ state.ee_date | default(date) }}, bookOn={{ state.ee_bookon | default(bookOn) }}, hours={{ state.ee_hours | default(hours) }}, type={{ state.ee_type | default(typeKey) }}, ticket={{ state.ee_ticket | default(ticket) }}, start={{ state.ee_start | default(start) }}, description={{ state.ee_description | default(description) }}, tags={{ state.ee_tags | default(tagsText) }}, comment={{ state.ee_comment | default(comment) }}, isGroup={{ grp }}" emit="time-changed" then="entryedit=" done="Saved." label="Save" variant=primary/>
+      </row>
+    </col>
+    {{/each}}
+  </dialog>
+  <on event="entry-dropped" run="zeiterfassung.entry-op" with="op=drop, state={{ state | tojson }}" then="{{ data.w.dropClear }}" emit="time-changed"/>
+  <data name="ctx" lambda="zeiterfassung.entry-detail" with="id={{ state.ctxentry }}" when="{{ state.ctxentry }}"/>
+  <dialog bind="ctxentry" reset="cx_, src_" title="Context" wide=true>
+    {{#if data.ctx.found}}
+    <col gap=2>
+      <b>{{ data.ctx.title }}</b>
+      <small><muted>{{ data.ctx.created }}</muted></small>
+      {{#if data.ctxdone.ctxdone.message}}<callout tone=good>{{ data.ctxdone.ctxdone.message }}</callout>{{/if}}
+      {{#each data.ctx.contexts}}
+      <box>
+        <row gap=2 justify=between wrap=true>
+          <row gap=2 wrap=true><b>{{ kind }}</b><text>{{ headline }}</text><small><muted>{{ author }} {{ date }} {{ ticket }}</muted></small>{{#if jira}}<small><muted>{{ jira }}</muted></small>{{/if}}</row>
+          <row gap=1>
+            <button run="zeiterfassung.entry-op" with="op=context-move, id={{ data.ctx.id }}, contextId={{ id }}, dir=up" emit="time-changed" label="↑" variant=quiet/>
+            <button run="zeiterfassung.entry-op" with="op=context-move, id={{ data.ctx.id }}, contextId={{ id }}, dir=down" emit="time-changed" label="↓" variant=quiet/>
+            <button action="state" state="ctxedit" value="{{ id }}" label="✎" tip="Edit" variant=quiet/>
+            <button run="zeiterfassung.entry-op" with="op=context-unlink, id={{ data.ctx.id }}, contextId={{ id }}" emit="time-changed" label="Unlink" variant=quiet/>
+            <button run="zeiterfassung.entry-op" with="op=context-delete, contextId={{ id }}" confirm="Delete this context item?" emit="time-changed" label="✕" variant=quiet/>
+          </row>
+        </row>
+        <markdown value="{{ body }}"/>
+        {{#each links}}<button action="url" href="{{ url }}" label="{{ label }}" variant=link/>{{/each}}
+        {{#each files}}<row gap=1 align=center><button action="url" href="{{ url }}" label="📎 {{ name }}" variant=link/><small><muted>{{ size }}</muted></small><button run="zeiterfassung.entry-op" with="op=context-file-delete, fileId={{ id }}" confirm="Delete this file?" emit="time-changed" label="✕" variant=quiet/></row>{{/each}}
+        <upload bind="ctxbusy" run="zeiterfassung.entry-op" with="op=context-file, id={{ data.ctx.id }}, contextId={{ id }}" multiple=true done="Added." emit="time-changed" label="+ Add files"/>
+      </box>
+      {{/each}}
+      {{#if data.ctx.contexts}}
+      <row gap=2><button run="zeiterfassung.entry-op" with="op=context-sync, id={{ data.ctx.id }}" into="ctxdone" emit="time-changed" confirm="Post these items to their Jira tickets?" label="Sync to Jira" variant=plain/></row>
+      {{/if}}
+      {{#if data.ctx.todos}}<section title="From todos" collapsible=true open=false>{{#each data.ctx.todos}}<small>{{ this }}</small>{{/each}}{{#each data.ctx.sources}}<small><muted>{{ this }}</muted></small>{{/each}}{{#each data.ctx.notes}}<small>{{ this }}</small>{{/each}}</section>{{/if}}
+      <section title="Add context">
+        <col gap=2>
+          <grid cols=2 gap=2 min=160>
+            <select bind="cx_kind" options="{{ data.ctx.kindOptions | tojson }}" label="Kind"/>
+            <input bind="cx_title" label="Headline"/>
+            <input bind="cx_author" label="Author"/>
+            <input bind="cx_ticket" label="Ticket" value="{{ data.ctx.ticket }}"/>
+          </grid>
+          <input bind="cx_links" type=textarea rows=2 label="Links (one per line)"/>
+          <input bind="cx_body" type=textarea rows=3 label="Message"/>
+          <row gap=2 wrap=true>
+            <button run="zeiterfassung.entry-op" with="op=context-add, id={{ data.ctx.id }}, ctxKind={{ state.cx_kind }}, ctxTitle={{ state.cx_title }}, ctxAuthor={{ state.cx_author }}, ctxLinks={{ state.cx_links }}, ctxBody={{ state.cx_body }}, ctxTicket={{ state.cx_ticket | default(data.ctx.ticket) }}, ctxDate={{ data.ctx.date }}" emit="time-changed" then="cx_body=; cx_title=; cx_links=" done="Context added." label="Add" variant=primary/>
+            <upload bind="ctxbusy" run="zeiterfassung.entry-op" with="op=context-file, id={{ data.ctx.id }}, contextId=0" multiple=true zone=view done="Context added." emit="time-changed" label="+ Files as an item of their own"/>
+          </row>
+        </col>
+      </section>
+      <section title="Link existing">
+        <row gap=2 align=end wrap=true>
+          <select bind="cx_link" options="{{ data.ctx.linkable | tojson }}" search=true label="Context item"/>
+          <button run="zeiterfassung.entry-op" with="op=context-link, id={{ data.ctx.id }}, contextId={{ state.cx_link }}" emit="time-changed" done="Context linked." label="Link" variant=plain/>
+        </row>
+      </section>
+      <section title="Add a source">
+        <col gap=1>
+          <input bind="src_q" label="Search Teams, GitLab, todos and mails — or paste a link" placeholder="!167, T-12, a name, a link …"/>
+          {{#if data.src.hits}}
+          {{#each data.src.hits}}
+          <row gap=2 justify=between align=center><col><small><muted>{{ section }} · {{ meta }}</muted></small><text>{{ text }}</text></col><button run="zeiterfassung.entry-op" with="op=source-add, id={{ data.ctx.id }}, url={{ url }}, ticket={{ data.ctx.ticket }}" emit="time-changed" done="Added." label="+ Add" variant=plain/></row>
+          {{/each}}
+          {{/if}}
+        </col>
+      </section>
+    </col>
+    {{/if}}
+  </dialog>
+  <data name="src" lambda="zeiterfassung.source-search" with="q={{ state.src_q }}" when="{{ state.src_q }}" debounce=400/>
+  <dialog bind="ctxedit" reset="ce_" title="Edit context item" wide=true>
+    {{#each data.ctx.contexts | where('id', state.ctxedit)}}
+    <col gap=2>
+      <grid cols=2 gap=2 min=160>
+        <select bind="ce_kind" options="{{ data.ctx.kindOptions | tojson }}" label="Kind"/>
+        <input bind="ce_title" label="Headline" value="{{ title }}"/>
+        <input bind="ce_author" label="Author" value="{{ author }}"/>
+        <input bind="ce_ticket" label="Ticket" value="{{ ticket }}"/>
+        <input bind="ce_date" type=date label="Date" value="{{ dateRaw }}"/>
+      </grid>
+      <input bind="ce_links" type=textarea rows=2 label="Links (one per line)" value="{{ linksText }}"/>
+      <input bind="ce_body" type=textarea rows=4 label="Message" value="{{ body }}"/>
+      <row gap=2><button run="zeiterfassung.entry-op" with="op=context-edit, contextId={{ id }}, ctxKind={{ state.ce_kind | default(kindKey) }}, ctxTitle={{ state.ce_title | default(title) }}, ctxAuthor={{ state.ce_author | default(author) }}, ctxTicket={{ state.ce_ticket | default(ticket) }}, ctxDate={{ state.ce_date | default(dateRaw) }}, ctxLinks={{ state.ce_links | default(linksText) }}, ctxBody={{ state.ce_body | default(body) }}" emit="time-changed" then="ctxedit=" done="Context saved." label="Save" variant=primary/></row>
+    </col>
+    {{/each}}
+  </dialog>
+  <dialog bind="entrycopy" reset="ec_" title="Copy to another day">
+    {{#each data.w.entryList | where('id', state.entrycopy)}}
+    <col gap=2>
+      <text>{{ description }} · {{ hoursText }} h</text>
+      <input bind="ec_date" type=date label="Day" value="{{ date }}"/>
+      <row gap=2><button run="zeiterfassung.entry-op" with="op=copy, id={{ id }}, date={{ state.ec_date | default(date) }}" emit="time-changed" then="entrycopy=" done="Copied." label="Copy" variant=primary/></row>
+    </col>
+    {{/each}}
+  </dialog>
+  <dialog bind="groupedit" reset="gs_" title="Group">
+    {{#each data.w.entryList | where('id', state.groupedit)}}
+    <col gap=2>
+      <text>{{ description }} · {{ hoursText }} h</text>
+      {{#if groupText}}<small><muted>{{ groupText }} {{ books }}</muted></small>{{/if}}
+      <input bind="gs_start" label="Start" value="{{ start }}" placeholder="09:30"/>
+      <row gap=2><button run="zeiterfassung.entry-op" with="op=start, id={{ id }}, start={{ state.gs_start | default(start) }}" emit="time-changed" done="Saved." label="Set the start" variant=plain/></row>
+      {{#if not isGroup}}
+      <select bind="gs_span" options="{{ groupOptions | tojson }}" label="Group"/>
+      <row gap=2>
+        <button run="zeiterfassung.entry-op" with="op=link, id={{ id }}, spanId={{ state.gs_span }}" emit="time-changed" then="groupedit=" label="Join this group" variant=primary/>
+        {{#if member}}<button run="zeiterfassung.entry-op" with="op=unlink, id={{ id }}" emit="time-changed" then="groupedit=" label="Separate entry" variant=plain/>{{/if}}
+      </row>
+      {{/if}}
+      {{#if spanId}}
+      <select bind="gs_mode" options="{{ modeOptions | tojson }}" label="How the group books"/>
+      <row gap=2>
+        <button run="zeiterfassung.entry-op" with="op=span-mode, spanId={{ spanId }}, mode={{ state.gs_mode }}" emit="time-changed" then="groupedit=" done="Saved." label="Save the way" variant=plain/>
+        <button run="zeiterfassung.entry-op" with="op=ungroup, spanId={{ spanId }}" confirm="Take this group apart?" emit="time-changed" then="groupedit=" label="Ungroup" variant=danger/>
+      </row>
+      {{/if}}
+      {{#if candidates}}<button run="zeiterfassung.entry-op" with="op=collect, id={{ id }}" emit="time-changed" then="groupedit=" label="Group {{ candidates }} parallel entries under it" variant=plain/>{{/if}}
+    </col>
+    {{/each}}
+  </dialog>
+</col>
+{{#else}}<text tone=muted>…</text>{{/if}}
+</split>
+
+{{/if}}
+{{/if}}
+{{/if}}
+{{/if}}
+{{/if}}

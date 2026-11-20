@@ -63,7 +63,7 @@ export async function handler(event, context) {
     running: b.running,
     runningText: b.running ? `${since ? `${Math.floor(since / 60)}:${String(since % 60).padStart(2, "0")}` : ""} · ${b.phase === "ai" ? t("{provider} analyzing", { provider: b.provider }) : (PHASES[b.phase] ?? t("running"))}` : "",
     asOf: b.shown ? t("As of: {when}", { when: when(b.shown.at) }) : "",
-    facts: b.shown ? [b.shown.analyzed === 1 ? t("1 ticket analyzed") : t("{n} tickets analyzed", { n: b.shown.analyzed }), b.shown.model, mins(b.shown.durationMs), b.shown.costUsd != null ? `≈ $${b.shown.costUsd.toFixed(2)}` : ""].filter(Boolean).map((text) => ({ text })) : [],
+    facts: b.shown ? [b.shown.analyzed === 1 ? t("1 ticket analyzed") : t("{n} tickets analyzed", { n: b.shown.analyzed }), b.shown.model, mins(b.shown.durationMs), b.shown.costUsd != null ? `≈ ${b.shown.costUsd.toLocaleString(locale, { style: "currency", currency: "USD" })}` : ""].filter(Boolean).map((text) => ({ text })) : [],
     runId: b.shown?.id ?? 0,
     none: b.shown ? "" : t("No briefing yet — “Run now” reads your tickets and has the AI ({ai}) write the briefing (takes a minute or two).", { ai: b.provider }),
     failed: b.failed ? t("The last run ({when}) failed: {error}", { when: when(b.failed.at), error: b.failed.error }) + (b.shown ? ` — ${t("this is the one before.")}` : "") : "",

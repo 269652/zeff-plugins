@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.day",
+  "label": "Time tracking: end of day",
+  "what": "The day or the week drafted for booking: the meetings, the agents' suggestions and the tickets worked on, each line to take over.",
+  "kind": "function",
+  "zeff": [
+    "time.day"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

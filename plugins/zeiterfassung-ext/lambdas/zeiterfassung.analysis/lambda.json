@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.analysis",
+  "label": "Time tracking: the analysis",
+  "what": "The analysis of the booked time — the cards, the split by type, hours by job, the weeks, the Jira metrics where tickets are synced, tags and top tickets.",
+  "kind": "function",
+  "zeff": [
+    "time.analysis"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

@@ -1,0 +1,11 @@
+{
+  "name": "work.panes",
+  "label": "Code: a session's changes and dev servers",
+  "what": "The files a session changed since it began, with their diffs, and its dev servers from .claude/launch.json.",
+  "kind": "function",
+  "zeff": [
+    "work.session-changes"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

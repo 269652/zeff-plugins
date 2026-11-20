@@ -1,0 +1,11 @@
+{
+  "name": "todos.asks",
+  "label": "Todos: what the workers on a todo ask of you",
+  "what": "The permission, question or plan a live worker on the todo waits on you for, with the answers to give and the modes to switch to.",
+  "kind": "function",
+  "zeff": [
+    "work.asks"
+  ],
+  "timeoutMs": 15000,
+  "memoryMb": 128
+}

@@ -1,0 +1,12 @@
+{
+  "name": "work.settings",
+  "label": "Code: the settings",
+  "what": "The workers' and live sessions' settings and the repos, as the settings screen shows them.",
+  "kind": "function",
+  "zeff": [
+    "work.settings",
+    "work.admin"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

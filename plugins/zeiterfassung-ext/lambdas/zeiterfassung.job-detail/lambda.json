@@ -1,0 +1,11 @@
+{
+  "name": "zeiterfassung.job-detail",
+  "label": "Time tracking: a job's or project's page",
+  "what": "What a job's or a project's own page shows: what it has booked, its entries, for a project the days to book.",
+  "kind": "function",
+  "zeff": [
+    "time.job-detail"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

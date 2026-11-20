@@ -1,0 +1,18 @@
+{
+  "name": "work.screen",
+  "label": "Code: what the screen shows",
+  "what": "The sessions list (grouped and sorted), and by what is picked a session's conversation with its asks, a ticket's page or the new-session page — shaped from the engine's reads.",
+  "kind": "function",
+  "zeff": [
+    "work.session-list",
+    "work.session-open",
+    "work.composer",
+    "work.dangling",
+    "work.branches",
+    "work.attachments",
+    "work.session-files",
+    "work.folders"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}
