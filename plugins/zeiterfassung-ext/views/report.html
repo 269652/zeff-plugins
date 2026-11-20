@@ -864,13 +864,13 @@
       <input stack=true bind="n_description" type=textarea rows=2 label="Report" placeholder="What did you do?"/>
       {{#if state.n_cm == 'true'}}<input stack=true bind="n_comment" type=textarea rows=2 label="Comment" placeholder="Your own note on this entry — it isn't part of the booking's report text"/>{{#else}}<text><button action="state" state="n_cm" value="true" label="+ Comment" variant=link/></text>{{/if}}
       
-      <row gap=2 align=start wrap=false>
+      <row gap=2 align=center wrap=false>
         <check bind="n_grp" value="1"/>
-        <col fill=true><text>This entry collects the day's work (e.g. Mob Programming)</text><small tone=muted>The hours are booked once, as they are here. What you implement that day and that runs parallel to it (by start and hours) is itemized under this entry — not booked on top, and traceable through the todos.</small></col>
+        <hover width=360><text>This entry collects the day's work (e.g. Mob Programming) <small tone=muted>ⓘ</small></text><hovercard><small>The hours are booked once, as they are here. What you implement that day and that runs parallel to it (by start and hours) is itemized under this entry — not booked on top, and traceable through the todos.</small></hovercard></hover>
       </row>
-      <row gap=2 align=start wrap=false>
+      <row gap=2 align=center wrap=false>
         <check bind="n_sp" value="1"/>
-        <col fill=true><text>Separate entry</text><small tone=muted>Not grouped with work that runs parallel to it (a day's group entry otherwise takes it in).</small></col>
+        <hover width=360><text>Separate entry <small tone=muted>ⓘ</small></text><hovercard><small>Not grouped with work that runs parallel to it (a day's group entry otherwise takes it in).</small></hovercard></hover>
       </row>
       <box dashed=true>
         <section collapsible=true quiet=true open=false title="+ Add context · Teams messages, merge requests, a note — kept with this entry">
