@@ -815,7 +815,7 @@
         {{#each data.w.table.absences}}
         <srow tone=muted>
           <scell row=true><text tone=muted><i>{{ job }}</i></text><small tone=muted>{{ label }}</small></scell>
-          {{#each cells}}<scell num=true tone="{{ tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{#if open}}<button run="zeiterfassung.absence-book" with="dates={{ iso }}" emit="time-changed" done="Booked." label="+{{ open }}" tip="Book {{ open }} h on {{ label }} {{ note }}" variant=plain/>{{#else}}{{#if hours}}<small tone=muted tip="Booked on the absence's job">✓ {{ hours }}</small>{{/if}}{{/if}}</scell>{{/each}}
+          {{#each cells}}<scell num=true tone="{{ tone == 'accent' ? 'today' : tone == 'muted' ? 'off' : 'plain' }}" dim="{{ dim }}">{{#if open}}<button run="zeiterfassung.absence-book" with="dates={{ iso }}" emit="time-changed" done="Booked." label="+{{ open }}" tip="Book {{ open }} h on {{ label }} {{ note }}" variant=plain/>{{/if}}</scell>{{/each}}
           <scell num=true>{{#if openTotal}}<button run="zeiterfassung.absence-book" with="dates={{ openDates }}" emit="time-changed" done="Booked." label="+{{ openTotal }}" tip="Book all of the week's {{ label }}" variant=plain/>{{/if}}</scell>
         </srow>
         {{/each}}
