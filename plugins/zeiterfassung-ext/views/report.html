@@ -851,14 +851,14 @@
     <col gap=3>
       <grid tracks="minmax(0,2fr) repeat(4,minmax(0,1fr))" gap=3>
         {{#if data.w.form.bookOptions}}<select stack=true bind="n_bookon" options="{{ data.w.form.bookOptions | tojson }}" label="Book on"/>{{#else}}<text tone=warn>No active jobs yet — create one on the Jobs page before booking time.</text>{{/if}}
+        <input stack=true bind="n_ticket" label="Ticket" placeholder="PROJ-337" options="{{ data.w.form.tickets | tojson }}"/>
         {{#if data.w.form.typeOptions}}<select stack=true bind="n_type" options="{{ data.w.form.typeOptions | tojson }}" label="Type"/>{{#else}}<text tone=warn>…</text>{{/if}}
         <input stack=true bind="n_date" type=date label="Date" value="{{ data.w.form.defaultDate }}"/>
         <input stack=true bind="n_hours" label="Hours" placeholder="1.5"/>
-        <input stack=true bind="n_start" type=time label="Start"/>
       </grid>
       <grid tracks="minmax(0,2fr) repeat(4,minmax(0,1fr))" gap=3>
-        <input stack=true bind="n_ticket" label="Ticket" placeholder="PROJ-337" options="{{ data.w.form.tickets | tojson }}"/>
         <input stack=true bind="n_tags" label="Tags" placeholder="tag1, tag2"/>
+        <input stack=true bind="n_start" type=time label="Start"/>
         <input stack=true bind="n_by" label="Reported by"/>
       </grid>
       <input stack=true bind="n_description" type=textarea rows=2 label="Report" placeholder="What did you do?"/>
@@ -1061,9 +1061,9 @@
       <grid cols=3 gap=2 min=170>
         <input bind="ee_date" type=date label="Date" value="{{ date }}"/>
         {{#if data.w.form.bookOptions}}<select bind="ee_bookon" value="{{ bookOn }}" options="{{ data.w.form.bookOptions | tojson }}" search=true label="Book on"/>{{#else}}<text tone=warn>No active jobs yet — create one on the Jobs page before booking time.</text>{{/if}}
+        <input bind="ee_ticket" label="Ticket" value="{{ ticket }}"/>
         <input bind="ee_hours" type=number label="Hours" value="{{ hours }}"/>
         {{#if data.w.form.typeOptions}}<select bind="ee_type" value="{{ typeKey }}" options="{{ data.w.form.typeOptions | tojson }}" label="Type"/>{{#else}}<text tone=warn>…</text>{{/if}}
-        <input bind="ee_ticket" label="Ticket" value="{{ ticket }}"/>
         <input bind="ee_start" label="Start" value="{{ start }}" placeholder="09:30"/>
       </grid>
       <input bind="ee_description" label="Description" value="{{ description }}"/>
