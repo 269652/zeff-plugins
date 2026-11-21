@@ -227,6 +227,9 @@ export function buildCatalog() {
       }),
     );
   }
+  // (not an error: a plugin without them is listed all the same, only harder to find — a port script that rewrote its manifest drops them)
+  const bare = plugins.filter((p) => !p.keywords?.length || !p.category).map((p) => p.id);
+  if (bare.length) console.warn(`catalog: no keywords or category: ${bare.join(", ")}`);
   if (problems.length) throw new Error(`catalog: ${problems.length} problem(s)\n  ${problems.join("\n  ")}`);
   plugins.sort((a, b) => a.id.localeCompare(b.id));
   return { format: 1, generatedBy: "scripts/catalog.mjs", categories: CATEGORIES, plugins };
