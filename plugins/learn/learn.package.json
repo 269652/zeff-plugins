@@ -3,7 +3,7 @@
   "id": "learn-ext",
   "name": "Learn",
   "icon": "🎓",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Courses researched and planned as skill trees, a live teacher in every lesson, exercises, cards that come back when you are about to forget them, experience, levels, a streak, study times and lesson todos.",
   "plugins": [
     "notebook"
@@ -2045,7 +2045,7 @@
         "description": "One line per course: its level, XP, streak, cards due and how far it is.",
         "icon": "📚",
         "params": [],
-        "template": "<data name=\"dash\" flow=\"learn.dashboard\"/>\n<box title=\"Courses\"><col gap=3>\n{{#each data.dash.courses}}\n<col gap=1>\n<row gap=2 align=center wrap=true><b>{{ title }}</b>{{#if status == 'ready'}}<badge color=purple>Level {{ level }}</badge>{{/if}}{{#if status == 'researching'}}<badge color=yellow>being planned</badge>{{/if}}{{#if status == 'failed'}}<badge color=red>planning failed</badge>{{/if}}<grow/><small><muted>{{ xp }} XP{{#if streak}} · 🔥 {{ streak }}{{/if}}{{#if due}} · 🃏 {{ due }} due{{/if}}</muted></small></row>\n{{#if status == 'ready'}}<progress value=\"{{ percent }}\" max=100 tone=good/>\n<small><muted>{{ mastered }} of {{ steps }} steps · {{ cards }} cards{{#if todayXp}} · {{ todayXp }} / {{ dailyGoal }} XP today{{/if}}</muted></small>{{/if}}\n</col>\n{{/each}}\n{{#if data.dash.totals}}{{#if !data.dash.courses}}<empty icon=\"🎓\" title=\"No course yet\" text=\"Start one in the Learn view of Courses.\"/>{{/if}}{{/if}}\n</col></box>",
+        "template": "<data name=\"dash\" flow=\"learn.dashboard\"/>\n<box title=\"Courses\"><col gap=3>\n{{#each data.dash.courses}}\n<col gap=1>\n<row gap=2 align=center wrap=true>{{#if href}}<a href=\"{{ href }}\"><b>{{ title }}</b></a>{{#else}}<b>{{ title }}</b>{{/if}}{{#if status == 'ready'}}<badge color=purple>Level {{ level }}</badge>{{/if}}{{#if status == 'researching'}}<badge color=yellow>being planned</badge>{{/if}}{{#if status == 'failed'}}<badge color=red>planning failed</badge>{{/if}}<grow/><small><muted>{{ xp }} XP{{#if streak}} · 🔥 {{ streak }}{{/if}}{{#if due}} · 🃏 {{ due }} due{{/if}}</muted></small></row>\n{{#if status == 'ready'}}<progress value=\"{{ percent }}\" max=100 tone=good/>\n<small><muted>{{ mastered }} of {{ steps }} steps · {{ cards }} cards{{#if todayXp}} · {{ todayXp }} / {{ dailyGoal }} XP today{{/if}}</muted></small>{{/if}}\n</col>\n{{/each}}\n{{#if data.dash.totals}}{{#if !data.dash.courses}}<empty icon=\"🎓\" title=\"No course yet\" text=\"Start one in the Learn view of Courses.\"/>{{/if}}{{/if}}\n</col></box>",
         "example": "<use block=\"learn.course-lines\"/>"
       }
     },

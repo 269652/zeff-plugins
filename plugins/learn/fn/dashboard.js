@@ -56,6 +56,8 @@ const perCourse = courses.rows.map((r, i) => {
   const lastDay = String(r[cc("LastDay")] || "");
   return {
     title: String(r[0]),
+    // (the course's own page: the Courses database opened on it)
+    href: `/workspace/${courses.id}?s.tab=course&s.course=${encodeURIComponent(String(r[0]))}`,
     status,
     level: Number(r[cc("Level")]) || 1,
     xp: Number(r[cc("XP")]) || 0,
