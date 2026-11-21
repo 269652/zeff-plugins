@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "Ask the knowledge — Confluence's pages compiled into a knowledge graph by Zeff's knowledge server — in a chat with sources, have it read, keep something in it, and have its pages matched to your open todos.",
   "author": "Zeff",
+  "keywords": ["knowledge", "confluence", "wiki", "graph", "chat", "sources"],
+  "category": "knowledge",
+  "icon": "📚",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

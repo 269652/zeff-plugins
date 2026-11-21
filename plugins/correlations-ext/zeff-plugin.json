@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "What goes with what in your days: a journal's energy or mood against meetings, booked hours, messages, todos, spending and your other fields — same day and the day after. Computed in code, told only when it holds.",
   "author": "Zeff",
+  "keywords": ["statistics", "correlations", "journal", "mood", "energy", "analysis"],
+  "category": "ai",
+  "icon": "📈",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

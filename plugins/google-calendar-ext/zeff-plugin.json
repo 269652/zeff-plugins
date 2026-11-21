@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your Google calendars into Zeff's calendars — through Google's API or the automation Chrome, as the Connections page says. Every Google calendar (yours, family, birthdays …) shows in the Calendar app and counts for free slots. Nothing changes in Google.",
   "author": "Zeff",
+  "keywords": ["google", "calendar", "appointments", "sync"],
+  "category": "connector",
+  "icon": "📅",
   "apiVersion": 1,
   "permissions": [
     "exec"

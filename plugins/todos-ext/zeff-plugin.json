@@ -5,6 +5,9 @@
   "version": "0.4.0",
   "description": "The Todos screen in the Workspace, made of Zeff's own kit: your todos grouped by urgency, the ones you wait on, done, the workers'; tick, flag, set aside, dismiss, a due day, add. The todos themselves (the engine) stay Zeff's.",
   "author": "Zeff",
+  "keywords": ["todos", "tasks", "urgency", "waiting", "done"],
+  "category": "app",
+  "icon": "✅",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

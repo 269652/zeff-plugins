@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "Questions about numbers and dates answered from Zeff's own data: the AI plans queries over the named views, Zeff runs them, the AI phrases the answer from the numbers and cites the rows. The planning and phrasing are lambdas you or the AI can change.",
   "author": "Zeff",
+  "keywords": ["questions", "answers", "queries", "numbers", "data"],
+  "category": "ai",
+  "icon": "❓",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

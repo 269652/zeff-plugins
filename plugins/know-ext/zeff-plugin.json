@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "What you should know right now: the few points before a meeting or beside a mail, a chat, a ticket, a person — from what Zeff put together about the people and things (open promises, last contacts, related tickets), each point linked to its source. Its summary is a lambda you (or the AI) can change.",
   "author": "Zeff",
+  "keywords": ["briefing", "meetings", "context", "people", "summary"],
+  "category": "ai",
+  "icon": "💡",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "Your documents: the text read out of text files, Office files, PDFs, pictures and recordings, the AI's todos from them, which documents belong to which todo, your local folders read in by themselves. Its steps are lambdas and flows you or the AI can change.",
   "author": "Zeff",
+  "keywords": ["documents", "pdf", "office", "files", "ocr", "text"],
+  "category": "app",
+  "icon": "📄",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

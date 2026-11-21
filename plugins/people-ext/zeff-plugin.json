@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "What the AI does with your people: reads what new messages say about them (roles, tasks, promises, links), writes their overview, tells a person from an organisation and places them in a circle, and matches the names. The contacts themselves stay Zeff's.",
   "author": "Zeff",
+  "keywords": ["people", "contacts", "relationships", "crm", "summaries"],
+  "category": "ai",
+  "icon": "👥",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

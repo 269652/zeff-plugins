@@ -5,6 +5,9 @@
   "version": "1.4.2",
   "description": "Zeff's Learn as an external plugin: courses researched and planned as skill trees, a live teacher in every lesson, exercises, cards, experience, study times, lesson todos.",
   "author": "Zeff examples",
+  "keywords": ["learning", "courses", "teacher", "lessons", "flashcards", "skills"],
+  "category": "app",
+  "icon": "🎓",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

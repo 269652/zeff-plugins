@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Search fields for your Workspace views: type a title, pick a suggestion, its data becomes a row — films and series, books, Wikipedia, Google's Knowledge Graph and web results. What you type goes to that service.",
   "author": "Zeff",
+  "keywords": ["lookup", "films", "books", "wikipedia", "search fields", "tmdb"],
+  "category": "connector",
+  "icon": "🔎",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

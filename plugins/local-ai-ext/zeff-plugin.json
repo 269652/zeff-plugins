@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "An AI that runs on this computer — Ollama, LM Studio, llama.cpp or any server with an OpenAI-compatible API: the briefing, the mail steps and the other AI tasks without a byte leaving it. Its settings page: the server, the model, a test, what goes to it.",
   "author": "Zeff",
+  "keywords": ["local ai", "ollama", "lm studio", "llama.cpp", "openai compatible", "offline"],
+  "category": "ai",
+  "icon": "🖥️",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

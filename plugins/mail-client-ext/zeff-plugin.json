@@ -5,6 +5,9 @@
   "version": "1.0.1",
   "description": "Your mails and chats as a mail client, a chat and one inbox across channels: read, reply (or let the AI draft), snooze, archive, new inboxes. Made of the view language; the kernel sends.",
   "author": "Zeff",
+  "keywords": ["mail", "chat", "inbox", "reply", "snooze", "messages"],
+  "category": "communication",
+  "icon": "💬",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

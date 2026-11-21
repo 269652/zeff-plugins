@@ -5,6 +5,9 @@
   "version": "0.3.0",
   "description": "Your news, gathered for you: the feeds you pick plus a search per interest, everything scored for you, filtered by an agent, tagged, with an overview, stories, discovery, a page and settings of its own, a widget, a Today line and the news you kept for databases.",
   "author": "Zeff",
+  "keywords": ["news", "feeds", "rss", "interests", "reading"],
+  "category": "app",
+  "icon": "📰",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

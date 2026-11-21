@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your mail accounts (IMAP / POP3) into Zeff — each under its name, from its own server; none marked read. Replies are sent over the account's SMTP server on your click.",
   "author": "Zeff",
+  "keywords": ["imap", "pop3", "smtp", "mail", "email", "inbox"],
+  "category": "communication",
+  "icon": "📧",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

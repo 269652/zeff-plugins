@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Keeps a copy of your documents in your Google Drive — and, if you turn it on, of your backups. Files you add to Zeff's Documents folder in Drive can come into Zeff too. Signs in with an OAuth client of your own: by default Zeff only sees the files it puts in Drive itself.",
   "author": "Zeff",
+  "keywords": ["google", "drive", "backup", "documents", "cloud", "oauth"],
+  "category": "connector",
+  "icon": "☁️",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

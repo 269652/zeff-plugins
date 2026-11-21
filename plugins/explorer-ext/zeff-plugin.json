@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "The files of this computer in the Workspace, like Windows Explorer: drives, folders and files with dates and sizes; import into Documents, watch folders, open text, Markdown, CSV, pictures, PDFs, audio and video — and edit text files.",
   "author": "Zeff",
+  "keywords": ["files", "folders", "explorer", "drives", "import", "watch"],
+  "category": "app",
+  "icon": "🗂️",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

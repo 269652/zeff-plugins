@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your Signal chats' messages into Zeff from Signal Desktop on this computer — no chat opened, nothing marked read. Replies, a chat's history and the sign-in go through the same scraper. Its scraper is a lambda you (or the AI) can mend when Signal Desktop changes.",
   "author": "Zeff",
+  "keywords": ["signal", "messenger", "chat", "messages", "sync"],
+  "category": "communication",
+  "icon": "🔵",
   "apiVersion": 1,
   "permissions": [
     "exec"

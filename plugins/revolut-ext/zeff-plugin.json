@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your Revolut statements (the CSV export, in German or English — other banks' CSV too) into Zeff's bank: a file you import on the cases' overview, or one that comes in as a document. Paying someone by their RevTag stays a todo action.",
   "author": "Zeff",
+  "keywords": ["revolut", "bank", "csv", "statements", "import", "transactions"],
+  "category": "finance",
+  "icon": "🏦",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

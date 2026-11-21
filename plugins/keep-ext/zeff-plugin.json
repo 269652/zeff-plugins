@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your Google Keep notes into a Workspace database, in the account's automation Chrome (Keep opened in a new tab, what it loads taken over, the tab closed; nothing changes in Keep). Its scraper is a lambda you (or the AI) can mend when Keep changes.",
   "author": "Zeff",
+  "keywords": ["google", "keep", "notes", "sync"],
+  "category": "connector",
+  "icon": "🟡",
   "apiVersion": 1,
   "permissions": [
     "exec"

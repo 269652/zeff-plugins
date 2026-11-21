@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "Your debts and what you are owed: the Kennzahlen of the debts database — what you owe, what you are owed, the instalments a month, months until debt-free. Slice 1 of the port: the rest of Finances (income, spending, formulas, widgets, the overviews) is still the built-in's.",
   "author": "Zeff",
+  "keywords": ["finances", "debts", "budget", "instalments", "money", "metrics"],
+  "category": "finance",
+  "icon": "💶",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

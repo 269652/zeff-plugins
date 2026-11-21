@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "What is still open between you and others: promises, questions and requests nobody answered, Jira comments addressed to you. A loop closes where the source leaves no doubt; a reply or the AI's reading is proposed for you to confirm. The engine is lambdas you or the AI can change.",
   "author": "Zeff",
+  "keywords": ["open loops", "promises", "questions", "follow-up", "requests"],
+  "category": "app",
+  "icon": "🔁",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your Outlook inbox's latest mails into Zeff — through Microsoft's API or Outlook Web in the account's automation Chrome, as the Connections page says; none marked read. Replies open as drafts in Outlook.",
   "author": "Zeff",
+  "keywords": ["outlook", "microsoft", "mail", "email", "inbox", "sync"],
+  "category": "communication",
+  "icon": "✉️",
   "apiVersion": 1,
   "permissions": [
     "exec"

@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "One place per matter: the case numbers in your mails, letters and todos hold together one case — who it is owed to, what is open after your payments, what is due next and where to pay (GiroCode). Stage 1: its overview; finding cases, summaries and the bank are still the built-in's.",
   "author": "Zeff",
+  "keywords": ["cases", "matters", "case numbers", "payments", "letters", "debts"],
+  "category": "finance",
+  "icon": "📁",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

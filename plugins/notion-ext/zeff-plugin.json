@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Notion in the Workspace, both ways and close to live: the pages, databases and rows you share with your integration come in under My Notion; what you change on either side reaches the other within seconds. Use Zeff in place of Notion, or beside it.",
   "author": "Zeff",
+  "keywords": ["notion", "pages", "databases", "sync", "two-way"],
+  "category": "connector",
+  "icon": "📓",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

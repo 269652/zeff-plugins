@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Lets Zeff's AI open public web pages in an automated Chrome — pages that only load with JavaScript too: it reads their text, links and pictures, and can click and type on them. A tool for agents and the Workspace chat. No key needed.",
   "author": "Zeff",
+  "keywords": ["web", "browser", "chrome", "pages", "read", "agents"],
+  "category": "ai",
+  "icon": "🌐",
   "apiVersion": 1,
   "permissions": ["browser"],
   "contributes": {

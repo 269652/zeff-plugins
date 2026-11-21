@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "The Code tab in the Workspace: your sessions with workers and agents, each conversation live, the questions they ask you, tickets and new sessions. The engine stays Zeff's.",
   "author": "Zeff",
+  "keywords": ["code", "workers", "agents", "sessions", "tickets"],
+  "category": "developer",
+  "icon": "🛠️",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

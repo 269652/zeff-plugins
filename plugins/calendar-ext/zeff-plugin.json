@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "One calendar for everything: your own calendars and those of your sources in one page (day, week, month, agenda), appointments made and moved, proposals accepted, todos made from appointments and matched to them. The model stays Zeff's; the page and the AI steps are yours to change.",
   "author": "Zeff",
+  "keywords": ["calendar", "appointments", "meetings", "week", "agenda", "proposals"],
+  "category": "app",
+  "icon": "📅",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

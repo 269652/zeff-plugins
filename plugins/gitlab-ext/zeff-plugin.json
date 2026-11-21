@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your GitLab merge requests, their comments and your branches into Zeff — through GitLab in the account's automation Chrome. Replies, merges, opened merge requests and resolved threads go through the same scraper. Its scraper is a lambda you (or the AI) can mend when GitLab changes. (Connected through GitLab's API with a token or sign-in? That reading is still Zeff's — switch only when it is the automation Chrome.)",
   "author": "Zeff",
+  "keywords": ["gitlab", "merge requests", "code review", "branches", "git"],
+  "category": "developer",
+  "icon": "🦊",
   "apiVersion": 1,
   "permissions": [
     "exec"

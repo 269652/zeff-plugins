@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Reads your Gmail accounts' latest mails into Zeff — through Gmail's API or Gmail in the account's automation Chrome, as the Connections page says; none marked read. With Gmail's write access, replies are sent from Zeff on your click.",
   "author": "Zeff",
+  "keywords": ["gmail", "google", "mail", "email", "inbox", "sync"],
+  "category": "communication",
+  "icon": "📮",
   "apiVersion": 1,
   "permissions": [
     "exec"

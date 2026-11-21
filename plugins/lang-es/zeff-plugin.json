@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "description": "Zeff en español: todos los textos de la interfaz, fechas y números en formato español.",
   "author": "Zeff",
+  "keywords": ["spanish", "español", "translation", "language", "locale"],
+  "category": "language",
+  "icon": "🇪🇸",
   "apiVersion": 1,
   "contributes": {
     "language": { "code": "es", "name": "Spanish", "native": "Español", "locale": "es-ES" },

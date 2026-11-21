@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "The board briefing of your Jira boards: which tickets matter now, read fresh from Jira (through the Jira plugin or Zeff's connection) and assessed by the Workspace's AI review. By hand, on a Jira board or on its page.",
   "author": "Zeff",
+  "keywords": ["jira", "briefing", "boards", "tickets", "priorities"],
+  "category": "developer",
+  "icon": "🧭",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

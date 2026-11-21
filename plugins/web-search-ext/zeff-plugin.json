@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Lets Zeff's AI search the web and read a page — tools for agents and the Workspace chat. Through your Claude login without a key, or an official API with one (Brave, Google). Never scraping; pages only from the public internet.",
   "author": "Zeff",
+  "keywords": ["web search", "search", "agents", "tools", "pages"],
+  "category": "ai",
+  "icon": "🔍",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

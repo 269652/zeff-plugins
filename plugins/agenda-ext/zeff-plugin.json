@@ -5,6 +5,9 @@
   "version": "1.0.0",
   "description": "Notes on a timeline, in projects, as in the app Agenda: a date or a range, on the agenda, pinned, done, tags and people; its text is the note's page. A template in the Workspace (New → from a template → Agenda).",
   "author": "Zeff",
+  "keywords": ["notes", "timeline", "projects", "agenda", "journal", "tags"],
+  "category": "app",
+  "icon": "📒",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

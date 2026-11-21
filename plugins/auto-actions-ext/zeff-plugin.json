@@ -5,6 +5,9 @@
   "version": "0.1.0",
   "description": "The AI step after the briefing: every open todo without a button gets ready-made actions from what the installed plugins can do (a message, a comment, a mail draft, a meeting, a hand-over). Its review is a lambda you or the AI can change.",
   "author": "Zeff",
+  "keywords": ["todos", "actions", "briefing", "automation", "suggestions"],
+  "category": "ai",
+  "icon": "⚡",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {
