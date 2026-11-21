@@ -2,7 +2,7 @@
   "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
   "id": "learn-ext",
   "name": "Learn (external)",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Zeff's Learn as an external plugin: courses researched and planned as skill trees, a live teacher in every lesson, exercises, cards, experience, study times, lesson todos.",
   "author": "Zeff examples",
   "apiVersion": 1,
