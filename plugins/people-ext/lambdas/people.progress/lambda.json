@@ -1,0 +1,11 @@
+{
+  "name": "people.progress",
+  "label": "People: what runs in the background",
+  "what": "How far the search for everyone's dates and the compiling of the summaries are — what the overview shows while they run.",
+  "kind": "function",
+  "zeff": [
+    "people.progress"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 256
+}

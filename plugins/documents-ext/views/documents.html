@@ -1,0 +1,109 @@
+<state name="scope" value="inbox"/><state name="sort" value="newest"/><state name="layout" value="grid" keep=true/><state name="q" value=""/><state name="selected" value=""/><state name="checked" value=""/><state name="limit" value="48"/><state name="busy" value=""/><state name="full" value=""/>
+<data name="docs" lambda="documents.screen" with="scope={{ state.scope }}, q={{ state.q }}, sort={{ state.sort }}, limit={{ state.limit }}, selected={{ state.selected }}, checked={{ state.checked }}" debounce=250/>
+<data name="doc" lambda="documents.text" with="id={{ state.selected }}, chars={{ state.full ? 0 : 6000 }}" when="{{ state.selected }}"/>
+<on event="docs-changed" action="reload"/>
+<on event="find" action="state" state="scope" value="all"/>
+{{#if data.docs.picked}}<on event="doc-open" action="url" href="{{ data.docs.picked.fileUrl }}"/>{{/if}}
+
+{{#if data.docs.scopeOptions}}<tabs bind="scope" options="{{ data.docs.scopeOptions }}"/>{{/if}}
+
+<row gap=2>
+<upload bind="busy" run="documents.add" multiple=true zone=view label="+ Add files" done="Added." emit="docs-changed"/>
+{{#if data.docs.checkedCount}}
+<b>{{ data.docs.checkedCount }} selected</b>
+<button run="documents.act" with="op=read, ids={{ state.checked }}" emit="docs-changed" then="checked=" label="✓ Mark read"/>
+<button run="documents.act" with="op=unread, ids={{ state.checked }}" emit="docs-changed" then="checked=" label="● Mark unread"/>
+<button run="documents.act" with="op=delete, ids={{ state.checked }}" emit="docs-changed" then="checked=" variant=danger confirm="Delete the selected documents for good?" label="🗑 Delete"/>
+<button action="state" state="checked" value="" label="Clear" variant=quiet/>
+{{#else}}
+<search bind="q" placeholder="Search documents …"/>
+<select bind="sort" options="newest:Newest first, oldest:Oldest first, unread:Unread first, name:Name, size:Largest first"/>
+<grow/>
+{{#if data.docs.markAll}}<button run="documents.act" with="op=read, ids={{ data.docs.unreadIds | join(',') }}" emit="docs-changed"  label="✓ Mark all read"/>{{/if}}
+<tabs bind="layout" options="grid:▦, list:☰"/>
+{{/if}}
+</row>
+{{#if state.busy}}<small><muted>Working …</muted></small>{{/if}}
+{{#if data.docs.reading.now}}<row gap=2 align=center><small><muted>Reading: {{ data.docs.reading.now }} now, {{ data.docs.reading.waiting }} waiting</muted></small><button run="documents.act" with="op=restart, ids=" emit="docs-changed" variant=quiet label="Restart reading"/></row>{{#else}}{{#if data.docs.reading.waiting}}<row gap=2 align=center><small><muted>{{ data.docs.reading.waiting }} waiting — nothing is being read right now.</muted></small><button run="documents.act" with="op=restart, ids=" emit="docs-changed" variant=quiet label="Start reading"/></row>{{/if}}{{/if}}
+{{#if data.docs.heldCount}}<callout tone=warn><row gap=2 align=center><text>{{ data.docs.heldCount }} documents from your folders wait for your confirmation — the AI reads, compiles and looks at them only then.</text><grow/><button run="documents.act" with="op=approve, ids={{ data.docs.heldIds | join(',') }}" emit="docs-changed"  label="Confirm all"/></row></callout>{{/if}}
+
+<grid cols="{{ data.docs.picked ? 2 : 1 }}" gap=4 min=320>
+<col gap=3>
+{{#if data.docs.count}}
+{{#if state.layout == 'list'}}
+<col gap=1>
+{{#each data.docs.items}}
+<row gap=2 wrap=false>
+<check bind="checked" value="{{ id }}"/>
+<dot color="{{ unread ? '#4f46e5' : '#0000' }}"/>
+<box action="state" state="selected" value="{{ id }}">
+<row gap=2 wrap=false>{{ icon }} {{#if unread}}<b>{{ title | truncate(80) }}</b>{{#else}}{{ title | truncate(80) }}{{/if}}<grow/>{{#if from}}<muted>{{ from }}</muted>{{/if}}{{#if status == 'failed'}}<badge color=red>failed</badge>{{#else}}{{#if status == 'queued' or status == 'extracting'}}<badge color=blue>reading …</badge>{{#else}}{{#if status == 'unsupported'}}<badge color=yellow>not readable</badge>{{#else}}{{#if compiled}}<badge color=green>✓ compiled</badge>{{/if}}{{/if}}{{/if}}{{/if}}<muted>{{ sizeText }}</muted><muted>{{ day }}</muted></row>
+</box>
+</row>
+{{/each}}
+</col>
+{{#else}}
+<grid cols=4 gap=3 min=200>
+{{#each data.docs.items}}
+<col gap=1>
+<row gap=2><check bind="checked" value="{{ id }}"/><grow/>{{#if unread}}<dot color="#4f46e5"/>{{/if}}</row>
+<box action="state" state="selected" value="{{ id }}" tip="{{ tip }}">
+<col gap=2>
+{{#if isImage}}<img src="{{ fileUrl }}" alt="{{ title }}" h=140 fit=cover/>{{#else}}<box tone=muted><col gap=1 align=center><heading level=1>{{ icon }}</heading><small><muted>{{ ending }}</muted></small></col></box>{{/if}}
+<clamp lines=2>{{#if unread}}<b>{{ title | truncate(80) }}</b>{{#else}}{{ title | truncate(80) }}{{/if}}</clamp>
+<small><muted>{{ sizeText }} · {{ day }}</muted></small>
+{{#if from}}<small><muted>✉ {{ from }}</muted></small>{{/if}}
+{{#if localShown}}<small><muted>📁 {{ localShown }}{{#if localMissing}} · deleted in the folder{{/if}}</muted></small>{{/if}}
+<row>{{#if status == 'failed'}}<badge color=red>failed</badge>{{#else}}{{#if status == 'queued' or status == 'extracting'}}<badge color=blue>reading …</badge>{{#else}}{{#if status == 'unsupported'}}<badge color=yellow>not readable</badge>{{#else}}{{#if compiled}}<badge color=green>✓ compiled</badge>{{/if}}{{/if}}{{/if}}{{/if}}{{#if held}}<badge color=yellow>waits for your confirmation</badge>{{/if}}</row>
+</col>
+</box>
+</col>
+{{/each}}
+</grid>
+{{/if}}
+{{#if data.docs.hasMore}}<row gap=2 justify=center><button action="state" state="limit" value="{{ data.docs.nextLimit }}" label="More"/></row>{{/if}}
+{{#else}}
+<box tone=muted>
+<heading level=1>{{ data.docs.emptyIcon }}</heading>
+<text>{{ data.docs.emptyText }}</text>
+<small><muted>Drop files here to add them.</muted></small>
+</box>
+{{/if}}
+</col>
+{{#if data.docs.picked}}
+<box>
+<col gap=3>
+<row gap=2 align=start><b>{{ data.docs.picked.title }}</b><grow/><button action="state" state="selected" value="" label="✕" variant=quiet/></row>
+{{#if data.docs.picked.isPdf}}<media src="{{ data.docs.picked.fileUrl }}" kind=pdf h=520 label="{{ data.docs.picked.title }}"/>
+{{#else}}{{#if data.docs.picked.isImage}}<img src="{{ data.docs.picked.fileUrl }}" alt="{{ data.docs.picked.title }}" fit=contain/>
+{{#else}}{{#if data.docs.picked.isAudio}}<media src="{{ data.docs.picked.fileUrl }}" kind=audio label="{{ data.docs.picked.title }}"/>
+{{#else}}<box tone=muted><col gap=1 align=center><heading level=1>{{ data.docs.picked.icon }}</heading><small><muted>{{ data.docs.picked.ending }}</muted></small></col></box>{{/if}}{{/if}}{{/if}}
+<row gap=2>
+<button run="documents.act" with="op=read, ids={{ data.docs.picked.id }}" emit="doc-open" label="Open"/>
+<a href="{{ data.docs.picked.fileUrl }}&download=1">Download</a>
+{{#if data.docs.picked.unread}}<button run="documents.act" with="op=read, ids={{ data.docs.picked.id }}" emit="docs-changed"  label="✓ Mark read"/>{{#else}}<button run="documents.act" with="op=unread, ids={{ data.docs.picked.id }}" emit="docs-changed"  label="● Mark unread"/>{{/if}}
+{{#if data.docs.picked.held}}<button run="documents.act" with="op=approve, ids={{ data.docs.picked.id }}" emit="docs-changed"  label="Confirm"/>{{/if}}
+{{#if data.docs.picked.status == 'failed' or data.docs.picked.status == 'unsupported'}}<button run="documents.act" with="op=reread, ids={{ data.docs.picked.id }}" emit="docs-changed"  label="Read again"/>{{/if}}
+{{#if data.docs.picked.status == 'queued' or data.docs.picked.status == 'extracting'}}<button run="documents.act" with="op=skip, ids={{ data.docs.picked.id }}" emit="docs-changed"  label="Skip"/>{{/if}}
+<button run="documents.act" with="op=delete, ids={{ data.docs.picked.id }}" emit="docs-changed" then="selected=" variant=danger confirm="Delete this document for good?" label="🗑"/>
+</row>
+<col gap=1>
+<row gap=3><muted>Type</muted><small>{{ data.docs.picked.kindLabel }}</small></row>
+<row gap=3><muted>Size</muted><small>{{ data.docs.picked.sizeText }}</small></row>
+<row gap=3><muted>Added</muted><small>{{ data.docs.picked.added }}</small></row>
+{{#if data.docs.picked.fromFull}}<row gap=3><muted>From</muted><small>{{ data.docs.picked.fromFull }}</small></row>{{/if}}
+{{#if data.docs.picked.localShown}}<row gap=3><muted>Folder</muted><small>{{ data.docs.picked.localShown }}</small></row>{{/if}}
+<row gap=3><muted>State</muted><small>{{ data.docs.picked.stateText }}</small></row>
+</col>
+{{#if data.docs.picked.error}}<text tone=bad>{{ data.docs.picked.error }}</text>{{/if}}
+{{#if data.doc.found}}
+<col gap=2>
+{{#if data.doc.summary}}<b>Summary</b><text>{{ data.doc.summary }}</text>{{/if}}
+{{#if data.doc.text}}<b>Text</b><text pre=true>{{ data.doc.text }}</text>{{#if data.doc.more}}<button action="state" state="full" value="1" label="Show all" variant=quiet/>{{/if}}{{/if}}
+</col>
+{{/if}}
+{{#if data.docs.picked.concepts}}<row gap=1 wrap=true>{{#each data.docs.picked.concepts}}<button action="state" state="q" value="{{ this }}" emit="find" label="{{ this }}" variant=quiet/>{{/each}}</row>{{/if}}
+</col>
+</box>
+{{/if}}
+</grid>

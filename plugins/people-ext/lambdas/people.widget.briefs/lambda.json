@@ -1,0 +1,11 @@
+{
+  "name": "people.widget.briefs",
+  "label": "People widget: Meeting briefs",
+  "what": "The data of the widget \"Meeting briefs\" — what the built-in shows, through the kernel's read people.widget.",
+  "kind": "function",
+  "zeff": [
+    "people.widget"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

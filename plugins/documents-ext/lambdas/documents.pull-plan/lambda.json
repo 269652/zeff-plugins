@@ -1,0 +1,11 @@
+{
+  "name": "documents.pull-plan",
+  "label": "Documents: the Unread box of a row",
+  "what": "Which documents the document inbox says you have seen or not — as statements for the flow.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

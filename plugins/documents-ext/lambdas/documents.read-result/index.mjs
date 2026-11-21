@@ -12,7 +12,7 @@ export async function handler(event, context) {
   const z = context.zeff;
   const t = tFor(context.language);
   const { id, lane, read, now } = event;
-  const set = (status, error) => ({ sql: "update documents set status = ?, error = ?, updated_at = ? where id = ?", params: [status, String(error ?? "").slice(0, 500), now, id] });
+  const set = (status, error) => ({ sql: "update documents set status = ?, error = ?, updated_at = ? where id = ? and status = 'extracting'", params: [status, String(error ?? "").slice(0, 500), now, id] });
   if (read?.error) {
     const tooLong = /took longer than/i.test(String(read.error));
     return { slow: false, statements: [set("failed", tooLong ? t("It took too long — click “Read again”.") : read.error)] };
@@ -25,5 +25,5 @@ export async function handler(event, context) {
     return held ? { slow: false, statements: [set("queued", t("Waits for your confirmation — then the AI reads it."))] } : { slow: true, statements: [set("queued", "")] };
   }
   const text = String(read?.text ?? "").slice(0, MAX_TEXT);
-  return { slow: false, statements: [{ sql: "update documents set text = ?, status = 'ready', error = '', compiled = 0, summary = '', concepts = '', updated_at = ? where id = ?", params: [text, now, id] }] };
+  return { slow: false, statements: [{ sql: "update documents set text = ?, status = 'ready', error = '', compiled = 0, summary = '', concepts = '', updated_at = ? where id = ? and status = 'extracting'", params: [text, now, id] }] };
 }

@@ -1,0 +1,12 @@
+{
+  "name": "documents.source",
+  "label": "Documents: the document inbox",
+  "what": "The documents as records of the Workspace (the document inbox databases): kind, state, added, size, unread, compiled, from, concepts, abstract and text.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "documents.origins"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

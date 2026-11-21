@@ -155,6 +155,11 @@ function parseCsv(text, tab = false, max = 500) {
 }
 
 // src/plugins/documents/shared.ts
+var TEXT_EXT = /* @__PURE__ */ new Set(["txt", "md", "markdown", "csv", "tsv", "json", "xml", "html", "htm", "log", "yaml", "yml", "ini", "rtf", "srt", "vtt", "eml", "ics", "tex"]);
+var OFFICE_EXT = /* @__PURE__ */ new Set(["docx", "xlsx", "pptx", "odt", "ods", "odp"]);
+var IMAGE_EXT = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp"]);
+var AUDIO_EXT = /* @__PURE__ */ new Set(["mp3", "wav", "m4a", "ogg", "oga", "opus", "flac", "aac", "wma", "webm", "amr"]);
+var READABLE_EXTS = ["pdf", ...TEXT_EXT, ...OFFICE_EXT, ...IMAGE_EXT, ...AUDIO_EXT];
 function sizeText(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;

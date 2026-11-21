@@ -1,0 +1,11 @@
+{
+  "name": "people.review.claim",
+  "label": "People review: What the AI read about people",
+  "what": "What waits for your word in the review queue — \"What the AI read about people\" — through the kernel's read people.review-list.",
+  "kind": "function",
+  "zeff": [
+    "people.review-list"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

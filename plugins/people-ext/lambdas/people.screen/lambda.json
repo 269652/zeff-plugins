@@ -1,0 +1,11 @@
+{
+  "name": "people.screen",
+  "label": "People: what the overview shows",
+  "what": "The people overview — the cards, who to get in touch with, the appointments with a brief each, dates coming up, what waits to be checked, the suggestions, the settings — as the built-in works it out.",
+  "kind": "function",
+  "zeff": [
+    "people.screen-data"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

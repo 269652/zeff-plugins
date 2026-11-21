@@ -1,0 +1,11 @@
+{
+  "name": "people.review.date",
+  "label": "People review: Dates found — are they right?",
+  "what": "What waits for your word in the review queue — \"Dates found — are they right?\" — through the kernel's read people.review-list.",
+  "kind": "function",
+  "zeff": [
+    "people.review-list"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

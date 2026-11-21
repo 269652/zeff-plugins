@@ -1,0 +1,11 @@
+{
+  "name": "people.series",
+  "label": "People: days in touch, for the Correlations",
+  "what": "A daily series per person you are most in touch with: 1 on a day in touch with them, 0 on a day without.",
+  "kind": "function",
+  "zeff": [
+    "people.contact-days"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

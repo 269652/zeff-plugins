@@ -1,7 +1,7 @@
 {
   "format": 1,
   "id": "documents-ext",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Documents",
   "description": "Your documents: the text read out of them, the AI's todos from them and which documents belong to which todo, your local folders read in by themselves.",
   "icon": "📄",
@@ -166,7 +166,8 @@
           "store": [
             "documents-ext.documents",
             "documents-ext.gate",
-            "documents-ext.local_files"
+            "documents-ext.local_files",
+            "documents-ext.seen"
           ]
         },
         "sync": {
@@ -249,7 +250,8 @@
           "store": [
             "documents-ext.documents",
             "documents-ext.gate",
-            "documents-ext.local_files"
+            "documents-ext.local_files",
+            "documents-ext.seen"
           ]
         },
         "sync": {
@@ -469,7 +471,8 @@
           "store": [
             "documents-ext.documents",
             "documents-ext.gate",
-            "documents-ext.local_files"
+            "documents-ext.local_files",
+            "documents-ext.seen"
           ],
           "maxSteps": 6000
         },
@@ -723,7 +726,8 @@
           "store": [
             "documents-ext.documents",
             "documents-ext.gate",
-            "documents-ext.local_files"
+            "documents-ext.local_files",
+            "documents-ext.seen"
           ],
           "maxSteps": 6000
         },
@@ -734,6 +738,848 @@
           }
         ]
       }
+    },
+    {
+      "id": "i6",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Add a file as a document",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.add",
+        "title": "Add a file as a document",
+        "description": "A file brought by the Documents screen (or the attach panel of a todo — input todo) kept as a document and read; the same content again gives the first one back. input: name, mime, size, token (the staged upload), todo (optional).",
+        "inputs": [
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "mime",
+            "type": "text"
+          },
+          {
+            "name": "size",
+            "type": "number"
+          },
+          {
+            "name": "token",
+            "type": "text"
+          },
+          {
+            "name": "todo",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "kept",
+            "kind": "action",
+            "action": "files.take",
+            "input": {
+              "token": "{{ input.token }}",
+              "dir": "documents",
+              "name": "{{ input.name }}"
+            }
+          },
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.add-plan",
+              "event": {
+                "name": "{{ steps.kept.name }}",
+                "mime": "{{ input.mime }}",
+                "sha256": "{{ steps.kept.sha256 }}",
+                "size": "{{ steps.kept.size }}",
+                "file": "{{ steps.kept.file }}"
+              }
+            }
+          },
+          {
+            "id": "wrote",
+            "kind": "if",
+            "when": "{{ steps.plan.statements }}",
+            "then": [
+              {
+                "id": "write",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.plan.statements }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "row",
+            "kind": "action",
+            "action": "sql.query",
+            "input": {
+              "sql": "select id from documents where sha256 = ?",
+              "params": [
+                "{{ steps.kept.sha256 }}"
+              ]
+            }
+          },
+          {
+            "id": "attach",
+            "kind": "if",
+            "when": "{{ input.todo and steps.row.rows[0] }}",
+            "then": [
+              {
+                "id": "ctx",
+                "kind": "action",
+                "action": "todos.add-context",
+                "input": {
+                  "todo": "{{ input.todo }}",
+                  "refs": [
+                    "doc:{{ steps.row.rows[0].id }}"
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "reading",
+            "kind": "if",
+            "when": "{{ steps.plan.fresh }}",
+            "then": [
+              {
+                "id": "inbox",
+                "kind": "action",
+                "action": "workspace.refresh-databases",
+                "input": {
+                  "dataType": "documents"
+                }
+              },
+              {
+                "id": "go",
+                "kind": "call",
+                "flow": "documents.read",
+                "input": {}
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "id": "{{ steps.row.rows[0].id }}",
+              "fresh": "{{ steps.plan.fresh }}",
+              "message": "{{ steps.plan.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "ai": true,
+          "todos": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files",
+            "documents-ext.seen"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Do something with documents",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.act",
+        "title": "Do something with documents",
+        "description": "What the Documents screen's buttons do to documents: op = read | unread (seen), delete (the document, its file, the todos let go of it), reread (read again), skip, restart (the reading begins afresh), approve (confirm those waiting for you); ids: the documents (3,7 or a list).",
+        "inputs": [
+          {
+            "name": "op",
+            "type": "text"
+          },
+          {
+            "name": "ids",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.act-plan",
+              "event": {
+                "op": "{{ input.op }}",
+                "ids": "{{ input.ids }}"
+              }
+            }
+          },
+          {
+            "id": "wrote",
+            "kind": "if",
+            "when": "{{ steps.plan.statements }}",
+            "then": [
+              {
+                "id": "write",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.plan.statements }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "files",
+            "kind": "foreach",
+            "items": "{{ steps.plan.drops }}",
+            "as": "f",
+            "max": 500,
+            "nodes": [
+              {
+                "id": "drop",
+                "kind": "action",
+                "action": "files.drop",
+                "input": {
+                  "dir": "documents",
+                  "file": "{{ f }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "refs",
+            "kind": "foreach",
+            "items": "{{ steps.plan.refs }}",
+            "as": "r",
+            "max": 500,
+            "nodes": [
+              {
+                "id": "unref",
+                "kind": "action",
+                "action": "todos.drop-ref",
+                "input": {
+                  "ref": "{{ r }}"
+                }
+              }
+            ]
+          },
+          {
+            "id": "inbox",
+            "kind": "action",
+            "action": "workspace.refresh-databases",
+            "input": {
+              "dataType": "documents"
+            }
+          },
+          {
+            "id": "reading",
+            "kind": "if",
+            "when": "{{ steps.plan.reading }}",
+            "then": [
+              {
+                "id": "go",
+                "kind": "call",
+                "flow": "documents.read",
+                "input": {}
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "changed": "{{ steps.plan.changed }}",
+              "message": "{{ steps.plan.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "ai": true,
+          "todos": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files",
+            "documents-ext.seen"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Change the local folders",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.folder",
+        "title": "Change the local folders",
+        "description": "A folder to read in added (op add, path, mode auto | confirm), its mode set (op mode, id, mode) or the folder no longer read (op remove, id). A folder added is read in at once.",
+        "inputs": [
+          {
+            "name": "op",
+            "type": "text"
+          },
+          {
+            "name": "path",
+            "type": "text"
+          },
+          {
+            "name": "mode",
+            "type": "text"
+          },
+          {
+            "name": "id",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "look",
+            "kind": "if",
+            "when": "{{ input.op == 'add' }}",
+            "then": [
+              {
+                "id": "chk",
+                "kind": "action",
+                "action": "files.browse",
+                "input": {
+                  "path": "{{ input.path }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.folder-plan",
+              "event": {
+                "op": "{{ input.op }}",
+                "path": "{{ steps.chk.path ? steps.chk.path : input.path }}",
+                "mode": "{{ input.mode }}",
+                "id": "{{ input.id }}"
+              }
+            }
+          },
+          {
+            "id": "pref",
+            "kind": "action",
+            "action": "pref.set",
+            "input": {
+              "plugin": "documents-ext",
+              "key": "documents:folders",
+              "value": "{{ steps.plan.prefValue }}"
+            }
+          },
+          {
+            "id": "wrote",
+            "kind": "if",
+            "when": "{{ steps.plan.statements }}",
+            "then": [
+              {
+                "id": "write",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.plan.statements }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "scan",
+            "kind": "if",
+            "when": "{{ steps.plan.scan }}",
+            "then": [
+              {
+                "id": "go",
+                "kind": "call",
+                "flow": "documents.folders",
+                "input": {}
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.plan.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true,
+          "ai": true,
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files",
+            "documents-ext.seen"
+          ],
+          "maxSteps": 6000
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Browse the folders of this computer",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.browse",
+        "title": "Browse the folders of this computer",
+        "description": "A folder's subfolders for choosing a folder to read in (none given: the drives). Gives path, parent and dirs.",
+        "inputs": [
+          {
+            "name": "path",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "ls",
+            "kind": "action",
+            "action": "files.browse",
+            "input": {
+              "path": "{{ input.path }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "path": "{{ steps.ls.path }}",
+              "parent": "{{ steps.ls.parent }}",
+              "dirs": "{{ steps.ls.dirs }}"
+            }
+          }
+        ],
+        "requested": {
+          "api": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Save the audio transcriber",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.setting",
+        "title": "Save the audio transcriber",
+        "description": "The command that turns audio into text, and whether Poppler is installed by itself (input transcriber, autoInstall).",
+        "inputs": [
+          {
+            "name": "transcriber",
+            "type": "text"
+          },
+          {
+            "name": "autoInstall",
+            "type": "text"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.settings",
+              "event": {
+                "save": {
+                  "transcriber": "{{ input.transcriber }}",
+                  "autoInstall": "{{ input.autoInstall }}"
+                }
+              }
+            }
+          },
+          {
+            "id": "pref",
+            "kind": "action",
+            "action": "pref.set",
+            "input": {
+              "plugin": "documents-ext",
+              "key": "plugin:documents",
+              "value": "{{ steps.plan.prefValue }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.plan.message }}"
+            }
+          }
+        ],
+        "requested": {},
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i13",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Attach a document to a todo",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.attach",
+        "title": "Attach a document to a todo",
+        "description": "A document attached to a todo by hand: it shows in its context and goes into what the AI reads about it (input todo, doc).",
+        "inputs": [
+          {
+            "name": "todo",
+            "type": "number"
+          },
+          {
+            "name": "doc",
+            "type": "number"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "ctx",
+            "kind": "action",
+            "action": "todos.add-context",
+            "input": {
+              "todo": "{{ input.todo }}",
+              "refs": [
+                "doc:{{ input.doc }}"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.ctx.ok }}"
+            }
+          }
+        ],
+        "requested": {
+          "todos": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i14",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Fetch the documents' abstracts",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.abstracts",
+        "title": "Fetch the documents' abstracts",
+        "description": "The knowledge server is asked to take in and compile what is new; the abstracts and concepts of the documents it compiled are kept with them. Runs by itself every ten minutes.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.abstracts-plan",
+              "event": {}
+            }
+          },
+          {
+            "id": "ask",
+            "kind": "if",
+            "when": "{{ steps.plan.ids }}",
+            "then": [
+              {
+                "id": "sync",
+                "kind": "action",
+                "action": "knowledge.sync",
+                "input": {}
+              },
+              {
+                "id": "pages",
+                "kind": "action",
+                "action": "knowledge.pages",
+                "input": {
+                  "ids": "{{ steps.plan.ids }}"
+                }
+              },
+              {
+                "id": "res",
+                "kind": "action",
+                "action": "lambda.invoke",
+                "input": {
+                  "name": "documents.abstracts-result",
+                  "event": {
+                    "pages": "{{ steps.pages.pages }}"
+                  }
+                }
+              },
+              {
+                "id": "wrote",
+                "kind": "if",
+                "when": "{{ steps.res.statements }}",
+                "then": [
+                  {
+                    "id": "write",
+                    "kind": "action",
+                    "action": "sql.exec",
+                    "input": {
+                      "statements": "{{ steps.res.statements }}"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "message": "{{ steps.res.n }}"
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files",
+            "documents-ext.seen"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          },
+          {
+            "kind": "schedule",
+            "everyMinutes": 10
+          }
+        ]
+      }
+    },
+    {
+      "id": "i15",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Take back the Unread box of the document inbox",
+      "icon": "📄",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "documents.pull",
+        "title": "Take back the Unread box of the document inbox",
+        "description": "A document ticked off (or on) in a row of the document inbox is seen (unread) — run before each read of the inbox (input rows).",
+        "inputs": [
+          {
+            "name": "rows",
+            "type": "json"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "plan",
+            "kind": "action",
+            "action": "lambda.invoke",
+            "input": {
+              "name": "documents.pull-plan",
+              "event": {
+                "rows": "{{ input.rows }}"
+              }
+            }
+          },
+          {
+            "id": "wrote",
+            "kind": "if",
+            "when": "{{ steps.plan.statements }}",
+            "then": [
+              {
+                "id": "write",
+                "kind": "action",
+                "action": "sql.exec",
+                "input": {
+                  "statements": "{{ steps.plan.statements }}"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": true,
+              "seen": "{{ steps.plan.seen }}",
+              "unread": "{{ steps.plan.unread }}"
+            }
+          }
+        ],
+        "requested": {
+          "store": [
+            "documents-ext.documents",
+            "documents-ext.gate",
+            "documents-ext.local_files",
+            "documents-ext.seen"
+          ]
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i11",
+      "parent": "i1",
+      "kind": "database",
+      "title": "Documents settings",
+      "icon": "⚙️",
+      "schema": {
+        "titleName": "Settings",
+        "properties": [],
+        "views": [
+          {
+            "id": "vdocs1",
+            "name": "Documents settings",
+            "type": "app",
+            "filter": {
+              "op": "and",
+              "rules": []
+            },
+            "sorts": [],
+            "hidden": [],
+            "app": "template",
+            "template": "<state name=\"s_path\" value=\"\"/><state name=\"s_mode\" value=\"confirm\"/><state name=\"browsing\" value=\"\"/><state name=\"t_cmd\" value=\"\"/><state name=\"t_auto\" value=\"\"/>\n<data name=\"s\" lambda=\"documents.settings\"/>\n<on event=\"settings-changed\" action=\"reload\"/>\n{{#if not data.s}}<muted>Loading …</muted>{{#else}}\n<box title=\"Local folders\">\n<col gap=3>\n<text tone=muted>Zeff reads in every document from these folders by itself (subfolders too) — new and changed files on each run, a deleted file stays as a document. “Automatically”: the AI reads, compiles and looks at the documents by itself. “Wait for my confirmation”: nothing with the AI happens until you confirm them.</text>\n{{#each data.s.folders}}\n<row gap=2 align=center>\n<col fill=true><b>📁 {{ path }}</b><small><muted>{{ status }}</muted></small></col>\n<button run=\"documents.folder\" with=\"op=mode, id={{ id }}, mode=confirm\" emit=\"settings-changed\" label=\"Wait for my confirmation\" variant=\"{{ mode == 'confirm' ? 'primary' : 'plain' }}\"/>\n<button run=\"documents.folder\" with=\"op=mode, id={{ id }}, mode=auto\" emit=\"settings-changed\" label=\"Automatically\" variant=\"{{ mode == 'auto' ? 'primary' : 'plain' }}\"/>\n<button run=\"documents.folder\" with=\"op=remove, id={{ id }}\" emit=\"settings-changed\" label=\"Remove\" variant=danger confirm=\"No longer read this folder? Its documents stay.\"/>\n</row>\n{{/each}}\n<row gap=2 align=center>\n<small><muted>New folder:</muted></small>\n<button action=\"state\" state=\"s_mode\" value=\"confirm\" label=\"Wait for my confirmation\" variant=\"{{ state.s_mode == 'confirm' ? 'primary' : 'plain' }}\"/>\n<button action=\"state\" state=\"s_mode\" value=\"auto\" label=\"Automatically\" variant=\"{{ state.s_mode == 'auto' ? 'primary' : 'plain' }}\"/>\n<button run=\"documents.browse\" with=\"path=\" into=\"browse\" then=\"browsing=1\" label=\"Choose a folder …\" variant=primary/>\n{{#if data.s.folders}}<button run=\"documents.folders\" done=\"Folders read in.\" emit=\"settings-changed\" label=\"Read in now\"/>{{/if}}\n</row>\n<row gap=2 wrap=false><col fill=true><input bind=\"s_path\" label=\"or paste a path, e.g. C:\\Users\\me\\Documents\\Rechnungen\"/></col><button run=\"documents.folder\" with=\"op=add, path={{ state.s_path }}, mode={{ state.s_mode }}\" then=\"s_path=\" emit=\"settings-changed\" label=\"Add\" disabled=\"{{ not state.s_path }}\"/></row>\n</col>\n</box>\n<dialog bind=\"browsing\" title=\"Choose a folder\">\n<col gap=2>\n<row gap=2 align=center>\n<button run=\"documents.browse\" with=\"path={{ data.browse.parent }}\" into=\"browse\" label=\"↑ {{ data.browse.parent ? 'Up' : 'Drives' }}\"/>\n<small><muted>{{ data.browse.path ? data.browse.path : 'This computer' }}</muted></small>\n</row>\n{{#if data.browse.path}}<button run=\"documents.folder\" with=\"op=add, path={{ data.browse.path }}, mode={{ state.s_mode }}\" then=\"browsing=\" emit=\"settings-changed\" label=\"Add this folder\" variant=primary/>{{/if}}\n{{#each data.browse.dirs}}<button run=\"documents.browse\" with=\"path={{ path }}\" into=\"browse\" label=\"📁 {{ name }}\" variant=quiet/>{{/each}}\n</col>\n</dialog>\n{{#if data.s.pending}}\n<box title=\"Waiting for your confirmation\">\n<col gap=2>\n<text tone=muted>The text of these is read where that needs no AI; nothing else happens with them until you confirm.</text>\n{{#each data.s.pending}}<row gap=2 align=center><col fill=true><text>{{ name }}</text></col><button run=\"documents.act\" with=\"op=approve, ids={{ id }}\" emit=\"settings-changed\" label=\"Confirm\"/></row>{{/each}}\n</col>\n</box>\n{{/if}}\n<box title=\"Reading\">\n<row gap=2 align=center>\n<col fill=true><text>{{ data.s.reading.now }} being read now, {{ data.s.reading.waiting }} waiting.</text></col>\n<button run=\"documents.act\" with=\"op=restart\" done=\"Reading restarted.\" emit=\"settings-changed\" label=\"Restart reading\"/>\n</row>\n</box>\n<box title=\"Audio transcriber\">\n<col gap=3>\n<text tone=muted>Audio is turned into text by a command you set — Zeff installs nothing. {file} is the recording, {dir} a folder for its output (it takes the .txt written there, else what the command prints). For example whisper \"{file}\" --model small --output_format txt --output_dir \"{dir}\"</text>\n<row gap=2 wrap=false><col fill=true><input bind=\"t_cmd\" label=\"Audio transcriber\" value=\"{{ data.s.transcriber }}\"/></col></row>\n<row gap=2 align=center>\n<button action=\"state\" state=\"t_auto\" value=\"true\" label=\"Install Poppler by itself when a scanned or complex PDF needs it\" variant=\"{{ (state.t_auto ? state.t_auto == 'true' : data.s.autoInstall) ? 'primary' : 'plain' }}\"/>\n<button action=\"state\" state=\"t_auto\" value=\"false\" label=\"Not by itself\" variant=\"{{ (state.t_auto ? state.t_auto == 'true' : data.s.autoInstall) ? 'plain' : 'primary' }}\"/>\n<button run=\"documents.setting\" with=\"transcriber={{ state.t_cmd == '' ? data.s.transcriber : state.t_cmd }}, autoInstall={{ state.t_auto ? state.t_auto : data.s.autoInstall }}\" done=\"Saved.\" emit=\"settings-changed\" label=\"Save\" variant=primary/>\n</row>\n</col>\n</box>\n{{/if}}"
+          }
+        ]
+      },
+      "rows": [
+        {
+          "id": "r1",
+          "title": "Documents settings",
+          "cells": {},
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph"
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

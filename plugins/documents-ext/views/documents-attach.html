@@ -1,0 +1,21 @@
+<state name="todo" value=""/><state name="aq" value=""/><state name="busy" value=""/>
+<data name="pick" lambda="documents.attach-list" with="q={{ state.aq }}" debounce=250/>
+<on event="attached" action="reload"/>
+<col gap=2>
+<row gap=2 align=center>
+<col fill=true><search bind="aq" placeholder="Search the documents …"/></col>
+<upload bind="busy" run="documents.add" with="todo={{ state.todo }}" multiple=true zone=view label="Upload new …" done="Attached — being read …" emit="attached"/>
+</row>
+<small><muted>…or drop files on this panel. An attached document is context for this todo.</muted></small>
+{{#if data.pick.items}}
+{{#each data.pick.items}}
+<row gap=2 align=start wrap=false>
+<text>{{ icon }}</text>
+<col fill=true><b>{{ title }}</b> <small><muted>{{ sizeText }}</muted></small><small><muted>{{ text }}</muted></small></col>
+<button run="documents.attach" with="todo={{ state.todo }}, doc={{ id }}" done="Attached." emit="attached" label="Attach"/>
+</row>
+{{/each}}
+{{#else}}
+<small><muted>{{ data.pick.count ? 'Nothing matches.' : 'No documents yet — upload one.' }}</muted></small>
+{{/if}}
+</col>

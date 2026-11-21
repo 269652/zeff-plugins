@@ -2,7 +2,7 @@
   "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
   "id": "people-ext",
   "name": "People (AI steps)",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "What the AI does with your people: reads what new messages say about them (roles, tasks, promises, links), writes their overview, tells a person from an organisation and places them in a circle, and matches the names. The contacts themselves stay Zeff's.",
   "author": "Zeff",
   "apiVersion": 1,
@@ -11,6 +11,418 @@
     "lambdas": "lambdas",
     "workspacePackages": [
       "people.package.json"
+    ],
+    "rowBadges": [
+      {
+        "prefix": "person:",
+        "lambda": "people.row-badges"
+      }
+    ],
+    "seriesProviders": [
+      {
+        "id": "contact",
+        "replaces": "people.contact",
+        "lambda": "people.series"
+      }
+    ],
+    "widgets": [
+      {
+        "id": "list",
+        "replaces": "people.list",
+        "label": "People",
+        "icon": "👥",
+        "description": "People at a glance — your starred ones, the ones picked, or by words — with how to reach them and their next date.",
+        "size": "half",
+        "ttl": 60,
+        "settings": [
+          {
+            "key": "q",
+            "label": "Words (name, alias, mail)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 8,
+            "min": 1,
+            "max": 30,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.list"
+      },
+      {
+        "id": "upcoming",
+        "replaces": "people.upcoming",
+        "label": "Dates coming up",
+        "icon": "🎂",
+        "description": "Birthdays and dates of your people in the next days — tick one off when you have thought of it.",
+        "size": "half",
+        "ttl": 60,
+        "settings": [
+          {
+            "key": "days",
+            "label": "Days ahead",
+            "default": 14,
+            "min": 1,
+            "max": 90,
+            "kind": "number"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 6,
+            "min": 1,
+            "max": 20,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.upcoming",
+        "actFlow": "people.widget-act.upcoming"
+      },
+      {
+        "id": "owed",
+        "replaces": "people.owed",
+        "label": "Who owes whom",
+        "icon": "🤝",
+        "description": "The commitments read from your messages: what you owe your people, what they owe you — past its day first; tick one off when it is kept.",
+        "size": "half",
+        "ttl": 60,
+        "settings": [
+          {
+            "key": "who",
+            "label": "Whose",
+            "default": "all",
+            "options": [
+              {
+                "value": "all",
+                "label": "Both"
+              },
+              {
+                "value": "mine",
+                "label": "What I owe"
+              },
+              {
+                "value": "theirs",
+                "label": "What they owe me"
+              }
+            ],
+            "kind": "select"
+          },
+          {
+            "key": "person",
+            "label": "Only with (a name; empty: everyone)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 8,
+            "min": 1,
+            "max": 30,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.owed",
+        "actFlow": "people.widget-act.owed"
+      },
+      {
+        "id": "briefs",
+        "replaces": "people.briefs",
+        "label": "Meeting briefs",
+        "icon": "🗒️",
+        "description": "Your appointments in the next 24 hours, a line for each person in them: when you last met, what came from them since, what is open between you.",
+        "size": "half",
+        "ttl": 120,
+        "settings": [
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 6,
+            "min": 1,
+            "max": 20,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.briefs"
+      },
+      {
+        "id": "drifting",
+        "replaces": "people.drifting",
+        "label": "Drifting apart",
+        "icon": "🌊",
+        "description": "The people you are in touch with less than usual: their usual rhythm over the last 12 months, and how long it has been now — twice that and more.",
+        "size": "half",
+        "ttl": 900,
+        "settings": [
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 6,
+            "min": 1,
+            "max": 20,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.drifting"
+      },
+      {
+        "id": "todos",
+        "replaces": "people.todos",
+        "label": "Todos with a person",
+        "icon": "☑️",
+        "description": "The open todos about a person — on their page by itself; tick one off right here.",
+        "size": "half",
+        "ttl": 30,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 8,
+            "min": 1,
+            "max": 30,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.todos",
+        "actFlow": "people.widget-act.todos"
+      },
+      {
+        "id": "overview",
+        "replaces": "people.overview",
+        "label": "All about a person",
+        "icon": "🧑",
+        "description": "Everything Zeff knows about a person in one place: who they are to you, key facts, what was learned, relations, dates, last contact, open promises and todos, money, tickets, pages, how to reach them.",
+        "size": "full",
+        "ttl": 60,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          }
+        ],
+        "lambda": "people.widget.overview"
+      },
+      {
+        "id": "promises",
+        "replaces": "people.promises",
+        "label": "Open promises (both ways)",
+        "icon": "🤝",
+        "description": "What you promised a person and what they promised you, open — past its day first; on their page by itself, empty: everyone. Tick one off when it is kept.",
+        "size": "half",
+        "ttl": 60,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the page's person, else everyone)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "who",
+            "label": "Whose",
+            "default": "all",
+            "options": [
+              {
+                "value": "all",
+                "label": "Both"
+              },
+              {
+                "value": "mine",
+                "label": "What I promised"
+              },
+              {
+                "value": "theirs",
+                "label": "What they promised"
+              }
+            ],
+            "kind": "select"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 10,
+            "min": 1,
+            "max": 40,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.promises",
+        "actFlow": "people.widget-act.promises"
+      },
+      {
+        "id": "facts",
+        "replaces": "people.facts",
+        "label": "Facts about a person",
+        "icon": "💡",
+        "description": "What matters about a person: the key facts, their role, what they look after, what they like — from their summary and what was learned from your messages.",
+        "size": "half",
+        "ttl": 120,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 10,
+            "min": 1,
+            "max": 30,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.facts"
+      },
+      {
+        "id": "funfacts",
+        "replaces": "people.funfacts",
+        "label": "Fun facts",
+        "icon": "🎈",
+        "description": "The fun facts about a person — what makes them them.",
+        "size": "half",
+        "ttl": 300,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          }
+        ],
+        "lambda": "people.widget.funfacts"
+      },
+      {
+        "id": "news",
+        "replaces": "people.news",
+        "label": "News from a person",
+        "icon": "📰",
+        "description": "What is new with a person, the newest first: what was learned lately, their latest messages, the appointments with them.",
+        "size": "half",
+        "ttl": 60,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 8,
+            "min": 1,
+            "max": 30,
+            "kind": "number"
+          },
+          {
+            "key": "days",
+            "label": "Of the last … days",
+            "default": 30,
+            "min": 1,
+            "max": 365,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.news"
+      },
+      {
+        "id": "rhythm",
+        "replaces": "people.rhythm",
+        "label": "Your rhythm with a person",
+        "icon": "📈",
+        "description": "How you two are in touch: days in touch this year, how often usually, the last time, who starts, how fast each answers.",
+        "size": "full",
+        "ttl": 300,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          }
+        ],
+        "lambda": "people.widget.rhythm"
+      },
+      {
+        "id": "coming",
+        "replaces": "people.coming",
+        "label": "Coming up with a person",
+        "icon": "📆",
+        "description": "What is coming up with a person: the next appointments with them, their birthday and the other dates you keep.",
+        "size": "half",
+        "ttl": 120,
+        "settings": [
+          {
+            "key": "person",
+            "label": "Person (a name; empty: the person whose page this is)",
+            "default": "",
+            "kind": "text"
+          },
+          {
+            "key": "limit",
+            "label": "How many",
+            "default": 6,
+            "min": 1,
+            "max": 30,
+            "kind": "number"
+          }
+        ],
+        "lambda": "people.widget.coming"
+      }
+    ],
+    "reviewSources": [
+      {
+        "id": "claim",
+        "label": "What the AI read about people",
+        "listLambda": "people.review.claim",
+        "actFlow": "people.review-act.claim"
+      },
+      {
+        "id": "link",
+        "label": "Who is connected to what",
+        "listLambda": "people.review.link",
+        "actFlow": "people.review-act.link"
+      },
+      {
+        "id": "stale",
+        "label": "Still true?",
+        "listLambda": "people.review.stale",
+        "actFlow": "people.review-act.stale"
+      },
+      {
+        "id": "date",
+        "label": "Dates found — are they right?",
+        "listLambda": "people.review.date",
+        "actFlow": "people.review-act.date"
+      },
+      {
+        "id": "followup",
+        "label": "Follow up?",
+        "listLambda": "people.review.followup",
+        "actFlow": "people.review-act.followup"
+      }
+    ],
+    "appViews": [
+      {
+        "id": "people",
+        "dataType": "people",
+        "label": "Overview (plugin)",
+        "icon": "👥",
+        "template": "views/people.html"
+      }
     ],
     "aiTasks": [
       {

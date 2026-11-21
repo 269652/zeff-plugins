@@ -2,7 +2,7 @@
   "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
   "id": "documents-ext",
   "name": "Documents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Your documents: the text read out of text files, Office files, PDFs, pictures and recordings, the AI's todos from them, which documents belong to which todo, your local folders read in by themselves. Its steps are lambdas and flows you or the AI can change.",
   "author": "Zeff",
   "apiVersion": 1,
@@ -11,6 +11,35 @@
     "lambdas": "lambdas",
     "workspacePackages": [
       "documents.package.json"
+    ],
+    "appViews": [
+      {
+        "id": "documents-ext",
+        "dataType": "documents",
+        "label": "Documents",
+        "icon": "🗂",
+        "template": "views/documents.html"
+      }
+    ],
+    "sources": [
+      {
+        "id": "documents",
+        "label": "Documents",
+        "icon": "📄",
+        "hint": "The documents you dropped in or mail attachments brought — with their abstract, where they came from and whether you have seen them (Unread).",
+        "lambda": "documents.source",
+        "replaces": "documents",
+        "noNewRows": false,
+        "pull": "documents.pull"
+      }
+    ],
+    "knowledgeDocs": [
+      {
+        "id": "documents",
+        "lambda": "documents.knowledge-docs",
+        "args": {},
+        "everyMinutes": 30
+      }
     ],
     "stores": [
       {
@@ -92,6 +121,21 @@
           {
             "name": "state",
             "type": "text"
+          },
+          {
+            "name": "at",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "name": "seen",
+        "adopts": "document_seen",
+        "key": "doc_id",
+        "columns": [
+          {
+            "name": "doc_id",
+            "type": "integer"
           },
           {
             "name": "at",

@@ -1,0 +1,9 @@
+{
+  "name": "documents.abstracts-result",
+  "label": "Documents: the abstracts",
+  "what": "The abstracts the knowledge server made, kept with the documents — as statements for the flow.",
+  "kind": "function",
+  "zeff": [],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}
