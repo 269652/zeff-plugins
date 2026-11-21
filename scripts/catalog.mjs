@@ -165,7 +165,8 @@ export function buildCatalog() {
     }
     const bad = (why) => problems.push(`${mf}: ${why}`);
     if (typeof m.id !== "string" || !/^[a-z][a-z0-9-]{1,39}$/.test(m.id)) bad("id must be a-z, digits and -, 2–40 characters");
-    if (typeof m.name !== "string" || !m.name.trim()) bad("no name");
+    if (typeof m.name !== "string" || !m.name.trim() || m.name.length > 60) bad("name: 1–60 characters");
+    if (m.description !== undefined && (typeof m.description !== "string" || m.description.length > 600)) bad("description: up to 600 characters (Zeff refuses a longer one)");
     if (!Number.isInteger(m.apiVersion)) bad("no apiVersion");
     if (m.keywords !== undefined && (!Array.isArray(m.keywords) || m.keywords.some((k) => typeof k !== "string" || !k.trim() || k.length > 40) || m.keywords.length > 20)) bad("keywords: up to 20 words of up to 40 characters");
     if (m.category !== undefined && !CATEGORIES.includes(m.category)) bad(`category must be one of ${CATEGORIES.join(", ")}`);
