@@ -1,13 +1,20 @@
 {
+  "keywords": [
+    "jira",
+    "atlassian",
+    "tickets",
+    "issues",
+    "boards",
+    "mcp"
+  ],
+  "category": "developer",
+  "icon": "🎫",
   "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
   "id": "jira-ext",
   "name": "Jira",
   "version": "1.0.0",
   "description": "Reads your Jira tickets and those of the boards you chose into Zeff — the basis of the todos, the context sync and the entries per ticket — through the Jira MCP server (mcp-atlassian). Its reader is a lambda you (or the AI) can mend. Transitions, comments and new tickets are still done by Zeff on your click.",
   "author": "Zeff",
-  "keywords": ["jira", "atlassian", "tickets", "issues", "boards", "mcp"],
-  "category": "developer",
-  "icon": "🎫",
   "apiVersion": 1,
   "permissions": [
     "exec"
@@ -20,9 +27,9 @@
     "settings": [
       {
         "key": "MCP_COMMAND",
-        "label": "Jira MCP server: command",
+        "label": "Jira MCP server: command (fallback)",
         "kind": "text",
-        "help": "The program that starts the Jira MCP server, e.g. uvx (mcp-atlassian). Carried over from where Zeff had it when you switch."
+        "help": "Only without a token: the program that starts the Jira MCP server, e.g. uvx (mcp-atlassian). Carried over from where Zeff had it when you switch."
       },
       {
         "key": "MCP_ARGS",
@@ -40,7 +47,19 @@
         "key": "BASE_URL",
         "label": "Jira address",
         "kind": "text",
-        "help": "Where your Jira is (for the tickets' links); empty: the server's JIRA_URL."
+        "help": "Where your Jira is, e.g. https://jira.example.com; empty: the server's JIRA_URL."
+      },
+      {
+        "key": "TOKEN",
+        "label": "Jira token",
+        "kind": "secret",
+        "help": "A Personal Access Token (Jira Server / Data Center) — or, for Jira Cloud, an API token with your e-mail below. Set: Zeff talks to Jira's REST API with it, no MCP server needed. Kept encrypted, never shown again."
+      },
+      {
+        "key": "EMAIL",
+        "label": "Jira Cloud e-mail",
+        "kind": "text",
+        "help": "Only for Jira Cloud: the e-mail you sign in with (the token is then an API token)."
       },
       {
         "key": "TOOL",

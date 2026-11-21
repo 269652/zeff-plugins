@@ -1,5 +1,7 @@
 import { runSession, payloadOf } from "zeff:automation/mcp-client";
-import { extractIssues, normalizeIssue, norm, transitionsOf, tFor } from "./lib.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { extractIssues, normalizeIssue, norm, transitionsOf, tFor, jiraRest } from "./lib.mjs";
 
 const BOARD_PAGE = 50; // jira_get_board_issues caps limit at 50 and needs a jql; paged with start_at
 const BOARD_MAX = 500; // the most recently updated per board, to bound huge boards
@@ -125,9 +127,15 @@ async function change(call, op, t, plain) {
 export async function handler(event, context) {
   const s = context.secrets;
   const command = String(s.MCP_COMMAND ?? "").trim();
-  if (!command) throw new Error("Jira isn't set up: the plugin's settings name the Jira MCP server (its command, e.g. uvx mcp-atlassian) — Plugins → Jira → Settings.");
   const env = envOf(s.MCP_ENV);
   const baseUrl = String(s.BASE_URL ?? "").trim() || env.JIRA_URL || undefined;
+  // A token set (a Personal Access Token — or Cloud's API token with EMAIL): Jira's REST API, answered as the MCP server's tools (the
+  // built-in's src/lib/jira/rest.ts, bundled); else the Jira MCP server the settings name.
+  const token = String(s.TOKEN ?? "").trim();
+  const email = String(s.EMAIL ?? "").trim();
+  const rest = token && baseUrl ? jiraRest({ base: baseUrl, token, ...(email ? { email } : {}) }, { readFile: async (p) => ({ name: path.basename(p), data: new Uint8Array(await fs.promises.readFile(p)) }) }) : null;
+  if (!rest && !command) throw new Error("Jira isn't set up: the plugin's settings need Jira's address and your token (or a Jira MCP server's command) — Plugins → Jira → Settings.");
+  const withJira = (label, body, timeoutMs) => (rest ? body(rest.call) : runSession({ command: context.resolveCommand(command), args: words(s.MCP_ARGS), env, label }, body, timeoutMs));
   const tool = String(s.TOOL ?? "").trim() || "jira_search";
   const jql = String(s.JQL ?? "").trim() || "assignee = currentUser() ORDER BY updated DESC";
   const fields = String(s.FIELDS ?? "").trim() || "summary,description,status,created,updated,resolutiondate,issuetype,priority,assignee";
@@ -140,8 +148,7 @@ export async function handler(event, context) {
     // A session Zeff's code holds with the Jira MCP server: the server started once; Zeff asks for one call after another
     // (session.next), this runs each in the server and answers (session.reply), until Zeff is done.
     const sessionId = String(event.sessionId ?? "");
-    return runSession(
-      { command: context.resolveCommand(command), args: words(s.MCP_ARGS), env, label: "Jira MCP" },
+    return withJira("Jira MCP",
       async (call) => {
         for (;;) {
           const n = await context.zeff.call("session.next", { sessionId });
@@ -170,8 +177,7 @@ export async function handler(event, context) {
     };
     const enabled = new Set((event.enabledIds ?? []).map(Number));
     const known = new Set((event.knownIds ?? []).map(Number));
-    return runSession(
-      { command: context.resolveCommand(command), args: words(s.MCP_ARGS), env, label: "Jira MCP" },
+    return withJira("Jira MCP",
       async (call) => {
         const discovered = [];
         for (const [proj, keys] of Object.entries(event.byProject ?? {})) {
@@ -224,8 +230,7 @@ export async function handler(event, context) {
       return typeof v.id === "string" || typeof v.id === "number" ? String(v.id) : null;
     };
     const post = async (call, ticket, body) => idOf(payloadOf(await call("jira_add_comment", { issue_key: ticket, body: body })));
-    return runSession(
-      { command: context.resolveCommand(command), args: words(s.MCP_ARGS), env, label: "Jira" },
+    return withJira("Jira",
       async (call) => {
         const results = [];
         for (const c of Array.isArray(event.calls) ? event.calls : []) {
@@ -264,8 +269,7 @@ export async function handler(event, context) {
   if (event?.tool === "ops") {
     const t = tFor(context.language);
     const results = [];
-    return runSession(
-      { command: context.resolveCommand(command), args: words(s.MCP_ARGS), env, label: "Jira" },
+    return withJira("Jira",
       async (call) => {
         let error = null;
         for (const op of Array.isArray(event.ops) ? event.ops : []) {
@@ -292,8 +296,7 @@ export async function handler(event, context) {
   }
 
   // mcp-atlassian cold-starts in ~30 s: every fetch over ONE session.
-  return runSession(
-    { command: context.resolveCommand(command), args: words(s.MCP_ARGS), env, label: "Jira MCP" },
+  return withJira("Jira MCP",
     async (call) => {
       // 1. My assigned tickets (expand=changelog brings the history for the time to respond).
       const myRaw = extractIssues(payloadOf(await call(tool, { jql, limit, fields, expand: "changelog" })));

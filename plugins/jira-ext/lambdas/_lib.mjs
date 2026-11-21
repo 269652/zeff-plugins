@@ -121,6 +121,368 @@ function transitionsOf(payload) {
 }
 var norm = (s) => (s ?? "").toLowerCase().replace(/\(→[^)]*\)/g, "").replace(/[^a-z0-9äöüß]+/g, " ").trim();
 
+// src/lib/jira/rest.ts
+var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function base64(s) {
+  const bytes = new TextEncoder().encode(s);
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = bytes[i] << 16 | (bytes[i + 1] ?? 0) << 8 | (bytes[i + 2] ?? 0);
+    out += B64[n >> 18 & 63] + B64[n >> 12 & 63] + (i + 1 < bytes.length ? B64[n >> 6 & 63] : "=") + (i + 2 < bytes.length ? B64[n & 63] : "=");
+  }
+  return out;
+}
+var isCloud = (auth) => !!auth.email || /\.atlassian\.net$/i.test(hostOf(auth.base));
+var hostOf = (u) => {
+  try {
+    return new URL(u).hostname;
+  } catch {
+    return "";
+  }
+};
+function authHeader(auth) {
+  return auth.email ? `Basic ${base64(`${auth.email}:${auth.token}`)}` : `Bearer ${auth.token}`;
+}
+function jiraToMarkdown(s) {
+  if (!s) return s;
+  const blocks = [];
+  const keep = (x) => `\0${blocks.push(x) - 1}\0`;
+  let t = s.replace(/\{code(?::([^}|]*))?[^}]*\}([\s\S]*?)\{code\}/g, (_, lang, body) => keep("```" + (lang && !lang.includes("=") ? lang : "") + "\n" + String(body).replace(/^\n|\n$/g, "") + "\n```"));
+  t = t.replace(/\{noformat\}([\s\S]*?)\{noformat\}/g, (_, body) => keep("```\n" + String(body).replace(/^\n|\n$/g, "") + "\n```"));
+  t = t.replace(/\{quote\}([\s\S]*?)\{quote\}/g, (_, body) => String(body).trim().split("\n").map((l) => `> ${l}`).join("\n"));
+  t = t.replace(/\{\{([^}]+)\}\}/g, (_, c) => keep("`" + c + "`"));
+  t = t.split("\n").map((line) => {
+    const h = /^h([1-6])\.\s+(.*)$/.exec(line);
+    if (h) return `${"#".repeat(Number(h[1]))} ${h[2]}`;
+    const ul = /^(\*+|-)\s+(.*)$/.exec(line);
+    if (ul && !/^\*[^*\s].*\*$/.test(line)) return `${"  ".repeat(ul[1] === "-" ? 0 : ul[1].length - 1)}- ${ul[2]}`;
+    const ol = /^(#+)\s+(.*)$/.exec(line);
+    if (ol) return `${"  ".repeat(ol[1].length - 1)}1. ${ol[2]}`;
+    if (/^bq\.\s+/.test(line)) return line.replace(/^bq\.\s+/, "> ");
+    return line;
+  }).join("\n");
+  t = t.replace(/\[([^|\]\n]+)\|([^\]\n]+)\]/g, "[$1]($2)");
+  t = t.replace(/(^|[\s(])\*(\S(?:[^*\n]*\S)?)\*(?=$|[\s).,:;!?])/g, "$1**$2**");
+  t = t.replace(/(^|[\s(])_(\S(?:[^_\n]*\S)?)_(?=$|[\s).,:;!?])/g, "$1*$2*");
+  t = t.replace(/(^|[\s(])-(\S(?:[^-\n]*\S)?)-(?=$|[\s).,:;!?])/g, "$1~~$2~~");
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[Number(i)]);
+}
+function markdownToJira(s) {
+  if (!s) return s;
+  const blocks = [];
+  const keep = (x) => `\0${blocks.push(x) - 1}\0`;
+  let t = s.replace(/```([\w+-]*)\n([\s\S]*?)\n?```/g, (_, lang, body) => keep(`{code${lang ? `:${lang}` : ""}}
+${body}
+{code}`));
+  t = t.replace(/`([^`\n]+)`/g, (_, c) => keep(`{{${c}}}`));
+  t = t.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (_, label, url) => keep(`[${label}|${url}]`));
+  t = t.split("\n").map((line) => {
+    const h = /^(#{1,6})\s+(.*)$/.exec(line);
+    if (h) return `h${h[1].length}. ${h[2]}`;
+    const ul = /^(\s*)[-*+]\s+(.*)$/.exec(line);
+    if (ul) return `${"*".repeat(Math.floor(ul[1].length / 2) + 1)} ${ul[2]}`;
+    const ol = /^(\s*)\d+[.)]\s+(.*)$/.exec(line);
+    if (ol) return `${"#".repeat(Math.floor(ol[1].length / 2) + 1)} ${ol[2]}`;
+    if (/^>\s?/.test(line)) return line.replace(/^>\s?/, "bq. ");
+    return line;
+  }).join("\n");
+  t = t.replace(/\*\*(\S(?:[^*\n]*\S)?)\*\*|__(\S(?:[^_\n]*\S)?)__/g, (_, a, b) => `${a ?? b}`);
+  t = t.replace(/(^|[^*\w])\*(\S(?:[^*\n]*\S)?)\*(?!\*)/g, "$1_$2_");
+  t = t.replace(/~~(\S(?:[^~\n]*\S)?)~~/g, "-$1-");
+  t = t.replace(/\u0001([^\u0001]*)\u0001/g, "*$1*");
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[Number(i)]);
+}
+var obj = (v) => v && typeof v === "object" ? v : {};
+var str2 = (v) => typeof v === "string" ? v : typeof v === "number" ? String(v) : void 0;
+function simplifyUser(u) {
+  const o = obj(u);
+  if (!Object.keys(o).length) return null;
+  const display = str2(o.displayName) ?? str2(o.name) ?? "";
+  const avatars = obj(o.avatarUrls);
+  return { account_id: str2(o.accountId) ?? null, display_name: display, name: str2(o.name) ?? display, email: str2(o.emailAddress) ?? null, avatar_url: str2(avatars["48x48"]) ?? null, ...str2(o.key) ? { key: str2(o.key) } : {} };
+}
+function simplifyComment(c) {
+  const o = obj(c);
+  const author = simplifyUser(o.author);
+  return { id: str2(o.id) ?? "", body: jiraToMarkdown(str2(o.body) ?? ""), ...author ? { author } : {}, ...str2(o.created) ? { created: o.created } : {}, ...str2(o.updated) ? { updated: o.updated } : {} };
+}
+function simplifyIssue(raw, fields, base) {
+  const o = obj(raw);
+  const f = obj(o.fields);
+  const want = (name) => fields === "*all" || fields.includes(name);
+  const key = str2(o.key) ?? "";
+  const out = { id: str2(o.id) ?? "", key };
+  if (want("summary")) out.summary = str2(f.summary) ?? "";
+  if (key) out.browse_url = `${base}/browse/${key}`;
+  if (want("description") && str2(f.description)) out.description = jiraToMarkdown(str2(f.description));
+  if (want("status") && f.status) {
+    const s = obj(f.status);
+    const cat = obj(s.statusCategory);
+    out.status = { name: str2(s.name) ?? "", ...Object.keys(cat).length ? { category: str2(cat.name) ?? "", color: str2(cat.colorName) ?? "" } : {} };
+  }
+  if (want("issuetype") && f.issuetype) out.issue_type = { name: str2(obj(f.issuetype).name) ?? "" };
+  if (want("priority") && f.priority) out.priority = { name: str2(obj(f.priority).name) ?? "" };
+  if (want("project") && f.project) out.project = { key: str2(obj(f.project).key), name: str2(obj(f.project).name) };
+  if (want("resolution") && f.resolution) out.resolution = { name: str2(obj(f.resolution).name) ?? "" };
+  if (want("duedate") && f.duedate) out.duedate = f.duedate;
+  if (want("resolutiondate") && f.resolutiondate) out.resolutiondate = f.resolutiondate;
+  if (want("parent") && f.parent) out.parent = f.parent;
+  if (want("subtasks") && Array.isArray(f.subtasks) && f.subtasks.length) out.subtasks = f.subtasks;
+  if (want("assignee")) out.assignee = simplifyUser(f.assignee) ?? { display_name: "Unassigned" };
+  if (want("reporter") && f.reporter) out.reporter = simplifyUser(f.reporter);
+  if (want("labels") && Array.isArray(f.labels) && f.labels.length) out.labels = f.labels;
+  if (want("components") && Array.isArray(f.components) && f.components.length) out.components = f.components.map((c) => str2(obj(c).name) ?? "").filter(Boolean);
+  if (want("fixVersions") && Array.isArray(f.fixVersions) && f.fixVersions.length) out.fix_versions = f.fixVersions.map((c) => str2(obj(c).name) ?? "").filter(Boolean);
+  if (want("created") && f.created) out.created = f.created;
+  if (want("updated") && f.updated) out.updated = f.updated;
+  const comments = obj(f.comment).comments;
+  if (want("comment") && Array.isArray(comments) && comments.length) out.comments = comments.map(simplifyComment);
+  if (want("attachment") && Array.isArray(f.attachment) && f.attachment.length)
+    out.attachments = f.attachment.map((a) => ({ filename: str2(obj(a).filename) ?? "", size: Number(obj(a).size ?? 0), url: str2(obj(a).content) ?? null, ...str2(obj(a).mimeType) ? { content_type: obj(a).mimeType } : {}, ...str2(obj(a).created) ? { created: obj(a).created } : {} }));
+  if (want("issuelinks") && Array.isArray(f.issuelinks) && f.issuelinks.length) out.issuelinks = f.issuelinks;
+  const histories = obj(o.changelog).histories;
+  if (Array.isArray(histories) && histories.length)
+    out.changelogs = histories.map((h) => {
+      const x = obj(h);
+      const author = simplifyUser(x.author);
+      return {
+        ...Array.isArray(x.items) && x.items.length ? { items: x.items.map((i) => ({ field: str2(obj(i).field) ?? "", fieldtype: str2(obj(i).fieldtype) ?? "", ...obj(i).fromString != null ? { from_string: obj(i).fromString } : {}, ...obj(i).toString != null && typeof obj(i).toString === "string" ? { to_string: obj(i).toString } : {} })) } : {},
+        ...author ? { author } : {},
+        ...str2(x.created) ? { created: x.created } : {}
+      };
+    });
+  if (Array.isArray(fields)) {
+    for (const name of fields) if (name.startsWith("customfield_") && f[name] !== void 0 && f[name] !== null) out[name] = { value: f[name] };
+  }
+  return out;
+}
+var fieldList = (fields) => {
+  const s = String(fields ?? "").trim();
+  if (!s) return DEFAULT_FIELDS;
+  if (s === "*all") return "*all";
+  return s.split(",").map((x) => x.trim()).filter(Boolean);
+};
+var DEFAULT_FIELDS = ["summary", "description", "status", "assignee", "reporter", "labels", "priority", "created", "updated", "issuetype"];
+var restFields = (f) => f === "*all" ? "*all" : f.join(",");
+var JiraRestError = class extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+};
+function errorText(status, statusText, body) {
+  let words = body.slice(0, 600);
+  try {
+    const j = JSON.parse(body);
+    const parts = [...j.errorMessages ?? [], ...Object.entries(j.errors ?? {}).map(([k, v]) => `${k}: ${v}`), ...j.message ? [j.message] : []];
+    if (parts.length) words = parts.join("; ");
+  } catch {
+  }
+  return `Jira answered ${status}${statusText ? ` ${statusText}` : ""}${words ? `: ${words}` : ""}`;
+}
+var envelope = (payload) => ({ content: [{ type: "text", text: JSON.stringify(payload) }] });
+function jiraRest(auth, opts = {}) {
+  const base = auth.base.trim().replace(/\/+$/, "");
+  const doFetch = opts.fetch ?? globalThis.fetch;
+  const cloud = isCloud(auth);
+  const headers = { Authorization: authHeader(auth), Accept: "application/json" };
+  async function req(method, path, body, extra) {
+    const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+    const r = await doFetch(`${base}${path}`, {
+      method,
+      headers: { ...headers, ...body !== void 0 && !isForm ? { "Content-Type": "application/json" } : {}, ...extra ?? {} },
+      body: body === void 0 ? void 0 : isForm ? body : JSON.stringify(body)
+    });
+    const text = await r.text();
+    if (!r.ok) throw new JiraRestError(r.status, errorText(r.status, r.statusText ?? "", text));
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new JiraRestError(r.status, `Jira answered with a page instead of data (not signed in?): ${text.slice(0, 300)}`);
+    }
+  }
+  const q = (params) => {
+    const u = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v !== void 0 && v !== null && v !== "") u.set(k, String(v));
+    const s = u.toString();
+    return s ? `?${s}` : "";
+  };
+  async function search(jql, fields, limit, startAt, expand) {
+    const issues = [];
+    let total = 0;
+    if (cloud) {
+      let token;
+      let skipped = 0;
+      for (; ; ) {
+        const page = obj(await req("GET", `/rest/api/2/search/jql${q({ jql, fields: restFields(fields), maxResults: Math.min(100, limit + startAt - skipped), expand, nextPageToken: token })}`));
+        const list = Array.isArray(page.issues) ? page.issues : [];
+        for (const i of list) {
+          if (skipped < startAt) skipped++;
+          else if (issues.length < limit) issues.push(simplifyIssue(i, fields, base));
+        }
+        token = str2(page.nextPageToken);
+        if (!token || page.isLast === true || issues.length >= limit || !list.length) break;
+      }
+      total = startAt + issues.length + (token ? 1 : 0);
+    } else {
+      let at = startAt;
+      for (; ; ) {
+        const page = obj(await req("GET", `/rest/api/2/search${q({ jql, fields: restFields(fields), maxResults: Math.min(100, limit - issues.length), startAt: at, expand })}`));
+        const list = Array.isArray(page.issues) ? page.issues : [];
+        total = Number(page.total ?? 0);
+        for (const i of list) issues.push(simplifyIssue(i, fields, base));
+        at += list.length;
+        if (!list.length || issues.length >= limit || at >= total) break;
+      }
+    }
+    return { total, start_at: startAt, max_results: limit, issues };
+  }
+  async function assigneeOf(who) {
+    const s = String(who ?? "").trim();
+    if (!s || /^(unassigned|none|null|-)$/i.test(s)) return cloud ? { accountId: null } : { name: null };
+    if (cloud) {
+      if (/^[0-9a-f:-]{20,}$/i.test(s)) return { accountId: s };
+      const list2 = await req("GET", `/rest/api/2/user/search${q({ query: s })}`).catch(() => []);
+      const hit2 = (Array.isArray(list2) ? list2 : []).map(obj).find((u) => [u.emailAddress, u.displayName, u.accountId].some((x) => str2(x)?.toLowerCase() === s.toLowerCase())) ?? obj((Array.isArray(list2) ? list2 : [])[0]);
+      if (!str2(hit2.accountId)) throw new JiraRestError(404, `No Jira user \u201C${s}\u201D found.`);
+      return { accountId: hit2.accountId };
+    }
+    const list = await req("GET", `/rest/api/2/user/search${q({ username: s })}`).catch(() => []);
+    const users = (Array.isArray(list) ? list : []).map(obj);
+    const hit = users.find((u) => [u.name, u.key, u.emailAddress, u.displayName].some((x) => str2(x)?.toLowerCase() === s.toLowerCase())) ?? (users.length === 1 ? users[0] : null);
+    return { name: str2(hit?.name) ?? s };
+  }
+  async function fieldsFor(input) {
+    const out = {};
+    for (const [k, v] of Object.entries(input)) {
+      if (k === "assignee") out.assignee = typeof v === "object" && v ? v : await assigneeOf(v);
+      else if (k === "description" && typeof v === "string") out.description = markdownToJira(v);
+      else if (k === "components" && typeof v === "string") out.components = v.split(",").map((x) => x.trim()).filter(Boolean).map((name) => ({ name }));
+      else if (k === "labels" && typeof v === "string") out.labels = v.split(",").map((x) => x.trim()).filter(Boolean);
+      else out[k] = v;
+    }
+    return out;
+  }
+  const json = (v) => {
+    if (v && typeof v === "object") return v;
+    const s = String(v ?? "").trim();
+    if (!s) return {};
+    try {
+      return obj(JSON.parse(s));
+    } catch {
+      throw new Error(`Not a JSON object: ${s.slice(0, 100)}`);
+    }
+  };
+  const key = (a) => {
+    const k = String(a.issue_key ?? "").trim().toUpperCase();
+    if (!/^[A-Z][A-Z0-9]+-\d+$/.test(k)) throw new Error(`Not a Jira key: \u201C${String(a.issue_key ?? "")}\u201D`);
+    return k;
+  };
+  const getIssue = async (k, fields, expand) => simplifyIssue(await req("GET", `/rest/api/2/issue/${k}${q({ fields: restFields(fields), expand })}`), fields, base);
+  const tools = {
+    jira_search: (a) => search(String(a.jql ?? ""), fieldList(a.fields), Number(a.limit) > 0 ? Number(a.limit) : 10, Number(a.start_at) > 0 ? Number(a.start_at) : 0, str2(a.expand)),
+    jira_get_board_issues: async (a) => {
+      const fields = fieldList(a.fields);
+      const limit = Number(a.limit) > 0 ? Number(a.limit) : 10;
+      const startAt = Number(a.start_at) > 0 ? Number(a.start_at) : 0;
+      const page = obj(await req("GET", `/rest/agile/1.0/board/${encodeURIComponent(String(a.board_id))}/issue${q({ jql: a.jql, fields: restFields(fields), startAt, maxResults: limit, expand: a.expand })}`));
+      const list = Array.isArray(page.issues) ? page.issues : [];
+      return { total: Number(page.total ?? list.length), start_at: startAt, max_results: limit, issues: list.map((i) => simplifyIssue(i, fields, base)) };
+    },
+    jira_get_agile_boards: async (a) => {
+      const page = obj(await req("GET", `/rest/agile/1.0/board${q({ projectKeyOrId: a.project_key, name: a.board_name, type: a.board_type, startAt: a.start_at, maxResults: Number(a.limit) > 0 ? a.limit : 50 })}`));
+      return (Array.isArray(page.values) ? page.values : []).map((b) => ({ id: str2(obj(b).id) ?? "", name: str2(obj(b).name) ?? "", type: str2(obj(b).type) ?? "" }));
+    },
+    jira_get_issue: (a) => getIssue(key(a), a.fields ? fieldList(a.fields) : [...DEFAULT_FIELDS, "comment"], str2(a.expand)),
+    jira_get_transitions: async (a) => {
+      const r = obj(await req("GET", `/rest/api/2/issue/${key(a)}/transitions`));
+      return (Array.isArray(r.transitions) ? r.transitions : []).map((x) => ({ id: str2(obj(x).id) ?? "", name: str2(obj(x).name) ?? "", to_status: str2(obj(obj(x).to).name) ?? "" }));
+    },
+    jira_transition_issue: async (a) => {
+      const k = key(a);
+      const body = { transition: { id: String(a.transition_id) } };
+      if (a.fields) body.fields = await fieldsFor(json(a.fields));
+      if (typeof a.comment === "string" && a.comment.trim()) body.update = { comment: [{ add: { body: markdownToJira(a.comment) } }] };
+      await req("POST", `/rest/api/2/issue/${k}/transitions`, body);
+      return { message: `Issue ${k} transitioned successfully`, issue: await getIssue(k, DEFAULT_FIELDS) };
+    },
+    jira_update_issue: async (a) => {
+      const k = key(a);
+      const fields = await fieldsFor({ ...json(a.fields), ...json(a.additional_fields) });
+      if (Object.keys(fields).length) await req("PUT", `/rest/api/2/issue/${k}`, { fields });
+      let attached = [];
+      const paths = (() => {
+        const v = a.attachments;
+        if (Array.isArray(v)) return v.map(String);
+        const s = String(v ?? "").trim();
+        if (!s) return [];
+        try {
+          const p = JSON.parse(s);
+          return Array.isArray(p) ? p.map(String) : [s];
+        } catch {
+          return s.split(",").map((x) => x.trim()).filter(Boolean);
+        }
+      })();
+      if (paths.length) {
+        if (!opts.readFile) throw new Error("Attachments can't be sent from here.");
+        for (const p of paths) {
+          const file = await opts.readFile(p);
+          const form = new FormData();
+          form.append("file", new Blob([file.data]), file.name);
+          await req("POST", `/rest/api/2/issue/${k}/attachments`, form, { "X-Atlassian-Token": "no-check" });
+          attached.push(file.name);
+        }
+      }
+      return { message: "Issue updated successfully", issue: await getIssue(k, DEFAULT_FIELDS), ...attached.length ? { attachment_results: { success: attached.map((filename) => ({ filename })) } } : {} };
+    },
+    jira_create_issue: async (a) => {
+      const extra = json(a.additional_fields);
+      const fields = await fieldsFor({
+        project: { key: String(a.project_key ?? "").trim() },
+        summary: String(a.summary ?? ""),
+        issuetype: { name: String(a.issue_type ?? "Task") },
+        ...a.description ? { description: String(a.description) } : {},
+        ...a.components ? { components: String(a.components) } : {},
+        ...a.assignee ? { assignee: String(a.assignee) } : {},
+        ...extra
+      });
+      const r = obj(await req("POST", "/rest/api/2/issue", { fields }));
+      const k = str2(r.key) ?? "";
+      return { message: "Issue created successfully", issue: k ? await getIssue(k, DEFAULT_FIELDS).catch(() => ({ id: r.id, key: k })) : r };
+    },
+    jira_create_issue_link: async (a) => {
+      await req("POST", "/rest/api/2/issueLink", { type: { name: String(a.link_type ?? "Relates") }, inwardIssue: { key: String(a.inward_issue_key ?? "") }, outwardIssue: { key: String(a.outward_issue_key ?? "") }, ...a.comment ? { comment: { body: markdownToJira(String(a.comment)) } } : {} });
+      return { success: true, message: `Link created between ${a.inward_issue_key} and ${a.outward_issue_key}` };
+    },
+    jira_add_comment: async (a) => simplifyComment(await req("POST", `/rest/api/2/issue/${key(a)}/comment`, { body: markdownToJira(String(a.body ?? a.comment ?? "")) })),
+    jira_edit_comment: async (a) => simplifyComment(await req("PUT", `/rest/api/2/issue/${key(a)}/comment/${encodeURIComponent(String(a.comment_id ?? ""))}`, { body: markdownToJira(String(a.body ?? "")) })),
+    jira_get_user_profile: async (a) => {
+      const who = String(a.user_identifier ?? "").trim();
+      if (!who || who.toLowerCase() === "me") return { success: true, user: simplifyUser(await req("GET", "/rest/api/2/myself")) };
+      try {
+        const u = cloud ? await req("GET", `/rest/api/2/user/search${q({ query: who })}`).then((l) => Array.isArray(l) ? l[0] : null) : await req("GET", `/rest/api/2/user${q({ username: who })}`);
+        if (!u) throw new JiraRestError(404, `User '${who}' not found`);
+        return { success: true, user: simplifyUser(u) };
+      } catch (e) {
+        if (e instanceof JiraRestError && e.status === 404) return { success: false, error: `User '${who}' not found`, user_identifier: who };
+        throw e;
+      }
+    }
+  };
+  const call = async (tool, args) => {
+    const fn = tools[tool];
+    if (!fn) throw new Error(`tool "${tool}": not available over Jira's REST API`);
+    try {
+      return envelope(await fn(args ?? {}));
+    } catch (e) {
+      throw e instanceof JiraRestError ? new Error(`tool "${tool}": ${e.message}`) : e;
+    }
+  };
+  const myself = async () => simplifyUser(await req("GET", "/rest/api/2/myself"));
+  return { call, myself, tools: Object.keys(tools) };
+}
+
 // src/plugins/lang-en/bundle.json
 var bundle_default = {};
 
@@ -154,6 +516,7 @@ setPluginStrings((lang) => STRINGS[lang] ?? {});
 var tFor = (lang) => translator(isLang(lang) ? lang : "en");
 export {
   extractIssues,
+  jiraRest,
   norm,
   normalizeIssue,
   tFor,

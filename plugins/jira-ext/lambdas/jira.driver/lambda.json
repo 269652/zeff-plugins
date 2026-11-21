@@ -12,6 +12,8 @@
     "MCP_ARGS",
     "MCP_ENV",
     "BASE_URL",
+    "TOKEN",
+    "EMAIL",
     "TOOL",
     "JQL",
     "FIELDS",
