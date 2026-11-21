@@ -989,7 +989,7 @@
   </section>
   {{/if}}
 
-  <section card=true title="{{ data.w.report.head }}" aside="grouped per day · configure on Schedule">
+  <section card=true title="{{ data.w.report.head }}" aside="grouped per day · configure on Schedule" collapsible=true open=false>
     {{#if data.w.slots.exports}}<row gap=2 wrap=true justify=end>{{#each data.w.slots.exports}}{{#if href}}<button action="url" href="{{ href }}" label="{{ label }}" tip="{{ tip }}" variant=link/>{{#else}}<button run="{{ flow }}" with="{{ with }}" label="{{ label }}" tip="{{ tip }}" variant=link/>{{/if}}{{/each}}</row>{{/if}}
     {{#if data.w.report.days}}
     <row justify=between gap=2><text tone=muted>rewritten by your report rules</text><copy text="{{ data.w.report.text }}" label="Copy report"/></row>
@@ -1013,7 +1013,7 @@
     {{#else}}<empty text="No time booked in this week."/>{{/if}}
   </section>
 
-  <section card=true title="{{ data.w.entriesHead }}" aside="{{ data.w.entryList | count }}" collapsible=true open=false>
+  <section card=true title="{{ data.w.entriesHead }}" aside="{{ data.w.entryList | count }}" collapsible=true open=true>
     {{#if data.w.entryList}}
     <sheet compact=true caption="Entries of the week">
       <shead><srow><scell head=true>Date</scell><scell head=true>Job</scell><scell head=true num=true>Hours</scell><scell head=true>Report</scell><scell head=true>Group</scell><scell head=true>Ticket</scell><scell head=true>Type · tags</scell><scell head=true></scell></srow></shead>
