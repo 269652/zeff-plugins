@@ -1,0 +1,11 @@
+{
+  "name": "people.widget.upcoming",
+  "label": "People widget: Dates coming up",
+  "what": "The data of the widget \"Dates coming up\" — what the built-in shows, through the kernel's read people.widget.",
+  "kind": "function",
+  "zeff": [
+    "people.widget"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

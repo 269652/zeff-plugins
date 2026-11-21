@@ -1,0 +1,12 @@
+{
+  "name": "documents.settings",
+  "label": "Documents: the settings page",
+  "what": "Your local folders, what waits for your confirmation, what is being read and the audio transcriber.",
+  "kind": "function",
+  "zeff": [
+    "pref.get",
+    "sql.query"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

@@ -1,0 +1,13 @@
+{
+  "name": "documents.screen",
+  "label": "Documents: the screen",
+  "what": "The documents of the scope asked for, searched and sorted, the scopes with their counts, and the one picked.",
+  "kind": "function",
+  "zeff": [
+    "sql.query",
+    "pref.get",
+    "documents.origins"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

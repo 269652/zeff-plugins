@@ -176,6 +176,40 @@ function safeName(name) {
   return base || "document";
 }
 
+// src/plugins/documents/nav.ts
+var DOC_KINDS_NAV = {
+  pdf: { label: "PDF", icon: "\u{1F4D5}" },
+  office: { label: "Office", icon: "\u{1F4D8}" },
+  text: { label: "Text", icon: "\u{1F4C4}" },
+  image: { label: "Images", icon: "\u{1F5BC}\uFE0F" },
+  audio: { label: "Audio", icon: "\u{1F3A7}" },
+  other: { label: "Other", icon: "\u{1F4CE}" }
+};
+function inScope(d, scope, now = Date.now()) {
+  if (scope === "inbox") return d.unread;
+  if (scope === "all") return true;
+  if (scope === "week") return Date.parse(d.added) >= now - 7 * 864e5;
+  if (scope === "mail") return !!d.from;
+  if (scope === "processing") return d.status === "queued" || d.status === "extracting";
+  if (scope.startsWith("kind:")) return d.kind === scope.slice(5);
+  return false;
+}
+function docNav(docs, t, now = Date.now()) {
+  const n = (s) => docs.filter((d) => inScope(d, s, now)).length;
+  const out = [
+    { id: "inbox", label: t("Inbox"), icon: "\u{1F4E5}", n: n("inbox") },
+    { id: "all", label: t("All documents"), icon: "\u{1F5C2}\uFE0F", n: n("all") },
+    { id: "week", label: t("Last 7 days"), icon: "\u{1F551}", n: n("week") },
+    { id: "mail", label: t("From mail"), icon: "\u2709\uFE0F", n: n("mail") }
+  ];
+  if (n("processing")) out.push({ id: "processing", label: t("Being read"), icon: "\u23F3", n: n("processing") });
+  for (const [k, v] of Object.entries(DOC_KINDS_NAV)) {
+    const c = n(`kind:${k}`);
+    if (c) out.push({ id: `kind:${k}`, label: t(v.label), icon: v.icon, n: c, group: t("Type") });
+  }
+  return out;
+}
+
 // src/lib/ai/batch.ts
 function batchByChars(items, sizeOf, limit, max = Infinity) {
   const batches = [];
@@ -220,10 +254,20 @@ function translate(lang, text, vars) {
 var translator = (lang) => (text, vars) => translate(lang, text, vars);
 
 // documents-port.ts
-var STRINGS = { "de": { "\u201C{path}\u201D isn't there (a drive not connected?).": "\u201E{path}\u201C ist nicht da (ein Laufwerk nicht verbunden?).", "It took too long \u2014 click \u201CRead again\u201D.": "Es hat zu lange gedauert \u2014 \u201ENochmal lesen\u201C klicken.", "Waits for your confirmation \u2014 then the AI reads it.": "Wartet auf deine Best\xE4tigung \u2014 dann liest die KI es.", "{failed} of {n} parts failed": "{failed} von {n} Teilen fehlgeschlagen", "Failed.": "Fehlgeschlagen.", "{reviewed} documents reviewed, {added} new todos": "{reviewed} Dokumente gepr\xFCft, {added} neue Todos", "{n} merged into open ones": "{n} in offene zusammengef\xFChrt", "{todos} todos, {changed} changed": "{todos} Todos, {changed} ge\xE4ndert", "{n} new": "{n} neu", "{n} changed": "{n} ge\xE4ndert", "{n} gone from the folder": "{n} im Ordner gel\xF6scht", "Nothing new.": "Nichts Neues." }, "es": { "\u201C{path}\u201D isn't there (a drive not connected?).": "\xAB{path}\xBB no est\xE1 (\xBFuna unidad sin conectar?).", "It took too long \u2014 click \u201CRead again\u201D.": "Tard\xF3 demasiado: pulsa \xABLeer de nuevo\xBB.", "Waits for your confirmation \u2014 then the AI reads it.": "Espera tu confirmaci\xF3n \u2014 entonces la IA lo lee.", "{failed} of {n} parts failed": "{failed} de {n} partes fallaron", "Failed.": "Fall\xF3.", "{reviewed} documents reviewed, {added} new todos": "{reviewed} documentos revisados, {added} tareas nuevas", "{n} merged into open ones": "{n} fusionados en abiertos", "{todos} todos, {changed} changed": "{todos} tareas, {changed} cambiadas", "{n} new": "{n} nuevos", "{n} changed": "{n} cambiados", "{n} gone from the folder": "{n} borrados de la carpeta", "Nothing new.": "Nada nuevo." } };
+var stamp = (parts) => {
+  const s = JSON.stringify(parts);
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16);
+};
+var STRINGS = { "de": { "Document deleted.": "Dokument gel\xF6scht.", "This document doesn't exist (any more).": "Dieses Dokument gibt es nicht (mehr).", "Reading it again \u2026": "Wird neu gelesen \u2026", "Skipped \u2014 click \u201CRead again\u201D.": "\xDCbersprungen \u2014 \u201ENochmal lesen\u201C klicken.", "Skipped.": "\xDCbersprungen.", "Reading restarted.": "Lesen neu gestartet.", "1 document confirmed.": "1 Dokument best\xE4tigt.", "{n} documents confirmed.": "{n} Dokumente best\xE4tigt.", "Already there.": "Schon vorhanden.", "{n} added \u2014 being read.": "{n} hinzugef\xFCgt \u2014 werden gelesen.", "being read \u2026": "wird gelesen \u2026", "\u201C{path}\u201D is not a folder on this computer.": "\u201E{path}\u201C ist kein Ordner auf diesem Computer.", "\u201C{path}\u201D is read in now.": "\u201E{path}\u201C wird jetzt eingelesen.", "The folder is no longer read in; its documents stay.": "Der Ordner wird nicht mehr eingelesen; seine Dokumente bleiben.", "\u201C{path}\u201D isn't there (a drive not connected?).": "\u201E{path}\u201C ist nicht da (ein Laufwerk nicht verbunden?).", "It took too long \u2014 click \u201CRead again\u201D.": "Es hat zu lange gedauert \u2014 \u201ENochmal lesen\u201C klicken.", "Waits for your confirmation \u2014 then the AI reads it.": "Wartet auf deine Best\xE4tigung \u2014 dann liest die KI es.", "{failed} of {n} parts failed": "{failed} von {n} Teilen fehlgeschlagen", "Failed.": "Fehlgeschlagen.", "{reviewed} documents reviewed, {added} new todos": "{reviewed} Dokumente gepr\xFCft, {added} neue Todos", "{n} merged into open ones": "{n} in offene zusammengef\xFChrt", "{todos} todos, {changed} changed": "{todos} Todos, {changed} ge\xE4ndert", "failed": "fehlgeschlagen", "reading \u2026": "liest \u2026", "not readable": "nicht lesbar", "compiled": "kompiliert", "Read and compiled": "Gelesen und kompiliert", "Read": "Lesen", "Nothing new \u2014 everything is read.": "Nichts Neues \u2014 alles gelesen.", "Nothing matches.": "Nichts passt.", "No documents here yet.": "Hier sind noch keine Dokumente.", "Saved.": "Gespeichert.", "{n} documents \xB7 read in {when}": "{n} Dokumente \xB7 eingelesen {when}", "not read in yet": "noch nicht eingelesen", "Abstract": "Kurzfassung", "Concepts": "Begriffe", "{n} new": "{n} neu", "{n} changed": "{n} ge\xE4ndert", "{n} gone from the folder": "{n} im Ordner gel\xF6scht", "Nothing new.": "Nichts Neues." }, "es": { "Document deleted.": "Documento eliminado.", "This document doesn't exist (any more).": "Este documento ya no existe.", "Reading it again \u2026": "Leyendo de nuevo \u2026", "Skipped \u2014 click \u201CRead again\u201D.": "Omitido: pulsa \xABLeer de nuevo\xBB.", "Skipped.": "Omitido.", "Reading restarted.": "Lectura reiniciada.", "1 document confirmed.": "1 documento confirmado.", "{n} documents confirmed.": "{n} documentos confirmados.", "Already there.": "Ya existe.", "{n} added \u2014 being read.": "{n} a\xF1adidos \u2014 se est\xE1n leyendo.", "being read \u2026": "leyendo \u2026", "\u201C{path}\u201D is not a folder on this computer.": "\xAB{path}\xBB no es una carpeta de este ordenador.", "\u201C{path}\u201D is read in now.": "\xAB{path}\xBB se est\xE1 leyendo ahora.", "The folder is no longer read in; its documents stay.": "La carpeta ya no se lee; sus documentos se quedan.", "\u201C{path}\u201D isn't there (a drive not connected?).": "\xAB{path}\xBB no est\xE1 (\xBFuna unidad sin conectar?).", "It took too long \u2014 click \u201CRead again\u201D.": "Tard\xF3 demasiado: pulsa \xABLeer de nuevo\xBB.", "Waits for your confirmation \u2014 then the AI reads it.": "Espera tu confirmaci\xF3n \u2014 entonces la IA lo lee.", "{failed} of {n} parts failed": "{failed} de {n} partes fallaron", "Failed.": "Fall\xF3.", "{reviewed} documents reviewed, {added} new todos": "{reviewed} documentos revisados, {added} tareas nuevas", "{n} merged into open ones": "{n} fusionados en abiertos", "{todos} todos, {changed} changed": "{todos} tareas, {changed} cambiadas", "failed": "fallido", "reading \u2026": "leyendo \u2026", "not readable": "no legible", "compiled": "compilado", "Read and compiled": "Le\xEDdo y compilado", "Read": "Leer", "Nothing new \u2014 everything is read.": "Nada nuevo \u2014 todo le\xEDdo.", "Nothing matches.": "Nada coincide.", "No documents here yet.": "A\xFAn no hay documentos aqu\xED.", "Saved.": "Guardado.", "{n} documents \xB7 read in {when}": "{n} documentos \xB7 le\xEDdos {when}", "not read in yet": "a\xFAn no le\xEDda", "Abstract": "Resumen", "Concepts": "Conceptos", "{n} new": "{n} nuevos", "{n} changed": "{n} cambiados", "{n} gone from the folder": "{n} borrados de la carpeta", "Nothing new.": "Nada nuevo." } };
 setPluginStrings((lang) => STRINGS[lang] ?? {});
 var tFor = (lang) => translator(isLang(lang) ? lang : "en");
 export {
+  DOC_KINDS_NAV,
   MAX_DOCUMENT_BYTES,
   READABLE_EXTS,
   RELATE_INSTRUCTIONS,
@@ -235,8 +279,10 @@ export {
   batchByChars,
   candidates,
   diffFolder,
+  docNav,
   docWords,
   excerpt,
+  inScope,
   kindOf,
   matchWhere,
   pickedRefs,
@@ -247,6 +293,7 @@ export {
   reviewPrompt,
   safeName,
   scanSummary,
+  stamp,
   tFor,
   wordsOf
 };

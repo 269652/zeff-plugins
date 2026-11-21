@@ -1,0 +1,11 @@
+{
+  "name": "documents.abstracts-plan",
+  "label": "Documents: what the knowledge server compiles",
+  "what": "The read documents the knowledge server has not compiled yet — their page ids.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

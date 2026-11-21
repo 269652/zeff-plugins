@@ -1,0 +1,13 @@
+{
+  "name": "people.person",
+  "label": "People: what a person's page shows",
+  "what": "A person's page — their profile, dates, details, what was read from messages, relations, the latest messages, todos, appointments, cases, documents — and what the knowledge knows of them, as the built-in works it out.",
+  "kind": "function",
+  "zeff": [
+    "people.page-data",
+    "people.wiki-of",
+    "people.loops-of"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

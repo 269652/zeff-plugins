@@ -1,0 +1,11 @@
+{
+  "name": "documents.add-plan",
+  "label": "Documents: a file added",
+  "what": "What adding a file means: a new document waiting to be read, or the one kept already — as statements for the flow.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

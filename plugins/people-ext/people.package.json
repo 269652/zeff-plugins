@@ -1,7 +1,7 @@
 {
   "format": 1,
   "id": "people-ext",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "name": "People",
   "description": "The AI steps of People: what the messages say about people, their overviews, who is a person or an organisation, which names are one person.",
   "icon": "👥",
@@ -382,6 +382,622 @@
             "value": {
               "ok": true,
               "message": "{{ steps.apply.aliases }} aliases, {{ steps.apply.created }} new, {{ steps.apply.merged }} merged, {{ steps.apply.relations }} relations"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i7",
+      "parent": "i1",
+      "kind": "page",
+      "title": "A tool of the people overview",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.tool",
+        "title": "A tool of the people overview",
+        "description": "What a button of the People overview does: add a person, import, find dates, match names, read new messages, place contacts, compile summaries, take what the AI is sure of, the verdicts on what waits to be checked, a circle, a todo, a greeting, the settings. Input: tool and what it needs. Output { message, draft }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.run-tool",
+            "input": {
+              "tool": "{{ input.tool }}",
+              "id": "{{ input.id }}",
+              "name": "{{ input.name }}",
+              "whatsapp": "{{ input.whatsapp }}",
+              "entityId": "{{ input.entityId }}",
+              "days": "{{ input.days }}",
+              "force": "{{ input.force }}",
+              "accept": "{{ input.accept }}",
+              "action": "{{ input.action }}",
+              "circle": "{{ input.circle }}",
+              "text": "{{ input.text }}",
+              "weeks": "{{ input.weeks }}",
+              "myName": "{{ input.myName }}",
+              "aboutMe": "{{ input.aboutMe }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.run.message }}",
+              "draft": "{{ steps.run.draft }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i8",
+      "parent": "i1",
+      "kind": "page",
+      "title": "An operation on a person's profile",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.person-op",
+        "title": "An operation on a person's profile",
+        "description": "What a button of a person's page does (input row, op and what it needs): the profile's lines, the note, the star, dates, finding dates, the summary, what was read confirmed or rejected, details, relations, a merge, deleting the profile. Output { gone, href, message }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.run-op",
+            "input": {
+              "row": "{{ input.row }}",
+              "op": "{{ input.op }}",
+              "name": "{{ input.name }}",
+              "aliases": "{{ input.aliases }}",
+              "emails": "{{ input.emails }}",
+              "whatsapp": "{{ input.whatsapp }}",
+              "jira": "{{ input.jira }}",
+              "note": "{{ input.note }}",
+              "on": "{{ input.on }}",
+              "kind": "{{ input.kind }}",
+              "date": "{{ input.date }}",
+              "label": "{{ input.label }}",
+              "id": "{{ input.id }}",
+              "days": "{{ input.days }}",
+              "what": "{{ input.what }}",
+              "action": "{{ input.action }}",
+              "key": "{{ input.key }}",
+              "value": "{{ input.value }}",
+              "rel": "{{ input.rel }}",
+              "other": "{{ input.other }}",
+              "keep": "{{ input.keep }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "gone": "{{ steps.run.gone }}",
+              "href": "{{ steps.run.href }}",
+              "message": "{{ steps.run.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i50",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Your word on an open loop",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.loop",
+        "title": "Your word on an open loop",
+        "description": "A button of the Open loops block on a person's page (input ref, op: close, dismiss, confirm, reopen, accept-close, reject-close, later). Output { ok, error }.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.loop-decide",
+            "input": {
+              "ref": "{{ input.ref }}",
+              "op": "{{ input.op }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "ok": "{{ steps.run.ok }}",
+              "error": "{{ steps.run.error }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i9",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Widget button: Dates coming up",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.widget-act.upcoming",
+        "title": "A button of the widget “Dates coming up”",
+        "description": "What a button of the widget people.upcoming does (input action, payload, config); the widget's data after it.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.widget-act",
+            "input": {
+              "id": "people.upcoming",
+              "action": "{{ input.action }}",
+              "payload": "{{ input.payload }}",
+              "config": "{{ input.config }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.run }}"
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i10",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Widget button: Who owes whom",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.widget-act.owed",
+        "title": "A button of the widget “Who owes whom”",
+        "description": "What a button of the widget people.owed does (input action, payload, config); the widget's data after it.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.widget-act",
+            "input": {
+              "id": "people.owed",
+              "action": "{{ input.action }}",
+              "payload": "{{ input.payload }}",
+              "config": "{{ input.config }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.run }}"
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i11",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Widget button: Todos with a person",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.widget-act.todos",
+        "title": "A button of the widget “Todos with a person”",
+        "description": "What a button of the widget people.todos does (input action, payload, config); the widget's data after it.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.widget-act",
+            "input": {
+              "id": "people.todos",
+              "action": "{{ input.action }}",
+              "payload": "{{ input.payload }}",
+              "config": "{{ input.config }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.run }}"
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i12",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Widget button: Open promises (both ways)",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.widget-act.promises",
+        "title": "A button of the widget “Open promises (both ways)”",
+        "description": "What a button of the widget people.promises does (input action, payload, config); the widget's data after it.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.widget-act",
+            "input": {
+              "id": "people.promises",
+              "action": "{{ input.action }}",
+              "payload": "{{ input.payload }}",
+              "config": "{{ input.config }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": "{{ steps.run }}"
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i13",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Review: What the AI read about people",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.review-act.claim",
+        "title": "A word on “What the AI read about people”",
+        "description": "A button of the review queue's “What the AI read about people” (input item, action: yes or no); what came of it, in words.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.review-act",
+            "input": {
+              "source": "people-claim",
+              "item": "{{ input.item }}",
+              "action": "{{ input.action }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.run.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i14",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Review: Who is connected to what",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.review-act.link",
+        "title": "A word on “Who is connected to what”",
+        "description": "A button of the review queue's “Who is connected to what” (input item, action: yes or no); what came of it, in words.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.review-act",
+            "input": {
+              "source": "people-link",
+              "item": "{{ input.item }}",
+              "action": "{{ input.action }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.run.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i15",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Review: Still true?",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.review-act.stale",
+        "title": "A word on “Still true?”",
+        "description": "A button of the review queue's “Still true?” (input item, action: yes or no); what came of it, in words.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.review-act",
+            "input": {
+              "source": "people-stale",
+              "item": "{{ input.item }}",
+              "action": "{{ input.action }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.run.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i16",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Review: Dates found — are they right?",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.review-act.date",
+        "title": "A word on “Dates found — are they right?”",
+        "description": "A button of the review queue's “Dates found — are they right?” (input item, action: yes or no); what came of it, in words.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.review-act",
+            "input": {
+              "source": "people-date",
+              "item": "{{ input.item }}",
+              "action": "{{ input.action }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.run.message }}"
+            }
+          }
+        ],
+        "requested": {
+          "write": "all",
+          "ai": true
+        },
+        "triggers": [
+          {
+            "kind": "manual"
+          }
+        ]
+      }
+    },
+    {
+      "id": "i17",
+      "parent": "i1",
+      "kind": "page",
+      "title": "Review: Follow up?",
+      "icon": "👥",
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "flow": {
+        "name": "people.review-act.followup",
+        "title": "A word on “Follow up?”",
+        "description": "A button of the review queue's “Follow up?” (input item, action: yes or no); what came of it, in words.",
+        "inputs": [],
+        "nodes": [
+          {
+            "id": "run",
+            "kind": "action",
+            "action": "people.review-act",
+            "input": {
+              "source": "people-followup",
+              "item": "{{ input.item }}",
+              "action": "{{ input.action }}"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "return",
+            "value": {
+              "message": "{{ steps.run.message }}"
             }
           }
         ],

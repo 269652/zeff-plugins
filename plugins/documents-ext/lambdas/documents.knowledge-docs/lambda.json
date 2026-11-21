@@ -1,0 +1,11 @@
+{
+  "name": "documents.knowledge-docs",
+  "label": "Documents: pages for the knowledge server",
+  "what": "The documents as pages for the knowledge server (space Zeff · Documents).",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

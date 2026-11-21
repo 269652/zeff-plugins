@@ -1,0 +1,11 @@
+{
+  "name": "documents.act-plan",
+  "label": "Documents: what a button does",
+  "what": "What marking read or unread, deleting, reading again, skipping, restarting the reading or confirming documents means — as statements for the flow.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 128
+}

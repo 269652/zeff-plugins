@@ -1,0 +1,11 @@
+{
+  "name": "people.widget.owed",
+  "label": "People widget: Who owes whom",
+  "what": "The data of the widget \"Who owes whom\" — what the built-in shows, through the kernel's read people.widget.",
+  "kind": "function",
+  "zeff": [
+    "people.widget"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

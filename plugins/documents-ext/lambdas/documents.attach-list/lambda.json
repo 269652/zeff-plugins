@@ -1,0 +1,11 @@
+{
+  "name": "documents.attach-list",
+  "label": "Documents: to attach to a todo",
+  "what": "The documents to pick from for a todo, newest first, searched, each with its abstract.",
+  "kind": "function",
+  "zeff": [
+    "sql.query"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

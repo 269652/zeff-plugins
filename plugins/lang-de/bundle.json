@@ -8768,5 +8768,9 @@
   "Zeff's, changed by you": "von Zeff, von dir geändert",
   "zeff/… (no words to make a name of)": "zeff/… (keine Worte, aus denen sich ein Name machen ließe)",
   "read pages: their title, text and fields": "Seiten lesen: ihren Titel, Text und ihre Felder",
-  "A page's title, icon, text (as the editor keeps it) and, for a row, its fields — nothing is changed.": "Titel, Icon und Text einer Seite (wie der Editor ihn speichert) und bei einer Zeile ihre Felder — nichts wird geändert."
+  "A page's title, icon, text (as the editor keeps it) and, for a row, its fields — nothing is changed.": "Titel, Icon und Text einer Seite (wie der Editor ihn speichert) und bei einer Zeile ihre Felder — nichts wird geändert.",
+  "Write something first.": "Schreib zuerst etwas auf.",
+  "every entry": "jeder Eintrag",
+  "A rule needs a job or a description.": "Eine Regel braucht einen Job oder eine Beschreibung.",
+  "A rule needs a part of the meeting's title.": "Eine Regel braucht einen Teil des Meeting-Titels."
 }

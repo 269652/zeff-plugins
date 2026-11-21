@@ -1,0 +1,236 @@
+<state name="circle" value="all"/>
+<state name="only" value=""/>
+<state name="sort" value="name"/>
+<state name="adding" value=""/>
+<state name="newname" value=""/>
+<state name="days" value="0"/>
+<state name="tab" value="people"/>
+<state name="todoFor" value=""/>
+<state name="todotext" value=""/>
+<state name="greetFor" value=""/>
+<data name="people" lambda="people.screen" with="circle={{ state.circle }}, only={{ state.only }}, sort={{ state.sort }}"/>
+<data name="prog" lambda="people.progress" every=5/>
+<on when="{{ not data.prog.running }}" action="reload"/>
+<on event="people-changed" action="reload"/>
+<on event="addperson" run="people.tool" with="tool=add, name={{ state.newname }}" done="Added ✓" then="adding=" emit="people-changed"/>
+<on event="savesettings" run="people.tool" with="tool=settings, weeks={{ state.setweeks }}, myName={{ state.setname }}, aboutMe={{ state.setabout }}" done="Saved." emit="people-changed"/>
+{{#if not data.people}}
+{{#if data.people_error}}<box tone=bad title="Something went wrong"><text>{{ data.people_error }}</text></box>{{#else}}<text tone=muted>…</text>{{/if}}
+{{#else}}
+<row gap=2>
+<tabs bind="tab" options="people:People:{{ data.people.count }}, more:Dates & to check:{{ data.people.toCheck }}"/>
+<grow/>
+{{#if state.tab != 'more'}}
+{{#if state.adding}}
+<input bind="newname" placeholder="Name…" label="New person" enter="addperson"/>
+<button emit="addperson" label="Add" variant=primary disabled="{{ state.newname ? 'false' : 'true' }}"/>
+<button action="state" state="adding" value="" label="✕" variant=quiet/>
+{{#else}}
+<button action="state" state="adding" value="true" label="＋ New person" variant=quiet/>
+{{/if}}
+<select bind="circle" options="{{ data.people.circleOptions }}"/>
+<select bind="sort" options="name:By name, quiet:Longest without contact first, recent:Last in touch first, next:Next date first, todos:Most todos first"/>
+{{/if}}
+</row>
+{{#if state.tab == 'more'}}
+<grid cols=2 gap=4 min=360>
+{{#if data.people.meetings}}
+<box title="Appointments in the next 24 hours">
+{{#each data.people.meetings}}
+<section collapsible=true open=false title="{{ when }} · {{ name }} — {{ title }}">
+{{#if rowId}}<button action="open" row="{{ rowId }}" label="Open {{ name }}" variant=link/>{{/if}}
+<text tone=muted><small>{{ lastMet }}</small></text>
+{{#if since}}
+<col gap=0>
+<muted>{{ sinceTitle }}</muted>
+{{#each since}}<clamp lines=2><muted>{{ ago }}:</muted> {{ text }}</clamp>{{/each}}
+</col>
+{{/if}}
+{{#if owed}}
+<col gap=0>
+<muted>Open between you</muted>
+{{#each owed}}<row gap=1><badge color="{{ mine ? 'red' : 'blue' }}">{{ mine ? 'you' : 'they' }}</badge> {{ text }}{{#if due}} <muted>· {{ due }}</muted>{{/if}}</row>{{/each}}
+</col>
+{{/if}}
+{{#if cases}}
+<col gap=0>
+<muted>Cases</muted>
+{{#each cases}}<row gap=1>{{ title }} <muted>{{ label }}</muted>{{#if hasOpen}} <muted>· open {{ open | euro }}</muted>{{/if}}</row>{{/each}}
+</col>
+{{/if}}
+{{#if nothing}}<muted>Nothing open with them.</muted>{{/if}}
+</section>
+{{/each}}
+</box>
+{{/if}}
+{{#if data.people.nudges}}
+<box>
+<row gap=2 align=baseline><heading level=3>Get in touch again?</heading><grow/><muted>after {{ data.people.weeks }} weeks</muted></row>
+{{#each data.people.nudges}}
+<row gap=2>
+<col gap=0>{{#if rowId}}<button action="open" row="{{ rowId }}" label="{{ name }}" variant=link/>{{#else}}<b>{{ name }}</b>{{/if}}<text tone=muted><small>{{ note }}</small></text></col>
+<grow/>
+{{#if write}}<button action="url" href="{{ write }}" label="{{ icon }} Write" variant=primary/>{{/if}}
+<button run="people.tool" with="tool=snooze, id={{ personId }}, days=14" emit="people-changed" label="Later" tip="Ask again in two weeks"/>
+</row>
+{{/each}}
+</box>
+{{/if}}
+{{#if data.people.upcoming}}
+<box title="Coming up">
+{{#each data.people.upcoming}}
+<row gap=2 wrap=false>{{#if rowId}}<button action="open" row="{{ rowId }}" label="{{ title }}" variant=link/>{{#else}}<b>{{ title }}</b>{{/if}}<grow/>{{#if soon}}<text tone=warn><small><b>{{ when }}</b></small></text>{{#else}}<muted>{{ when }}</muted>{{/if}}</row>
+{{/each}}
+</box>
+{{/if}}
+{{#if data.people.toCheck}}
+<box>
+<row gap=2 align=baseline><heading level=3>To check</heading><grow/><button action="url" href="/heute#review" label="{{ data.people.toCheck }} in the review queue →" variant=quiet/></row>
+{{#if data.people.confident}}
+<button run="people.tool" with="tool=acceptConfident" emit="people-changed" wide=true label="Take all from 90 % ({{ data.people.confident }})" tip="Claims and links the AI is sure of (90 % and more) — identity suggestions still wait for you."/>
+{{/if}}
+{{#each data.people.groups}}
+<section collapsible=true open="{{ data.people.oneKind ? 'true' : 'false' }}" title="{{ title }} · {{ n }}">
+{{#each items}}
+<row align=start gap=2 wrap=false>
+<col gap=0>
+<clamp lines=3>{{#if person}}{{#if rowId}}<button action="open" row="{{ rowId }}" label="{{ person }}" variant=link/>{{#else}}<b>{{ person }}</b>{{/if}}: {{/if}}{{ text }}</clamp>
+{{#if detail}}<muted>{{ detail | truncate(90) }}</muted>{{/if}}
+</col>
+<grow/>
+<button run="people.tool" with="{{ yes }}" emit="people-changed" label="✓ {{ yesLabel }}" variant=primary tip="{{ yesLabel }}"/>
+{{#if no}}<button run="people.tool" with="{{ no }}" emit="people-changed" label="✕" tip="{{ noLabel }}"/>{{/if}}
+</row>
+{{/each}}
+</section>
+{{/each}}
+</box>
+{{/if}}
+{{#if data.people.suggestions.any}}
+<box>
+<section collapsible=true open=false title="Suggestions · {{ data.people.suggestions.n }} to take over">
+{{#if data.people.suggestions.error}}<text tone=warn><small>Knowledge: {{ data.people.suggestions.error }}</small></text>{{/if}}
+{{#if data.people.suggestions.persons}}
+<muted>From the knowledge — the most mentioned first</muted>
+<row gap=1>{{#each data.people.suggestions.persons}}<button run="people.tool" with="tool=add, name={{ name }}, entityId={{ id }}" emit="people-changed" done="Added ✓" variant=quiet label="+ {{ name }} {{ pages }}" tip="{{ pages }} pages"/>{{/each}}</row>
+{{/if}}
+{{#if data.people.suggestions.chats}}
+<muted>From WhatsApp</muted>
+<row gap=1>{{#each data.people.suggestions.chats}}<button run="people.tool" with="tool=add, name={{ name }}, whatsapp={{ name }}" emit="people-changed" done="Added ✓" variant=quiet label="+ {{ name }}" tip="{{ messages }} messages"/>{{/each}}</row>
+{{/if}}
+</section>
+</box>
+{{/if}}
+<box>
+<section collapsible=true open="{{ data.prog.running ? 'true' : 'false' }}" title="Tools and settings">
+<button run="people.tool" with="tool=import" emit="people-changed" wide=true variant=primary label="Import from context (AI)" tip="The AI goes through the last 14 days of your mails, WhatsApp and Teams and makes profiles of the people in them."/>
+{{#if data.prog.datesProgress}}
+<row gap=2><dot color="#f59e0b"/><text tone=muted>{{ data.prog.datesProgress }}</text></row>
+{{#else}}
+<button run="people.tool" with="tool=findAll" emit="people-changed" wide=true label="Find dates for everyone" tip="For everyone without a birthday: in the facts and (with the LLM plugin) by AI in the knowledge and the messages"/>
+{{/if}}
+{{#if data.people.count > 1}}
+<button run="people.tool" with="tool=normalize" emit="people-changed" wide=true label="Match names (AI)" tip="The AI looks at who the names in your todos are: new names become aliases, contacts get profiles, duplicates are merged. It also runs after each briefing."/>
+{{/if}}
+{{#if data.people.count}}
+<row gap=1 wrap=false>
+<button run="people.tool" with="tool=extract, days={{ state.days }}" emit="people-changed" wide=true label="Read new messages (AI)" tip="The AI reads the messages that came in since the last time (mail, chats, Teams, Jira) and notes what they say about people: roles, responsibilities, facts, commitments — to confirm."/>
+<select bind="days" options="0:since last, 14:14 days, 30:30 days"/>
+</row>
+<button run="people.tool" with="tool=classify" emit="people-changed" wide=true label="Place contacts (AI)" tip="The AI says for each contact not placed yet whether it is a person or an organisation and which circle it is in — from what Zeff knows of them. Yours stay. It also runs after each briefing."/>
+<button run="people.tool" with="tool=linkJira" emit="people-changed" wide=true label="Link Jira accounts" tip="Ties Jira users to the profiles by their names — so @-mentions in notes synced to Jira point to the right person. No AI."/>
+{{/if}}
+{{#if data.prog.compileProgress}}
+<row gap=2><dot color="#6366f1"/><text tone=muted>{{ data.prog.compileProgress }}</text></row>
+{{#else}}
+<row gap=1 wrap=false>
+<button run="people.tool" with="tool=compile" emit="people-changed" wide=true label="Compile summaries" tip="A summary of every person: what connects you, the key facts, the fun facts"/>
+<button run="people.tool" with="tool=compile, force=true" emit="people-changed" label="again" tip="Also those compiled in the last 12 hours"/>
+</row>
+{{/if}}
+<muted>Two profiles that are one person? Open one: “Merge or delete” merges it into the other.</muted>
+<col gap=2>
+<input type=number bind="setweeks" value="{{ data.people.settings.weeks }}" label="Remind after (weeks)" leave="savesettings"/>
+<input bind="setname" value="{{ data.people.settings.myName }}" label="Your name" placeholder="First and last name" leave="savesettings"/>
+<input type=textarea rows=3 bind="setabout" value="{{ data.people.settings.aboutMe }}" label="About me" placeholder="e.g. I teach F4 at a vocational school." leave="savesettings"/>
+</col>
+</section>
+</box>
+</grid>
+{{#else}}
+<col gap=3>
+<row gap=3>
+<muted>{{#if data.people.filtered}}{{ data.people.shownCount }} of {{ data.people.rowCount }}{{#else}}{{#if data.people.count == 1}}1 person{{#else}}{{ data.people.count }} people{{/if}}{{/if}}</muted>
+<row gap=1>
+<button action="state" state="only" value="{{ state.only == 'starred' ? '' : 'starred' }}" label="★ Starred" variant="{{ state.only == 'starred' ? 'primary' : 'plain' }}"/>
+<button action="state" state="only" value="{{ state.only == 'quiet' ? '' : 'quiet' }}" label="Long not heard of" variant="{{ state.only == 'quiet' ? 'primary' : 'plain' }}"/>
+<button action="state" state="only" value="{{ state.only == 'owed' ? '' : 'owed' }}" label="Open promises" variant="{{ state.only == 'owed' ? 'primary' : 'plain' }}"/>
+<button action="state" state="only" value="{{ state.only == 'todos' ? '' : 'todos' }}" label="With todos" variant="{{ state.only == 'todos' ? 'primary' : 'plain' }}"/>
+<button action="state" state="only" value="{{ state.only == 'soon' ? '' : 'soon' }}" label="Dates soon" variant="{{ state.only == 'soon' ? 'primary' : 'plain' }}"/>
+</row>
+</row>
+{{#if data.people.cards}}
+<grid cols=4 gap=2 min=260>
+{{#each data.people.cards}}
+<box>
+<row gap=3 align=start wrap=false>
+<avatar name="{{ name }}" size=40/>
+<col gap=1 fill=true>
+<row gap=1 align=baseline wrap=false>
+<truncate><button action="open" row="{{ id }}" label="{{ name }}" variant=link/></truncate>
+{{#if starred}}<text tone=warn tip="Starred">★</text>{{/if}}
+<grow/>
+<menu label="⋯" tip="Do something">
+{{#if email}}<button action="url" href="{{ email }}" label="✉ Write a mail" variant=quiet/>{{/if}}
+{{#if chat}}<button action="url" href="{{ chat }}" label="💬 Open the chat" variant=quiet/>{{/if}}
+{{#if personId}}<button action="state" state="todoFor" value="{{ personId }}" label="＋ Add a todo" variant=quiet/>{{/if}}
+{{#if pay}}<button action="url" href="{{ pay }}" label="💶 Transfer money" variant=quiet/>{{/if}}
+{{#if personId}}{{#each circleOpts}}<button run="people.tool" with="{{ with }}" emit="people-changed" label="{{ current ? '◉ ' : '○ ' }}{{ label }}" variant=quiet/>{{/each}}{{/if}}
+</menu>
+</row>
+{{#if circleLabel}}<clamp lines=2><small><badge color="{{ circleColor }}">{{ circleLabel }}</badge>{{#if role}} <muted>{{ role }}</muted>{{/if}}</small></clamp>{{#else}}{{#if role}}<clamp lines=2><small><muted>{{ role }}</muted></small></clamp>{{/if}}{{/if}}
+{{#if hasParts}}<row gap=1 wrap=true>{{#each parts}}{{#if tone == 'warn'}}<text tone=warn tip="{{ tip }}"><small>{{ text }}</small></text>{{#else}}{{#if tone == 'bad'}}<text tone=bad tip="{{ tip }}"><small><b>{{ text }}</b></small></text>{{#else}}<text tone=muted tip="{{ tip }}"><small>{{ text }}</small></text>{{/if}}{{/if}}{{/each}}</row>{{/if}}
+{{#if hasPills}}
+<row gap=1 wrap=true>
+{{#if unread}}<button action="url" href="{{ mailQuery }}" label="✉ {{ unread }}" variant=quiet tip="{{ unreadTip }}"/>{{/if}}
+{{#if todos}}<badge color=blue tip="{{ todosTip }}">☐ {{ todos }}</badge>{{/if}}
+{{#if owedN}}<badge color=gray tip="{{ owedTitle }}">🤝 {{ owedN }}</badge>{{/if}}
+{{#if debtShown}}<badge color="{{ debtTone }}" tip="{{ debtTip }}">{{ debtText }}</badge>{{/if}}
+{{#if tickets}}<badge color=gray tip="{{ ticketsTip }}">🎫 {{ tickets }}</badge>{{/if}}
+</row>
+{{/if}}
+</col>
+</row>
+{{#if owedN}}
+<section collapsible=true open=false title="🤝 {{ owedN }}">
+{{#each owed}}
+<row gap=2 align=baseline wrap=false><text tone="{{ mine ? 'bad' : 'plain' }}"><small>{{ who }}</small></text><col fill=true>{{ text }}{{#if due}} <muted>· {{ due }}</muted>{{/if}}</col><button run="people.tool" with="tool=claim, id={{ id }}, action=done" emit="people-changed" label="Done"/></row>
+{{/each}}
+</section>
+{{/if}}
+{{#if birthday}}<button run="people.tool" with="tool=greeting, id={{ personId }}" into="greeting" then="greetFor={{ personId }}" label="🎂 Draft a greeting"/>{{/if}}
+</box>
+{{/each}}
+</grid>
+{{#else}}
+<box><text tone=muted>{{ data.people.rowCount ? 'No one matches.' : 'No people yet — add one above, or import them from your mails and chats (Tools).' }}</text></box>
+{{/if}}
+</col>
+{{/if}}
+<dialog bind="todoFor" title="New todo">
+<col gap=2>
+<input bind="todotext" placeholder="What to do …" label="New todo" enter="addtodo"/>
+<row gap=2>
+<button run="people.tool" with="tool=todo, id={{ state.todoFor }}, text={{ state.todotext }}" done="Todo added ✓" then="todoFor=" emit="people-changed" label="Add" variant=primary disabled="{{ state.todotext ? 'false' : 'true' }}"/>
+<button action="state" state="todoFor" value="" label="Close"/>
+</row>
+</col>
+</dialog>
+<on event="addtodo" run="people.tool" with="tool=todo, id={{ state.todoFor }}, text={{ state.todotext }}" done="Todo added ✓" then="todoFor=" emit="people-changed"/>
+<dialog bind="greetFor" title="Greeting">
+<col gap=2>
+<input type=textarea rows=5 bind="greet{{ state.greetFor }}" value="{{ data.greeting.draft }}" label="Greeting"/>
+<row gap=2><copy text="{{ data.greeting.draft }}" label="Copy"/>{{#if data.greeting.draft}}<button action="url" href="mailto:?subject=Happy birthday!&body={{ data.greeting.draft }}" label="✉ As a mail" variant=quiet/>{{/if}}<button action="state" state="greetFor" value="" label="Close"/></row>
+</col>
+</dialog>
+{{/if}}

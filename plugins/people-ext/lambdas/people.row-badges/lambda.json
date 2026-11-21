@@ -1,0 +1,11 @@
+{
+  "name": "people.row-badges",
+  "label": "People: the badges of the rows",
+  "what": "What waits with each person in the Workspace tree: open and overdue todos, promises past their day, unread messages.",
+  "kind": "function",
+  "zeff": [
+    "people.row-badges"
+  ],
+  "timeoutMs": 60000,
+  "memoryMb": 256
+}

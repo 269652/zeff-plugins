@@ -1,0 +1,11 @@
+{
+  "name": "people.widget.news",
+  "label": "People widget: News from a person",
+  "what": "The data of the widget \"News from a person\" — what the built-in shows, through the kernel's read people.widget.",
+  "kind": "function",
+  "zeff": [
+    "people.widget"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

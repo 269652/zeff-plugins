@@ -1,0 +1,11 @@
+{
+  "name": "documents.folder-plan",
+  "label": "Documents: a change to the local folders",
+  "what": "A folder added, its mode set or the folder removed — the folders to keep, as a value for the flow.",
+  "kind": "function",
+  "zeff": [
+    "pref.get"
+  ],
+  "timeoutMs": 30000,
+  "memoryMb": 128
+}

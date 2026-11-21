@@ -1,0 +1,347 @@
+<data name="page" lambda="people.person" with='{"row": {{ id }}, "part": "page"}'/>
+<data name="wiki" lambda="people.person" with='{"row": {{ id }}, "part": "wiki"}' when="{{ data.page.ready }}"/>
+<on event="pc" action="reload"/>
+<data name="loops" lambda="people.person" with='{"row": {{ id }}, "part": "loops"}' when="{{ data.page.ready }}"/>
+<state name="keep" value=""/>
+<state name="dkind" value="iban"/>
+<state name="dvalue" value=""/>
+<state name="datekind" value="birthday"/>
+<state name="datevalue" value=""/>
+<state name="datelabel" value=""/>
+<state name="relname" value=""/>
+<state name="relother" value=""/>
+<state name="amount" value=""/>
+<state name="purpose" value=""/>
+<state name="transfer" value=""/>
+{{#if not data.page}}
+{{#if data.page_error}}<box tone=bad title="Something went wrong"><text>{{ data.page_error }}</text></box>{{#else}}<text tone=muted>…</text>{{/if}}
+{{#else}}{{#if data.page.ready}}
+<on event="save-profile" run="people.person-op" with="row={{ id }}, op=profile, name={{ state.p_name }}, aliases={{ state.p_aliases }}, emails={{ state.p_emails }}, whatsapp={{ state.p_whatsapp }}, jira={{ state.p_jira }}" done="Saved ✓" emit="pc"/>
+<on event="save-note" run="people.person-op" with="row={{ id }}, op=note, note={{ state.p_note }}" done="Saved ✓"/>
+<on event="add-detail" run="people.person-op" with="row={{ id }}, op=detail, action=add, key={{ state.dkind }}, value={{ state.dvalue }}" then="dvalue=" emit="pc"/>
+<on event="add-date" run="people.person-op" with="row={{ id }}, op=addDate, kind={{ state.datekind }}, date={{ state.datevalue }}, label={{ state.datelabel }}" done="Added ✓" then="datevalue=" emit="pc"/>
+<on event="add-relation" run="people.person-op" with="row={{ id }}, op=addRelation, rel={{ state.relname }}, other={{ state.relother }}" then="relname=" emit="pc"/>
+<split ratio=1:2>
+<col gap=5>
+<box>
+<row gap=2 align=baseline><heading level=3>Profile</heading><grow/><button run="people.person-op" with="row={{ id }}, op=star, on={{ data.page.starred ? 'false' : 'true' }}" emit="pc" label="{{ data.page.starLabel }}" tip="{{ data.page.starTip }}" variant=quiet/></row>
+<input bind="p_name" value="{{ data.page.profile.name }}" label="Name" leave="save-profile"/>
+<input bind="p_aliases" value="{{ data.page.profile.aliases }}" label="Also called (comma-separated)" leave="save-profile"/>
+<input bind="p_emails" value="{{ data.page.profile.emails }}" label="Mail addresses (comma-separated)" leave="save-profile"/>
+<input bind="p_whatsapp" value="{{ data.page.profile.whatsapp }}" label="WhatsApp chat (its name)" leave="save-profile"/>
+<input bind="p_jira" value="{{ data.page.profile.jira }}" label="Jira usernames (comma-separated) — for @-mentions in Jira comments" placeholder="thobecke1" leave="save-profile"/>
+</box>
+<box>
+<row gap=2 align=baseline><heading level=3>Details</heading><grow/>{{#if data.page.canPay}}<button action="state" state="transfer" value="true" label="Transfer money" variant=quiet/>{{/if}}</row>
+{{#if data.page.hasDetails}}
+<col gap=1>
+{{#each data.page.details}}
+<row gap=3 align=baseline wrap=false>
+<small><muted>{{ label }}</muted></small>
+<col gap=0 fill=true>
+<row gap=1 align=baseline>{{#if phone}}<a href="tel:{{ dial }}">{{ value }}</a>{{#else}}{{#if map}}<a href="{{ map }}">{{ value }}</a>{{#else}}{{#if mono}}<mono>{{ value }}</mono>{{#else}}{{ value }}{{/if}}{{/if}}{{/if}}{{#if not confirmed}}<text tone=warn tip="Read from a message — confirm it under To check."><small>unchecked</small></text>{{/if}}</row>
+<text tone=muted tip="{{ historyTip }}"><small>{{ provenance }}</small></text>
+</col>
+<copy text="{{ value }}" label="⧉"/>
+<button run="people.person-op" with="row={{ data.page.row }}, op=detail, action=remove, key={{ key }}, value={{ value }}" emit="pc" label="×" tip="Remove" variant=quiet/>
+</row>
+{{/each}}
+</col>
+{{#else}}
+<text tone=muted>No bank account, address or phone known yet — Zeff takes them from what it reads, or add one.</text>
+{{/if}}
+<row gap=2 wrap=true>
+<select bind="dkind" options="iban:IBAN, bic:BIC, bank:Bank, revtag:RevTag, address:Address, phone:Phone, hours:Office hours"/>
+<input bind="dvalue" placeholder="Value" label="New detail" enter="add-detail"/>
+<button emit="add-detail" label="Add" disabled="{{ state.dvalue ? 'false' : 'true' }}"/>
+</row>
+</box>
+{{#if data.page.pulse.any}}
+<box>
+<heading level=3>Rhythm</heading>
+<col gap=0>
+<text>{{ data.page.pulse.days }}</text>
+{{#if data.page.pulse.channels}}<small><muted>{{ data.page.pulse.channels }}</muted></small>{{/if}}
+</col>
+{{#if data.page.pulse.rhythm}}<text>{{ data.page.pulse.rhythm }}</text>{{/if}}
+{{#if data.page.pulse.drifting}}<text tone=warn>{{ data.page.pulse.drift }}</text>{{/if}}
+{{#if data.page.pulse.initiative}}<text>{{ data.page.pulse.initiative }}</text>{{/if}}
+{{#if data.page.pulse.reply}}<muted>{{ data.page.pulse.reply }}</muted>{{/if}}
+</box>
+{{/if}}
+<box>
+<heading level=3>Notes</heading>
+<input type=textarea rows=5 bind="p_note" value="{{ data.page.note }}" placeholder="What you want to remember about them — preferences, gift ideas, what you last talked about…" label="Notes" leave="save-note"/>
+</box>
+<box>
+<row gap=2 align=baseline><heading level=3>Dates</heading><grow/><button run="people.person-op" with="row={{ id }}, op=findDates" emit="pc" label="Find dates" tip="In the facts and (with the LLM plugin) by AI in the knowledge and the messages" variant=quiet/></row>
+{{#if data.page.hasDates}}
+<col gap=2>
+{{#each data.page.dates}}
+<box tone="{{ confirmed ? 'plain' : 'warn' }}">
+<row gap=2 align=baseline><b>{{ label }}</b> {{ text }}{{#if when}} <muted>{{ when }}</muted>{{/if}}{{#if not confirmed}} <text tone=warn><small>found — is it right?</small></text>{{/if}}</row>
+{{#if sourceText}}<muted>{{ sourceText }}</muted>{{/if}}
+<row gap=1 wrap=true>
+{{#if confirmed}}
+<muted>remind</muted>
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateRemind, id={{ id }}, days=0" emit="pc" label="on the day" variant="{{ remindDays == 0 ? 'primary' : 'quiet' }}"/>
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateRemind, id={{ id }}, days=3" emit="pc" label="3" variant="{{ remindDays == 3 ? 'primary' : 'quiet' }}"/>
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateRemind, id={{ id }}, days=7" emit="pc" label="7" variant="{{ remindDays == 7 ? 'primary' : 'quiet' }}"/>
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateRemind, id={{ id }}, days=14" emit="pc" label="14" variant="{{ remindDays == 14 ? 'primary' : 'quiet' }}"/>
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateRemind, id={{ id }}, days=30" emit="pc" label="30" variant="{{ remindDays == 30 ? 'primary' : 'quiet' }}"/>
+<muted>days before</muted>
+{{#else}}
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateConfirm, id={{ id }}" emit="pc" label="Right" variant=primary/>
+{{/if}}
+<button run="people.person-op" with="row={{ data.page.row }}, op=dateDelete, id={{ id }}" emit="pc" label="{{ confirmed ? 'Delete' : 'Wrong' }}"/>
+</row>
+</box>
+{{/each}}
+</col>
+{{#else}}
+<text tone=muted>No date yet — enter one or let Zeff search (“Find dates”).</text>
+{{/if}}
+<row gap=2 wrap=true>
+<select bind="datekind" options="birthday:Birthday, anniversary:Anniversary, other:Date"/>
+<input bind="datevalue" placeholder="16.10. or 16.10.1996" label="Day" enter="add-date"/>
+<input bind="datelabel" placeholder="What for (optional)" label="What for"/>
+<button emit="add-date" label="Add" disabled="{{ state.datevalue ? 'false' : 'true' }}"/>
+</row>
+</box>
+<box>
+<heading level=3>Same person, or gone</heading>
+{{#if data.page.hasOthers}}
+<col gap=1>
+<muted>Same person as …</muted>
+<row gap=2 wrap=false>
+<select bind="keep" options="{{ data.page.mergeOptions }}" search=true/>
+<button run="people.person-op" with="row={{ id }}, op=merge, keep={{ state.keep }}" label="Merge" disabled="{{ state.keep ? 'false' : 'true' }}" confirm="Merge this profile into the chosen one?"/>
+</row>
+<muted>“{{ data.page.name }}” becomes an alias of the chosen profile; its chat, addresses, notes and dates come along; this profile is removed.</muted>
+</col>
+{{/if}}
+<row><button run="people.person-op" with="row={{ id }}, op=delete" label="Delete profile" variant=danger confirm="Delete the profile of “{{ data.page.name }}”?"/></row>
+</box>
+</col>
+<col gap=5>
+<know row="{{ id }}"/>
+<box>
+<row gap=2 align=baseline><heading level=3>Summary</heading><grow/><button run="people.person-op" with="row={{ id }}, op=compile" emit="pc" label="{{ data.page.compileLabel }}" variant=quiet/></row>
+{{#if data.page.compiled}}
+{{#if data.page.summary.connection}}<col gap=0><muted>What connects you</muted><text pre=true>{{ data.page.summary.connection }}</text></col>{{/if}}
+{{#if data.page.summary.keyFacts}}<col gap=0><muted>Key facts</muted>{{#each data.page.summary.keyFacts}}<text>• {{ this }}</text>{{/each}}</col>{{/if}}
+{{#if data.page.summary.funFacts}}<col gap=0><muted>Fun facts</muted>{{#each data.page.summary.funFacts}}<text>🎈 {{ this }}</text>{{/each}}</col>{{/if}}
+<muted>Compiled from {{ data.page.summary.sources }} things</muted>
+{{#else}}
+<text tone=muted>Not compiled yet — “Compile” writes what connects you, the key facts and the fun ones (needs the LLM plugin).</text>
+{{/if}}
+</box>
+<box>
+<heading level=3>Read from your messages</heading>
+{{#if data.page.known.nothing}}<text tone=muted>Nothing read from your messages yet — Zeff reads new ones after each briefing.</text>{{/if}}
+{{#if data.page.known.any}}
+<state name="known" value="{{ data.page.known.first }}"/>
+<tabs bind="known" options="{{ data.page.known.tabs }}"/>
+{{#if state.known == 'facts'}}
+{{#if data.page.known.hasFacts}}
+{{#each data.page.known.facts}}
+<col gap=1>
+<muted>{{ title }}</muted>
+{{#each items}}
+<row gap=2 align=baseline wrap=false tip="{{ tip }}"><col fill=true>{{ text }}{{#if due}} <muted>· {{ due }}</muted>{{/if}}</col>{{#if commitment}}<button run="people.person-op" with="row={{ data.page.row }}, op=review, what=claim, id={{ id }}, action=done" emit="pc" label="Done"/>{{/if}}</row>
+{{/each}}
+</col>
+{{/each}}
+{{#else}}
+<text tone=muted>No confirmed facts yet — check what was read under To check.</text>
+{{/if}}
+{{#else}}{{#if state.known == 'done'}}
+{{#if data.page.known.hasDone}}
+{{#each data.page.known.done}}
+<row gap=2 align=baseline wrap=false><small><muted>{{ kind }}</muted></small><text tone=muted>✓ {{ text }}{{#if due}} · {{ due }}{{/if}}</text></row>
+{{/each}}
+{{#else}}
+<text tone=muted>Nothing done yet.</text>
+{{/if}}
+{{#else}}
+{{#if data.page.known.hasCheck}}
+{{#each data.page.known.check}}
+<col gap=0>
+<row gap=2 align=baseline wrap=false>
+<small><muted>{{ kind }}</muted></small>
+<col fill=true>{{ text }}{{#if due}} <muted>· {{ due }}</muted>{{/if}}</col>
+<button run="people.person-op" with="row={{ data.page.row }}, op=review, what=claim, id={{ id }}, action=confirm" emit="pc" label="Right" variant=primary/>
+<button run="people.person-op" with="row={{ data.page.row }}, op=review, what=claim, id={{ id }}, action=reject" emit="pc" label="Wrong"/>
+</row>
+<truncate tip="{{ evidence }}"><muted>{{ quote }}</muted></truncate>
+</col>
+{{/each}}
+{{#else}}
+<text tone=muted>Nothing to check.</text>
+{{/if}}
+{{/if}}{{/if}}
+{{/if}}
+{{#if data.page.links}}<row gap=1>{{#each data.page.links}}<badge color=gray>{{ rel }} <b>{{ target }}</b></badge>{{/each}}</row>{{/if}}
+</box>
+<box>
+<heading level=3>Relations</heading>
+{{#if data.page.relations.none}}
+<text tone=muted>None known yet — the AI derives them from your todos and messages (“Match names”), or add one below.</text>
+{{#else}}
+<col gap=1>
+{{#each data.page.relations.out}}
+<row gap=2 align=baseline wrap=false tip="{{ evidence }}">
+<col gap=0 fill=true>
+<row gap=1><b>{{ rel }}</b>{{#if toYou}}<muted>(to you)</muted>{{#else}}of {{ other }}{{/if}}</row>
+{{#if evidence}}<muted>{{ evidence }}</muted>{{/if}}
+</col>
+<button run="people.person-op" with="row={{ data.page.row }}, op=deleteRelation, id={{ id }}" emit="pc" label="✕" tip="Wrong? Remove it." variant=quiet/>
+</row>
+{{/each}}
+{{#each data.page.relations.in}}
+<row gap=2 align=baseline wrap=false tip="{{ evidence }}">
+<col gap=0 fill=true>
+<row gap=1>{{ person }}: <b>{{ rel }}</b></row>
+{{#if evidence}}<muted>{{ evidence }}</muted>{{/if}}
+</col>
+<button run="people.person-op" with="row={{ data.page.row }}, op=deleteRelation, id={{ id }}" emit="pc" label="✕" tip="Remove" variant=quiet/>
+</row>
+{{/each}}
+</col>
+{{/if}}
+<row gap=2 wrap=true>
+<input bind="relname" placeholder="mother, landlord …" label="They are" enter="add-relation"/>
+<select bind="relother" options="{{ data.page.relationOptions }}"/>
+<button emit="add-relation" label="Add" disabled="{{ state.relname ? 'false' : 'true' }}"/>
+</row>
+</box>
+</col>
+</split>
+{{#if data.wiki.showWiki}}
+<box>
+<row gap=2 align=baseline><heading level=3>What the knowledge knows</heading><grow/>{{#if data.wiki.wiki.graph}}<a href="{{ data.wiki.wiki.graph }}">In the graph ↗</a>{{/if}}</row>
+{{#if data.wiki.wikiError}}<text tone=warn><small>{{ data.wiki.wiki.error }}</small></text>{{/if}}
+{{#if data.wiki.wikiEmpty}}<text tone=muted>The knowledge knows nobody of this name. An alias — what the person is called in your pages — helps.</text>{{/if}}
+{{#if data.wiki.wikiFull}}
+{{#if data.wiki.hasWikiMerge}}
+<box tone=warn>
+<small>{{ data.wiki.wikiMerge.text }}</small>
+<row gap=2><button run="people.person-op" with="row={{ id }}, op=knowledgeMerge, id={{ data.wiki.wikiMerge.id }}" emit="pc" label="{{ data.wiki.wikiMerge.label }}" variant=primary/><button run="people.person-op" with="row={{ id }}, op=knowledgeDismiss, id={{ data.wiki.wikiMerge.id }}" emit="pc" label="Not the same"/></row>
+</box>
+{{/if}}
+{{#if data.wiki.wiki.summary}}<text>{{ data.wiki.wiki.summary }}</text>{{/if}}
+{{#if data.wiki.wiki.related}}
+<col gap=1>
+{{#each data.wiki.wiki.related}}<col gap=0><b>{{ name }}</b>{{#each rels}}<text tone=muted><small>{{ this }}</small></text>{{/each}}</col>{{/each}}
+</col>
+{{/if}}
+{{#if data.wiki.wiki.pages}}
+<section collapsible=true open=false title="{{ data.wiki.wikiPagesTitle }}">
+{{#each data.wiki.wiki.pages}}<row gap=1><a href="{{ href }}">{{ title }}</a> <muted>{{ space }}</muted></row>{{/each}}
+</section>
+{{/if}}
+{{/if}}
+</box>
+{{/if}}
+<section title="Latest messages">
+<list source="data.page.contacts" empty="No messages — enter the WhatsApp chat or the mail addresses in the profile.">
+<row gap=2><muted>{{ folder }}</muted><muted>{{ who }}</muted><grow/><muted>{{ at }}</muted></row>
+<clamp lines=2>{{ text }}</clamp>
+</list>
+</section>
+{{#if data.loops.any}}
+<section title="Open loops">
+<col gap=2>
+{{#each data.loops.items}}
+<box>
+<row gap=2 align=baseline wrap=true><text tone="{{ mine ? 'warn' : 'plain' }}"><small>{{ who }}</small></text><badge color=gray>{{ kind }}</badge><col fill=true tip="{{ quote }}">{{ text }}</col></row>
+<row gap=2 align=baseline wrap=true><muted>{{ since }}</muted>{{#if due}}<text tone="{{ overdue ? 'bad' : 'muted' }}"><small>{{ due }}</small></text>{{/if}}{{#if unconfirmed}}<muted tip="Read by the AI — confirm it or say it isn't one.">{{ unconfirmed }}</muted>{{/if}}{{#if href}}<a href="{{ href }}">where it was said</a>{{/if}}</row>
+{{#if proposal}}
+<box tone=good>
+<small>{{ proposal.text }}{{#if proposal.href}} <a href="{{ proposal.href }}">show message</a>{{/if}}</small>
+<row gap=2><button run="people.loop" with="ref={{ ref }}, op=accept-close" emit="pc" label="Yes, kept"/><button run="people.loop" with="ref={{ ref }}, op=reject-close" emit="pc" label="No, still open"/></row>
+</box>
+{{/if}}
+{{#if open}}
+<row gap=1>
+<button run="people.loop" with="ref={{ ref }}, op=close" emit="pc" label="Done"/>
+{{#if unconfirmed}}<button run="people.loop" with="ref={{ ref }}, op=confirm" emit="pc" label="Confirm"/>{{/if}}
+<button run="people.loop" with="ref={{ ref }}, op=dismiss" emit="pc" label="Not a loop"/>
+{{#if overdue}}<button run="people.loop" with="ref={{ ref }}, op=later" emit="pc" label="Later"/>{{/if}}
+</row>
+{{#else}}
+<row gap=2><muted>{{ closed }}</muted><button run="people.loop" with="ref={{ ref }}, op=reopen" emit="pc" label="Reopen"/></row>
+{{/if}}
+</box>
+{{/each}}
+</col>
+</section>
+{{/if}}
+<rowtimeline row="{{ id }}" title="What happened"/>
+<section title="Todos they appear in">
+<list source="data.page.todos" empty="No open todo names them.">
+<row gap=2 align=baseline wrap=false><button action="url" href="{{ href }}" label="{{ ref }}" variant=quiet/><col fill=true>{{ text }}</col>{{#if due}}<muted>{{ due }}</muted>{{/if}}</row>
+</list>
+</section>
+{{#if data.page.hasEvents}}
+<section title="Appointments">
+{{#if data.page.anyEvents}}
+<grid cols=2 gap=8 min=320>
+<col gap=1><muted>Coming up</muted><list source="data.page.events.upcoming" empty="Nothing in the next 30 days."><row gap=2 align=baseline wrap=false tip="{{ calendar }}"><dot color="{{ color }}"/><muted>{{ when }}</muted><col fill=true><truncate><button action="url" href="{{ href }}" label="{{ title }}" variant=link/></truncate></col>{{#if location}}<muted>{{ location | truncate(40) }}</muted>{{/if}}</row></list></col>
+<col gap=1><muted>Recently</muted><list source="data.page.events.recent" empty="Nothing in the last 30 days."><row gap=2 align=baseline wrap=false tip="{{ calendar }}"><dot color="{{ color }}"/><muted>{{ when }}</muted><col fill=true><truncate><button action="url" href="{{ href }}" label="{{ title }}" variant=link/></truncate></col>{{#if location}}<muted>{{ location | truncate(40) }}</muted>{{/if}}</row></list></col>
+</grid>
+{{#else}}
+<text tone=muted>No appointment with them in the last or next 30 days — Zeff looks for their mail address among the attendees and their name in the title.</text>
+{{/if}}
+</section>
+{{/if}}
+<grid cols=2 gap=8 min=320>
+{{#if data.page.hasCases}}
+<section title="Cases">
+<list source="data.page.cases">
+<row gap=2 align=baseline wrap=false>
+<mono>{{ label }}</mono>
+<col fill=true><truncate>{{#if done}}<text tone=muted><button action="url" href="{{ href }}" label="{{ title }}" variant=link/></text>{{#else}}<button action="url" href="{{ href }}" label="{{ title }}" variant=link/>{{/if}}</truncate></col>
+{{#if showOpen}}<text>{{ open | euro }}</text>{{/if}}
+{{#if nextDue}}<muted>{{ nextDue }}</muted>{{/if}}
+</row>
+</list>
+</section>
+{{/if}}
+{{#if data.page.hasDocuments}}
+<section title="Letters and documents">
+<list source="data.page.documents">
+<row gap=2 align=baseline wrap=false><col fill=true><truncate><a href="{{ href }}">📄 {{ name }}</a></truncate></col><muted>{{ at }}</muted></row>
+{{#if summary}}<clamp lines=2><muted>{{ summary }}</muted></clamp>{{/if}}
+</list>
+</section>
+{{/if}}
+</grid>
+<grid cols=2 gap=8 min=320>
+<section title="Mentioned in your workspace">
+{{#if data.page.pages}}
+<row gap=1>{{#each data.page.pages}}<button action="url" href="{{ href }}" label="{{ label }}"/>{{/each}}</row>
+{{#else}}
+<text tone=muted>No page mentions them yet — type @ in a page.</text>
+{{/if}}
+</section>
+<section title="Shared tickets">
+{{#if data.page.tickets}}
+<row gap=1>{{#each data.page.tickets}}<badge color=gray>🎫 {{ this }}</badge>{{/each}}</row>
+{{#else}}
+<text tone=muted>No ticket known yet — Zeff derives them from comments and assignments.</text>
+{{/if}}
+</section>
+</grid>
+<dialog bind="transfer" title="Transfer money">
+<col gap=2>
+<text tone=muted>To {{ data.page.account.name }} — {{ data.page.account.iban }}</text>
+<input bind="amount" placeholder="Amount" label="Amount"/>
+<input bind="purpose" placeholder="Purpose" label="Purpose"/>
+{{#if state.amount}}<girocode name="{{ data.page.account.name }}" iban="{{ data.page.account.iban }}" bic="{{ data.page.account.bic }}" amount="{{ state.amount }}" purpose="{{ state.purpose }}"/>{{/if}}
+<row><button action="state" state="transfer" value="" label="Close"/></row>
+</col>
+</dialog>
+{{#else}}
+{{#if data.page.error}}<box tone=bad title="Something went wrong"><text>{{ data.page.error }}</text></box>{{/if}}
+{{/if}}{{/if}}

@@ -1,0 +1,11 @@
+{
+  "name": "people.review.stale",
+  "label": "People review: Still true?",
+  "what": "What waits for your word in the review queue — \"Still true?\" — through the kernel's read people.review-list.",
+  "kind": "function",
+  "zeff": [
+    "people.review-list"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}

@@ -1,0 +1,11 @@
+{
+  "name": "people.widget.funfacts",
+  "label": "People widget: Fun facts",
+  "what": "The data of the widget \"Fun facts\" — what the built-in shows, through the kernel's read people.widget.",
+  "kind": "function",
+  "zeff": [
+    "people.widget"
+  ],
+  "timeoutMs": 120000,
+  "memoryMb": 256
+}
