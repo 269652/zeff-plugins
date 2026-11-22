@@ -14,7 +14,11 @@ export async function handler(event, context) {
 
   const scope = event?.scope === "done" || event?.scope === "worker" ? event.scope : "open";
   const q = String(event?.filter ?? "").trim().toLowerCase();
-  const data = await context.zeff.call("todos.rows", { scope });
+  // Done and the workers' todos in pages, read on the server only as far as shown (a filter reads further: it has to see them all).
+  const PAGE = 50;
+  const want = Math.max(PAGE, Math.min(1000, Number(event?.limit) || PAGE));
+  const filtered = !!q || String(event?.chips || "[]") !== "[]";
+  const data = await context.zeff.call("todos.rows", scope === "open" ? { scope } : { scope, limit: filtered ? 1000 : want });
 
   // The omnibar's chips: "icon title␟1,2,3".
   let picks = [];
@@ -34,12 +38,13 @@ export async function handler(event, context) {
   const match = (r) => chips.every((c) => c.ids.has(r.id)) && (!q || [r.text, r.ref, r.ticket, r.note, r.source, ...(r.alsoTickets ?? [])].some((s) => String(s ?? "").toLowerCase().includes(q)));
   const kept = data.rows.filter(match);
   // Done and the workers' todos come in pages (the newest first): a long Done list is hundreds of rows — only these are drawn.
-  const PAGE = 50;
-  const limit = scope === "open" ? Infinity : Math.max(PAGE, Math.min(5000, Number(event?.limit) || PAGE));
+  const limit = scope === "open" ? Infinity : want;
   const shown = scope === "open" ? kept : kept.slice(0, limit);
   const views = new Map(shown.map((r) => [r.id, view(r, data)]));
   const rows = shown.map((r) => views.get(r.id));
-  const more = scope === "open" ? 0 : Math.max(0, kept.length - shown.length);
+  // (how many are left: the page's count of the whole scope when nothing filters, else what the wide read found)
+  const total = filtered ? kept.length : Number(data.counts?.[scope]) || kept.length;
+  const more = scope === "open" ? 0 : Math.max(0, total - shown.length);
 
   let groups = [];
   let waiting = [];
