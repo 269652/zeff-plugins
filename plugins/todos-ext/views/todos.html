@@ -185,7 +185,7 @@
 {{#if ticket}}<iconbtn glyph=clock reveal=true label="{{ workedLabel }}" tip="Worked on it — suggests a booking for it in the Weekly report (the todo stays open)" run="todos-ext.worked-on" with="id={{ id }}" into="wk"/>{{/if}}
 <iconbtn glyph="{{ flagged ? 'flag-on' : 'flag' }}" on="{{ flagged }}" tone=bad reveal=true pressed="{{ flagged }}" label="{{ flagLabel }}" tip="{{ flagTip }}" run="todos-ext.flag" with="id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}" emit="todos-changed"/>
 <iconbtn glyph="{{ deferred ? 'top' : 'bottom' }}" on="{{ deferred }}" reveal=true label="{{ deferLabel }}" tip="{{ deferTip }}" run="todos-ext.defer" with="id={{ id }}, deferred={{ deferred ? 'false' : 'true' }}" emit="todos-changed"/>
-<iconbtn glyph=x reveal=true label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
+<iconbtn glyph=x reveal=true grace=3.5 undo="Undo dismiss" label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
 {{/if}}
 <iconbtn glyph="⋯" reveal=true label="Open the todo" tip="Open the todo — its notes, actions, context" action="state" state="panel" value="{{ id }}"/>
 </hoverbar>
@@ -262,7 +262,7 @@
 {{#if ticket}}<iconbtn glyph=clock reveal=true label="{{ workedLabel }}" tip="Worked on it — suggests a booking for it in the Weekly report (the todo stays open)" run="todos-ext.worked-on" with="id={{ id }}" into="wk"/>{{/if}}
 <iconbtn glyph="{{ flagged ? 'flag-on' : 'flag' }}" on="{{ flagged }}" tone=bad reveal=true pressed="{{ flagged }}" label="{{ flagLabel }}" tip="{{ flagTip }}" run="todos-ext.flag" with="id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}" emit="todos-changed"/>
 <iconbtn glyph="{{ deferred ? 'top' : 'bottom' }}" on="{{ deferred }}" reveal=true label="{{ deferLabel }}" tip="{{ deferTip }}" run="todos-ext.defer" with="id={{ id }}, deferred={{ deferred ? 'false' : 'true' }}" emit="todos-changed"/>
-<iconbtn glyph=x reveal=true label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
+<iconbtn glyph=x reveal=true grace=3.5 undo="Undo dismiss" label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
 {{/if}}
 <iconbtn glyph="⋯" reveal=true label="Open the todo" tip="Open the todo — its notes, actions, context" action="state" state="panel" value="{{ id }}"/>
 </hoverbar>
@@ -336,7 +336,7 @@
 {{#if ticket}}<iconbtn glyph=clock reveal=true label="{{ workedLabel }}" tip="Worked on it — suggests a booking for it in the Weekly report (the todo stays open)" run="todos-ext.worked-on" with="id={{ id }}" into="wk"/>{{/if}}
 <iconbtn glyph="{{ flagged ? 'flag-on' : 'flag' }}" on="{{ flagged }}" tone=bad reveal=true pressed="{{ flagged }}" label="{{ flagLabel }}" tip="{{ flagTip }}" run="todos-ext.flag" with="id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}" emit="todos-changed"/>
 <iconbtn glyph="{{ deferred ? 'top' : 'bottom' }}" on="{{ deferred }}" reveal=true label="{{ deferLabel }}" tip="{{ deferTip }}" run="todos-ext.defer" with="id={{ id }}, deferred={{ deferred ? 'false' : 'true' }}" emit="todos-changed"/>
-<iconbtn glyph=x reveal=true label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
+<iconbtn glyph=x reveal=true grace=3.5 undo="Undo dismiss" label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
 {{/if}}
 <iconbtn glyph="⋯" reveal=true label="Open the todo" tip="Open the todo — its notes, actions, context" action="state" state="panel" value="{{ id }}"/>
 </hoverbar>
@@ -486,7 +486,7 @@
 {{#if ticket}}<iconbtn glyph=clock reveal=true label="{{ workedLabel }}" tip="Worked on it — suggests a booking for it in the Weekly report (the todo stays open)" run="todos-ext.worked-on" with="id={{ id }}" into="wk"/>{{/if}}
 <iconbtn glyph="{{ flagged ? 'flag-on' : 'flag' }}" on="{{ flagged }}" tone=bad reveal=true pressed="{{ flagged }}" label="{{ flagLabel }}" tip="{{ flagTip }}" run="todos-ext.flag" with="id={{ id }}, flagged={{ flagged ? 'false' : 'true' }}" emit="todos-changed"/>
 <iconbtn glyph="{{ deferred ? 'top' : 'bottom' }}" on="{{ deferred }}" reveal=true label="{{ deferLabel }}" tip="{{ deferTip }}" run="todos-ext.defer" with="id={{ id }}, deferred={{ deferred ? 'false' : 'true' }}" emit="todos-changed"/>
-<iconbtn glyph=x reveal=true label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
+<iconbtn glyph=x reveal=true grace=3.5 undo="Undo dismiss" label="{{ dismissTip }}" tip="Dismiss — doesn't apply" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/>
 {{/if}}
 <iconbtn glyph="⋯" reveal=true label="Open the todo" tip="Open the todo — its notes, actions, context" action="state" state="panel" value="{{ id }}"/>
 </hoverbar>
@@ -567,7 +567,7 @@
 <checklist>
 {{#each data.today.due}}
 <checkrow id="today-{{ id }}" label="{{ ref }} done" run="todos-ext.status" with="id={{ id }}, status=done" into="st" emit="todos-changed">
-<line look=between><line look=lead>{{ text }}</line><line look=tools><ink tone="{{ overdue ? 'bad' : 'amber' }}">{{ when }}</ink><ink tone=faint>{{ ref }}</ink><iconbtn glyph=x label="Dismiss — not to be done" tip="Dismiss — not to be done" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/></line></line>
+<line look=between><line look=lead>{{ text }}</line><line look=tools><ink tone="{{ overdue ? 'bad' : 'amber' }}">{{ when }}</ink><ink tone=faint>{{ ref }}</ink><iconbtn glyph=x grace=3.5 undo="Undo dismiss" label="Dismiss — not to be done" tip="Dismiss — not to be done" run="todos-ext.status" with="id={{ id }}, status=dismissed" into="st" emit="todos-changed"/></line></line>
 </checkrow>
 {{/each}}
 </checklist>
