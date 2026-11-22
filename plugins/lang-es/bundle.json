@@ -8827,5 +8827,6 @@
   "Microsoft tenant": "Tenant de Microsoft",
   "Your tenant id (empty: any organisation)": "Tu ID de tenant (vacío: cualquier organización)",
   "The regular AI run over your tickets from your JQL filter: what happened, what to do — then the mail and WhatsApp review, mail matching and the auto actions.": "La pasada regular de la IA por tus tickets de tu filtro JQL: qué pasó, qué hacer — luego la revisión de correo y WhatsApp, la asignación de correos y las acciones automáticas.",
-  "Undo dismiss": "Deshacer descartar"
+  "Undo dismiss": "Deshacer descartar",
+  "Open it again — back into your todos": "Reabrirla — de vuelta a tus tareas"
 }
