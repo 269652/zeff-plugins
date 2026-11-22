@@ -33,8 +33,13 @@ export async function handler(event, context) {
 
   const match = (r) => chips.every((c) => c.ids.has(r.id)) && (!q || [r.text, r.ref, r.ticket, r.note, r.source, ...(r.alsoTickets ?? [])].some((s) => String(s ?? "").toLowerCase().includes(q)));
   const kept = data.rows.filter(match);
-  const views = new Map(kept.map((r) => [r.id, view(r, data)]));
-  const rows = kept.map((r) => views.get(r.id));
+  // Done and the workers' todos come in pages (the newest first): a long Done list is hundreds of rows — only these are drawn.
+  const PAGE = 50;
+  const limit = scope === "open" ? Infinity : Math.max(PAGE, Math.min(5000, Number(event?.limit) || PAGE));
+  const shown = scope === "open" ? kept : kept.slice(0, limit);
+  const views = new Map(shown.map((r) => [r.id, view(r, data)]));
+  const rows = shown.map((r) => views.get(r.id));
+  const more = scope === "open" ? 0 : Math.max(0, kept.length - shown.length);
 
   let groups = [];
   let waiting = [];
@@ -60,6 +65,9 @@ export async function handler(event, context) {
     nWaiting: waiting.length,
     rows: scope === "open" ? [] : rows,
     nRows: rows.length,
+    more,
+    moreLabel: more ? t("Show {n} more", { n: Math.min(more, PAGE) }) : "",
+    nextLimit: String(rows.length + PAGE),
     nMine: scope === "open" ? rows.length - waiting.length : 0,
     empty: filtering ? t("Nothing matches the filter.") : scope === "open" ? t("Nothing open for you.") : scope === "done" ? t("Nothing done yet.") : t("No worker todos yet."),
   };
