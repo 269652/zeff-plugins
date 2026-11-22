@@ -6,6 +6,7 @@
 <data name="lage" lambda="todos.lage" with="att={{ state.att }}" every="5" when="{{ state.part == 'todos' or state.part == 'tickets' }}"/>
 <data name="day" lambda="todos.day" with="day={{ state.recapday }}" every="5" when="{{ state.part == 'recap' }}"/>
 <data name="today" lambda="todos.heute" when="{{ state.part == 'today' }}"/>
+<data name="places" lambda="todos.places"/>
 <data name="men" lambda="todos.mention" with="text={{ state.newnote }}" debounce=250 when="{{ state.panel and state.newnote }}"/>
 <data name="p" lambda="todos.panel" with="id={{ state.panel }}" when="{{ state.panel }}"/>
 <data name="qp" lambda="todos.panel" with="id={{ state.quick }}" when="{{ state.quick }}"/>
@@ -18,6 +19,13 @@
 <sidebarframe store="zeff-todos-sidebar">
 <sidebar>
 <tabs bind="part" look=line options='[["todos","Briefing"],["tickets","Tickets"],["recap","Recap"],["today","Today"]]'/>
+{{#if data.places.actions}}
+<row gap=1 wrap=true>
+{{#each data.places.actions}}{{#if href}}<button action="url" href="{{ href }}" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{#else}}<button run="{{ flow }}" with="{{ with }}" confirm="{{ confirm }}" into="placed" emit="todos-changed" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{/if}}{{/each}}
+</row>
+{{#if data.placed.error}}<line look=error>{{ data.placed.error }}</line>{{/if}}
+{{/if}}
+
 {{#if state.part == 'recap'}}
 <line look=stack>
 <line look=day>

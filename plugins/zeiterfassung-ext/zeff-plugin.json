@@ -1,13 +1,20 @@
 {
+  "keywords": [
+    "time tracking",
+    "timesheet",
+    "hours",
+    "bookings",
+    "report",
+    "zeiterfassung"
+  ],
+  "category": "time",
+  "icon": "⏱️",
   "$schema": "http://127.0.0.1:9333/ext/sdk/zeff-plugin.schema.json",
   "id": "zeiterfassung-ext",
   "name": "Time tracking — the report",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "The report of your booked time in the view language: the week (booking, suggestions, closing it) and the month, over Zeff's own figures. The core (jobs, projects, bookings, the schedule) stays Zeff's.",
   "author": "Zeff",
-  "keywords": ["time tracking", "timesheet", "hours", "bookings", "report", "zeiterfassung"],
-  "category": "time",
-  "icon": "⏱️",
   "apiVersion": 1,
   "permissions": [],
   "contributes": {

@@ -989,8 +989,8 @@
   </section>
   {{/if}}
 
+  {{#if data.w.slots.exports}}<row gap=2 wrap=true justify=end>{{#each data.w.slots.exports}}{{#if href}}<button action="url" href="{{ href }}" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{#else}}<button run="{{ flow }}" with="{{ with }}" label="{{ label }}" tip="{{ tip }}" variant=plain/>{{/if}}{{/each}}</row>{{/if}}
   <section card=true title="{{ data.w.report.head }}" aside="grouped per day · configure on Schedule" collapsible=true open=false>
-    {{#if data.w.slots.exports}}<row gap=2 wrap=true justify=end>{{#each data.w.slots.exports}}{{#if href}}<button action="url" href="{{ href }}" label="{{ label }}" tip="{{ tip }}" variant=link/>{{#else}}<button run="{{ flow }}" with="{{ with }}" label="{{ label }}" tip="{{ tip }}" variant=link/>{{/if}}{{/each}}</row>{{/if}}
     {{#if data.w.report.days}}
     <row justify=between gap=2><text tone=muted>rewritten by your report rules</text><copy text="{{ data.w.report.text }}" label="Copy report"/></row>
     <col gap=3>

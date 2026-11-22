@@ -1,0 +1,11 @@
+{
+  "name": "todos.places",
+  "label": "Todos: the buttons other plugins put on the screen",
+  "what": "The buttons the installed plugins add beside the tabs — a booking system's links, say: each a link or a flow to run.",
+  "kind": "function",
+  "zeff": [
+    "todos.actions"
+  ],
+  "timeoutMs": 15000,
+  "memoryMb": 128
+}
