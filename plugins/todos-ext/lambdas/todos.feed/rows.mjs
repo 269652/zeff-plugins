@@ -12,25 +12,26 @@ export function rowTools(t, lang) {
 
   const minutes = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`);
   const ORIGIN = { Calendar: t("From an appointment — no ticket"), Mail: t("From a mail — no ticket") };
-  // A todo's words with what they name as links, as the built-in page drew them: ticket keys (to Jira), merge requests ("!168", to GitLab), other todos ("T-37").
+  // A todo's words with what they name as references (<ref>: a link with its hover card), as the built-in page drew them: ticket keys (to Jira),
+  // merge requests ("!168", to GitLab), other todos ("T-37"); the people named in the words between are the template's (<reftext>).
   const textParts = (text, data, mrs) => {
     const base = Object.values(data.tickets ?? {}).find((x) => x.url)?.url?.replace(/\/browse\/[^/]+$/, "/browse/") ?? "";
     const out = [];
     for (const [i, p] of String(text ?? "").split(/\b([A-Z][A-Z0-9]+-\d+)\b|(?<![\w-])(T-\d+)\b|((?<![\w/])!\d+\b)/).entries()) {
       if (p === undefined || p === "") continue;
       const kind = i % 4;
-      if (kind === 1) out.push({ ticket: p, url: data.tickets?.[p]?.url || (base ? `${base}${p}` : ""), tip: data.tickets?.[p]?.summary ?? "" });
-      else if (kind === 2) out.push({ tref: p, href: `/t/${p.slice(2)}`, tip: t("Show {ref}", { ref: p }) });
+      if (kind === 1) out.push({ ref: "ticket", id: p, label: p, href: data.tickets?.[p]?.url || (base ? `${base}${p}` : ""), tip: data.tickets?.[p]?.summary ?? "" });
+      else if (kind === 2) out.push({ ref: "todo", id: p.slice(2), label: p, href: `/t/${p.slice(2)}`, tip: t("Show {ref}", { ref: p }) });
       else if (kind === 3) {
         const m = (mrs ?? []).find((x) => x.ref === p);
-        out.push(m ? { mr: p, url: m.url, tip: `${m.ref}: ${m.title}${m.state ? ` (${m.state})` : ""}` } : { s: p });
+        out.push(m ? { ref: "mr", id: m.url, label: p, href: m.url, tip: `${m.ref}: ${m.title}${m.state ? ` (${m.state})` : ""}` } : { s: p });
       } else out.push({ s: p });
     }
     // (every part has every field — a template asks each of them)
-    return out.map((x) => ({ s: "", ticket: "", tref: "", mr: "", url: "", href: "", tip: "", ...x }));
+    return out.map((x) => ({ s: "", ref: "", id: "", label: "", href: "", tip: "", ...x }));
   };
   const view = (r, data) => {
-    const links = (keys) => keys.map((k) => ({ key: k, url: data.tickets?.[k]?.url ?? "", title: data.tickets?.[k]?.summary ?? "" }));
+    const links = (keys) => keys.map((k) => ({ key: k, url: data.tickets?.[k]?.url ?? "", title: data.tickets?.[k]?.summary ?? "", label: data.tickets?.[k]?.url ? `${k} ↗` : k }));
     const closed = r.status !== "open";
     const asking = !closed && r.needsInput ? r.needsInput : "";
     const reported = !closed && !asking && r.workerDone && !r.workerDone.suggested ? r.workerDone : null;
@@ -46,6 +47,7 @@ export function rowTools(t, lang) {
       pathLabel: r.path ? t("Path “{path}”", { path: r.path }) : "",
       ticket: r.ticket,
       ticketUrl: data.tickets?.[r.ticket]?.url ?? "",
+      ticketLabel: data.tickets?.[r.ticket]?.url ? `${r.ticket} ↗` : r.ticket,
       ticketTitle: data.tickets?.[r.ticket]?.summary ?? "",
       ticketStatus: data.tickets?.[r.ticket]?.status ?? "",
       also: links(r.alsoTickets ?? []),
