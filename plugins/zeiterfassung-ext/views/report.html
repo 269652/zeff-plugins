@@ -773,7 +773,7 @@
   {{#if data.w.unreadable}}<callout tone=bad>{{ data.w.unreadable }}</callout>{{/if}}
   {{#if data.booked.booked.message}}<callout tone=good>{{ data.booked.booked.message }}</callout>{{/if}}
 
-  <grid cols=4 gap=3 min=220 keep=true>
+  <grid cols=4 gap=3 min=140 keep=true>
     <tile tint=true label="{{ data.w.booked.label }}" value="{{ data.w.booked.num }}" suffix="{{ data.w.booked.of }}" sub="{{ data.w.booked.sub }}" tone="{{ data.w.booked.tone }}" mark="{{ data.w.booked.mark }}">
       {{#if data.w.booked.todayHours}}<text><muted>Today </muted>{{#if data.w.booked.todayDone}}<b tone=good>{{ data.w.booked.todayHours }}</b>{{#else}}<b>{{ data.w.booked.todayHours }}</b>{{/if}}<muted>{{ data.w.booked.todayOf }}</muted></text>{{/if}}
     </tile>
@@ -888,16 +888,6 @@
       </row>
     </col>
   </section>
-
-  {{#if not data.w.closing.hidden}}
-  <section card=true title="{{ data.w.closing.head }}" aside="{{ data.w.closing.summary }}" asidetone="{{ data.w.closing.tone }}">
-    <grid cols=2 gap=1 min=340>
-    {{#each data.w.closing.items}}
-    <row gap=2 align=baseline><text tone="{{ tone }}" tip="{{ title }}"><b>{{ icon }}</b></text><text>{{ label }}</text><truncate tip="{{ detail }}"><small><muted>{{ detail }}</muted></small></truncate></row>
-    {{/each}}
-    </grid>
-  </section>
-  {{/if}}
 
   {{#if data.w.suggestions.items}}
   <section card=true title="{{ data.w.suggestions.head }}" aside="{{ data.w.suggestions.count }}" sub="Reported by agents, not booked yet — check the hours and the line, then accept.">
