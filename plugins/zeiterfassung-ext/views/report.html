@@ -780,6 +780,9 @@
     <tile tint=true label="{{ data.w.past.label }}" value="{{ data.w.past.value }}" sub="{{ data.w.past.sub }}" tone="{{ data.w.past.tone }}" mark="{{ data.w.past.mark }}">
       {{#if data.w.past.weeks}}<row gap=1 wrap=true>{{#each data.w.past.weeks}}<button action="state" state="week" value="{{ key }}" label="{{ label }}" tip="{{ title }}" variant=chip tone="{{ missing ? 'bad' : 'good' }}"/>{{/each}}</row>{{/if}}
     </tile>
+    {{#if data.w.outstanding}}<tile tint=true label="{{ data.w.outstanding.label }}" value="{{ data.w.outstanding.value }}" sub="{{ data.w.outstanding.sub }}" tone="{{ data.w.outstanding.tone }}" mark="{{ data.w.outstanding.mark }}">
+      <row gap=1 wrap=true>{{#each data.w.outstanding.weeks}}<button action="state" state="week" value="{{ key }}" label="{{ label }}" tip="{{ title }}" variant=chip tone="{{ tone }}"/>{{/each}}</row>
+    </tile>{{/if}}
     {{#each data.w.slots.cards}}<tile tint=true label="{{ label }}" value="{{ value }}" sub="{{ sub }}" tone="{{ tone }}"/>{{/each}}
   </grid>
 
