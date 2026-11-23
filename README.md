@@ -1,8 +1,8 @@
 # zeff-plugins
 
-**The official plugin collection for [Zeff](https://github.com/269652/Zeff)** — the local-first app that turns everything that reaches you
-(mail, chats, tickets, calendars, documents, bank statements) into one todo list. In Zeff, nearly everything is a plugin; this repository
-holds 39 of them: connectors for your mail, chats and tickets, apps such as time tracking, finances, cases and news, and language packs.
+**The official plugin collection for [Zeff](https://github.com/269652/Zeff)** — the local-first app that derives your todos from every
+channel that reaches you: mail, chats, tickets, calendars, documents, bank statements. Each channel is a plugin, and so is much of what you
+do with the todos afterwards. This repository holds 39 of them: connectors for your mail, chats and tickets, apps such as time tracking, finances, cases and news, and language packs.
 
 ## Install a plugin
 
@@ -11,6 +11,8 @@ for, and press **Install**. No download, no restart. Updates show up behind the 
 whatever you changed yourself.
 
 ## What is here
+
+The **connectors** bring a channel into your todo list; the **apps** help you work them off.
 
 ### Apps
 
